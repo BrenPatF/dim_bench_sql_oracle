@@ -1,0 +1,1 @@
+sqlplus bench/bench@XE

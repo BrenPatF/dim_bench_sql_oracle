@@ -1,0 +1,109 @@
+old   1: CREATE USER &DEMO_USER IDENTIFIED BY &DEMO_USER
+new   1: CREATE USER bench IDENTIFIED BY bench
+
+User created.
+
+old   1: GRANT CREATE SESSION TO &DEMO_USER
+new   1: GRANT CREATE SESSION TO bench
+
+Grant succeeded.
+
+old   1: GRANT ALTER SESSION TO &DEMO_USER
+new   1: GRANT ALTER SESSION TO bench
+
+Grant succeeded.
+
+old   1: GRANT CREATE TABLE TO &DEMO_USER
+new   1: GRANT CREATE TABLE TO bench
+
+Grant succeeded.
+
+old   1: GRANT CREATE TYPE TO &DEMO_USER
+new   1: GRANT CREATE TYPE TO bench
+
+Grant succeeded.
+
+old   1: GRANT CREATE PUBLIC SYNONYM TO &DEMO_USER
+new   1: GRANT CREATE PUBLIC SYNONYM TO bench
+
+Grant succeeded.
+
+old   1: GRANT CREATE SYNONYM TO &DEMO_USER
+new   1: GRANT CREATE SYNONYM TO bench
+
+Grant succeeded.
+
+old   1: GRANT CREATE SEQUENCE TO &DEMO_USER
+new   1: GRANT CREATE SEQUENCE TO bench
+
+Grant succeeded.
+
+old   1: GRANT CREATE VIEW TO &DEMO_USER
+new   1: GRANT CREATE VIEW TO bench
+
+Grant succeeded.
+
+old   1: GRANT UNLIMITED TABLESPACE TO &DEMO_USER
+new   1: GRANT UNLIMITED TABLESPACE TO bench
+
+Grant succeeded.
+
+old   1: GRANT CREATE PROCEDURE TO &DEMO_USER
+new   1: GRANT CREATE PROCEDURE TO bench
+
+Grant succeeded.
+
+old   1: GRANT CREATE ANY DIRECTORY TO &DEMO_USER
+new   1: GRANT CREATE ANY DIRECTORY TO bench
+
+Grant succeeded.
+
+old   1: GRANT CREATE ANY CONTEXT TO &DEMO_USER
+new   1: GRANT CREATE ANY CONTEXT TO bench
+
+Grant succeeded.
+
+DIRECTORY input_dir - C:\input *** Change this if necessary ***
+
+Directory created.
+
+DIRECTORY output_dir - C:\input *** Change this if necessary, write access required ***
+
+Directory created.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+

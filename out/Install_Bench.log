@@ -1,0 +1,972 @@
+SQL> 
+SQL> PROMPT Dropping tables
+Dropping tables
+SQL> DROP TABLE bench_run_v$stats
+  2  /
+DROP TABLE bench_run_v$stats
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL> DROP TABLE bench_run_v$sql_plan_stats_all
+  2  /
+DROP TABLE bench_run_v$sql_plan_stats_all
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL> DROP TABLE bench_run_statistics
+  2  /
+DROP TABLE bench_run_statistics
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL> DROP TABLE bench_run_data_points
+  2  /
+DROP TABLE bench_run_data_points
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL> DROP TABLE bench_runs
+  2  /
+DROP TABLE bench_runs
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL> DROP TABLE queries
+  2  /
+DROP TABLE queries
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL> DROP TABLE query_groups
+  2  /
+DROP TABLE query_groups
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL> PROMPT query_groups
+query_groups
+SQL> CREATE TABLE query_groups (
+  2      name                         VARCHAR2(30) NOT NULL,
+  3      description                  VARCHAR2(500),
+  4      CONSTRAINT qgp_pk            PRIMARY KEY (name))
+  5  /
+
+Table created.
+
+SQL> COMMENT ON TABLE query_groups IS 'Query group'
+  2  /
+
+Comment created.
+
+SQL> PROMPT Queries
+Queries
+SQL> CREATE TABLE queries (
+  2      id                           NUMBER NOT NULL,
+  3      query_group                  VARCHAR2(30) NOT NULL,
+  4      name                         VARCHAR2(30) NOT NULL,
+  5      order_seq                    NUMBER,
+  6      description                  VARCHAR2(500),
+  7      active_yn                    VARCHAR2(1) DEFAULT 'Y',
+  8      text                         CLOB NOT NULL,
+  9      pre_query_sql                CLOB,
+ 10      CONSTRAINT qry_pk            PRIMARY KEY (id),
+ 11      CONSTRAINT qry_uk            UNIQUE (query_group, name),
+ 12      CONSTRAINT qry_qgp_fk        FOREIGN KEY (query_group) REFERENCES query_groups (name)
+ 13  )
+ 14  /
+
+Table created.
+
+SQL> COMMENT ON TABLE queries IS 'Query and pre-query SQL text'
+  2  /
+
+Comment created.
+
+SQL> PROMPT queries_s
+queries_s
+SQL> DROP SEQUENCE queries_s
+  2  /
+DROP SEQUENCE queries_s
+              *
+ERROR at line 1:
+ORA-02289: sequence does not exist
+
+
+SQL> CREATE SEQUENCE queries_s START WITH 1
+  2  /
+
+Sequence created.
+
+SQL> PROMPT bench_runs
+bench_runs
+SQL> CREATE TABLE bench_runs (
+  2      id                           NUMBER NOT NULL,
+  3      description                  VARCHAR2(500),
+  4      query_group                  VARCHAR2(30) NOT NULL,
+  5      log_header_id		 NUMBER,
+  6      data_set                     VARCHAR2(30),
+  7      points_wide_list             L1_num_arr,
+  8      points_deep_list             L1_num_arr,
+  9      redo_data_yn                 VARCHAR2(1) DEFAULT 'Y',
+ 10      status                       VARCHAR2(1),
+ 11      message                      VARCHAR2(4000),
+ 12      cpu_time                     NUMBER,
+ 13      elapsed_time                 NUMBER,
+ 14      creation_date                DATE NOT NULL,
+ 15      CONSTRAINT brn_pk            PRIMARY KEY (id),
+ 16      CONSTRAINT brn_qgp_fk        FOREIGN KEY (query_group) REFERENCES query_groups (name),
+ 17      CONSTRAINT brn_log_fk        FOREIGN KEY (log_header_id) REFERENCES log_headers (id)
+ 18  )
+ 19  /
+
+Table created.
+
+SQL> COMMENT ON TABLE bench_runs IS 'Bench run header'
+  2  /
+
+Comment created.
+
+SQL> PROMPT bench_runs_s
+bench_runs_s
+SQL> DROP SEQUENCE bench_runs_s
+  2  /
+DROP SEQUENCE bench_runs_s
+              *
+ERROR at line 1:
+ORA-02289: sequence does not exist
+
+
+SQL> CREATE SEQUENCE bench_runs_s START WITH 1
+  2  /
+
+Sequence created.
+
+SQL> PROMPT bench_run_data_points
+bench_run_data_points
+SQL> CREATE TABLE bench_run_data_points (
+  2      id                              NUMBER NOT NULL,
+  3      bench_run_id                    NUMBER NOT NULL,
+  4      point_wide                      NUMBER NOT NULL,
+  5      point_deep                      NUMBER NOT NULL,
+  6      cpu_time                        NUMBER,
+  7      elapsed_time                    NUMBER,
+  8      num_records                     NUMBER,
+  9      num_records_per_part            NUMBER,
+ 10      group_size                      NUMBER,
+ 11      creation_date                   DATE NOT NULL,
+ 12      text                            VARCHAR2(4000),
+ 13      CONSTRAINT rdp_pk               PRIMARY KEY (id),
+ 14      CONSTRAINT rdp_uk               UNIQUE (bench_run_id, point_wide, point_deep),
+ 15      CONSTRAINT rdp_rcn_fk           FOREIGN KEY (bench_run_id) REFERENCES bench_runs (id)
+ 16  )
+ 17  /
+
+Table created.
+
+SQL> COMMENT ON TABLE bench_run_data_points IS 'Bench run data points'
+  2  /
+
+Comment created.
+
+SQL> PROMPT bench_run_data_points_s
+bench_run_data_points_s
+SQL> DROP SEQUENCE bench_run_data_points_s
+  2  /
+DROP SEQUENCE bench_run_data_points_s
+              *
+ERROR at line 1:
+ORA-02289: sequence does not exist
+
+
+SQL> CREATE SEQUENCE bench_run_data_points_s START WITH 1
+  2  /
+
+Sequence created.
+
+SQL> PROMPT bench_run_statistics
+bench_run_statistics
+SQL> CREATE TABLE bench_run_statistics (
+  2      id                              NUMBER NOT NULL,
+  3      bench_run_data_point_id         NUMBER NOT NULL,
+  4      query_id                        NUMBER NOT NULL,
+  5      cpu_time                        NUMBER,
+  6      elapsed_time                    NUMBER,
+  7      num_records_out                 NUMBER,
+  8      plan_hash_value                 NUMBER,
+  9      plan_tab                        L1_chr_db_arr,
+ 10      creation_date                   DATE NOT NULL,
+ 11      status                          VARCHAR2(1),
+ 12      message                         VARCHAR2(4000),
+ 13      CONSTRAINT brs_pk               PRIMARY KEY (id),
+ 14      CONSTRAINT brs_uk               UNIQUE (bench_run_data_point_id, query_id),
+ 15      CONSTRAINT brs_qry_fk           FOREIGN KEY (query_id) REFERENCES queries (id),
+ 16      CONSTRAINT brs_rdp_fk           FOREIGN KEY (bench_run_data_point_id) REFERENCES bench_run_data_points (id)
+ 17  )
+ 18  /
+
+Table created.
+
+SQL> COMMENT ON TABLE bench_run_statistics IS 'Summary timing statistics by run data point'
+  2  /
+
+Comment created.
+
+SQL> PROMPT bench_run_statistics_s
+bench_run_statistics_s
+SQL> DROP SEQUENCE bench_run_statistics_s
+  2  /
+DROP SEQUENCE bench_run_statistics_s
+              *
+ERROR at line 1:
+ORA-02289: sequence does not exist
+
+
+SQL> CREATE SEQUENCE bench_run_statistics_s START WITH 1
+  2  /
+
+Sequence created.
+
+SQL> PROMPT bench_run_v$sql_plan_stats_all
+bench_run_v$sql_plan_stats_all
+SQL> CREATE TABLE bench_run_v$sql_plan_stats_all (
+  2          bench_run_statistic_id      NUMBER NOT NULL,
+  3          ID                          NUMBER NOT NULL,
+  4          ADDRESS                     RAW(8),
+  5          HASH_VALUE                  NUMBER,
+  6          SQL_ID                      VARCHAR2(13),
+  7          PLAN_HASH_VALUE             NUMBER,
+  8          CHILD_ADDRESS               RAW(8),
+  9          CHILD_NUMBER                NUMBER,
+ 10          TIMESTAMP                   DATE,
+ 11          OPERATION                   VARCHAR2(30),
+ 12          OPTIONS                     VARCHAR2(30),
+ 13          OBJECT_NODE                 VARCHAR2(40),
+ 14          OBJECT#                     NUMBER,
+ 15          OBJECT_OWNER                VARCHAR2(30),
+ 16          OBJECT_NAME                 VARCHAR2(30),
+ 17          OBJECT_ALIAS                VARCHAR2(65),
+ 18          OBJECT_TYPE                 VARCHAR2(20),
+ 19          OPTIMIZER                   VARCHAR2(20),
+ 20          PARENT_ID                   NUMBER,
+ 21          DEPTH                       NUMBER,
+ 22          POSITION                    NUMBER,
+ 23          SEARCH_COLUMNS              NUMBER,
+ 24          COST                        NUMBER,
+ 25          CARDINALITY                 NUMBER,
+ 26          BYTES                       NUMBER,
+ 27          OTHER_TAG                   VARCHAR2(35),
+ 28          PARTITION_START             VARCHAR2(5),
+ 29          PARTITION_STOP              VARCHAR2(5),
+ 30          PARTITION_ID                NUMBER,
+ 31          OTHER                       VARCHAR2(4000),
+ 32          DISTRIBUTION                VARCHAR2(20),
+ 33          CPU_COST                    NUMBER,
+ 34          IO_COST                     NUMBER,
+ 35          TEMP_SPACE                  NUMBER,
+ 36          ACCESS_PREDICATES           VARCHAR2(4000),
+ 37          FILTER_PREDICATES           VARCHAR2(4000),
+ 38          PROJECTION                  VARCHAR2(4000),
+ 39          TIME                        NUMBER,
+ 40          QBLOCK_NAME                 VARCHAR2(30),
+ 41          REMARKS                     VARCHAR2(4000),
+ 42          OTHER_XML                   CLOB,
+ 43          EXECUTIONS                  NUMBER,
+ 44          LAST_STARTS                 NUMBER,
+ 45          STARTS                      NUMBER,
+ 46          LAST_OUTPUT_ROWS            NUMBER,
+ 47          OUTPUT_ROWS                 NUMBER,
+ 48          LAST_CR_BUFFER_GETS         NUMBER,
+ 49          CR_BUFFER_GETS              NUMBER,
+ 50          LAST_CU_BUFFER_GETS         NUMBER,
+ 51          CU_BUFFER_GETS              NUMBER,
+ 52          LAST_DISK_READS             NUMBER,
+ 53          DISK_READS                  NUMBER,
+ 54          LAST_DISK_WRITES            NUMBER,
+ 55          DISK_WRITES                 NUMBER,
+ 56          LAST_ELAPSED_TIME           NUMBER,
+ 57          ELAPSED_TIME                NUMBER,
+ 58          POLICY                      VARCHAR2(10),
+ 59          ESTIMATED_OPTIMAL_SIZE      NUMBER,
+ 60          ESTIMATED_ONEPASS_SIZE      NUMBER,
+ 61          LAST_MEMORY_USED            NUMBER,
+ 62          LAST_EXECUTION              VARCHAR2(10),
+ 63          LAST_DEGREE                 NUMBER,
+ 64          TOTAL_EXECUTIONS            NUMBER,
+ 65          OPTIMAL_EXECUTIONS          NUMBER,
+ 66          ONEPASS_EXECUTIONS          NUMBER,
+ 67          MULTIPASSES_EXECUTIONS      NUMBER,
+ 68          ACTIVE_TIME                 NUMBER,
+ 69          MAX_TEMPSEG_SIZE            NUMBER,
+ 70          LAST_TEMPSEG_SIZE           NUMBER,
+ 71  --        CONSTRAINT rps_pk           PRIMARY KEY (bench_run_statistic_id, id), I encountered a duplicate
+ 72          CONSTRAINT rps_rst_fk       FOREIGN KEY (bench_run_statistic_id) REFERENCES bench_run_statistics (id)
+ 73  )
+ 74  /
+
+Table created.
+
+SQL> COMMENT ON TABLE bench_run_v$sql_plan_stats_all IS 'Query execution statistics from v$sql_plan_statistics_all by run statistic id'
+  2  /
+
+Comment created.
+
+SQL> CREATE INDEX brs_N1 ON bench_run_v$sql_plan_stats_all (bench_run_statistic_id, id) -- was PK
+  2  /
+
+Index created.
+
+SQL> CREATE TABLE bench_run_v$stats (
+  2          bench_run_statistic_id      NUMBER NOT NULL,
+  3          stat_type                   VARCHAR2(30),
+  4          statistic#                  NUMBER,
+  5          level#                      NUMBER,
+  6          stat_name                   VARCHAR2(100),
+  7          value_before                NUMBER,
+  8          value_after                 NUMBER,
+  9          wait_before                 NUMBER,
+ 10          wait_after                  NUMBER,
+ 11          CONSTRAINT rvs_pk           PRIMARY KEY (bench_run_statistic_id, statistic#, stat_type),
+ 12          CONSTRAINT rvs_rst_fk       FOREIGN KEY (bench_run_statistic_id) REFERENCES bench_run_statistics (id)
+ 13  )
+ 14  /
+
+Table created.
+
+SQL> COMMENT ON TABLE bench_run_v$stats IS 'Before and after query values from v$mystat, v$latch, v$sess_time_model'
+  2  /
+
+Comment created.
+
+SQL> PROMPT bench_run_data_points_v
+bench_run_data_points_v
+SQL> CREATE OR REPLACE VIEW bench_run_data_points_v AS
+  2  WITH last_run_v AS (
+  3  SELECT Max (id) id FROM bench_runs
+  4  ), wide_v AS (
+  5  SELECT r.id, ROWNUM ind, s.COLUMN_VALUE siz
+  6    FROM bench_runs r
+  7    JOIN last_run_v l
+  8      ON l.id = r.id
+  9    CROSS JOIN TABLE (r.points_wide_list) s
+ 10  ), deep_v AS (
+ 11  SELECT r.id, ROWNUM ind, s.COLUMN_VALUE siz
+ 12    FROM bench_runs r
+ 13    JOIN last_run_v l
+ 14      ON l.id = r.id
+ 15    CROSS JOIN TABLE (r.points_deep_list) s
+ 16  )
+ 17  SELECT  rdp.point_wide,
+ 18          rdp.point_deep,
+ 19          wid.siz size_wide,
+ 20          dee.siz size_deep,
+ 21          rdp.cpu_time,
+ 22          rdp.elapsed_time,
+ 23          rdp.num_records,
+ 24          rdp.num_records_per_part,
+ 25          rdp.group_size
+ 26    FROM bench_run_data_points rdp
+ 27    JOIN last_run_v lrv
+ 28      ON lrv.id = rdp.bench_run_id
+ 29    JOIN wide_v wid
+ 30      ON wid.id = rdp.bench_run_id
+ 31     AND wid.ind = rdp.point_wide
+ 32    JOIN deep_v dee
+ 33      ON dee.id = rdp.bench_run_id
+ 34     AND dee.ind = rdp.point_deep
+ 35  /
+
+View created.
+
+SQL> PROMPT bench_run_statistics_v
+bench_run_statistics_v
+SQL> CREATE OR REPLACE VIEW bench_run_statistics_v AS
+  2  WITH last_run_v AS (
+  3  SELECT Max (id) id FROM bench_runs
+  4  ), wide_v AS (
+  5  SELECT r.id, ROWNUM ind, s.COLUMN_VALUE siz
+  6    FROM bench_runs r
+  7    JOIN last_run_v l
+  8      ON l.id = r.id
+  9    CROSS JOIN TABLE (r.points_wide_list) s
+ 10  ), deep_v AS (
+ 11  SELECT r.id, ROWNUM ind, s.COLUMN_VALUE siz
+ 12    FROM bench_runs r
+ 13    JOIN last_run_v l
+ 14      ON l.id = r.id
+ 15    CROSS JOIN TABLE (r.points_deep_list) s
+ 16  )
+ 17  SELECT  qry.name query_name,
+ 18          rdp.point_wide,
+ 19          rdp.point_deep,
+ 20          wid.siz size_wide,
+ 21          dee.siz size_deep,
+ 22          rdp.num_records num_records_total,
+ 23          brs.num_records_out,
+ 24          brs.cpu_time,
+ 25          brs.elapsed_time,
+ 26          brs.plan_hash_value,
+ 27          brs.plan_tab,
+ 28          To_Char (brs.creation_date, 'dd-Mon-yy hh24:mi:ss') created
+ 29    FROM bench_run_data_points rdp
+ 30    JOIN last_run_v lrv
+ 31      ON lrv.id = rdp.bench_run_id
+ 32    JOIN wide_v wid
+ 33      ON wid.id = rdp.bench_run_id
+ 34     AND wid.ind = rdp.point_wide
+ 35    JOIN deep_v dee
+ 36      ON dee.id = rdp.bench_run_id
+ 37     AND dee.ind = rdp.point_deep
+ 38    JOIN bench_run_statistics brs
+ 39      ON brs.bench_run_data_point_id = rdp.id
+ 40    JOIN queries qry
+ 41      ON qry.id = brs.query_id
+ 42  /
+
+View created.
+
+SQL> PROMPT bench_v$sql_plan_stats_all_v
+bench_v$sql_plan_stats_all_v
+SQL> CREATE OR REPLACE VIEW bench_v$sql_plan_stats_all_v AS
+  2  WITH last_run_v AS (
+  3  SELECT Max (id) id FROM bench_runs
+  4  ), wide_v AS (
+  5  SELECT r.id, ROWNUM ind, s.COLUMN_VALUE siz
+  6    FROM bench_runs r
+  7    JOIN last_run_v l
+  8      ON l.id = r.id
+  9    CROSS JOIN TABLE (r.points_wide_list) s
+ 10  ), deep_v AS (
+ 11  SELECT r.id, ROWNUM ind, s.COLUMN_VALUE siz
+ 12    FROM bench_runs r
+ 13    JOIN last_run_v l
+ 14      ON l.id = r.id
+ 15    CROSS JOIN TABLE (r.points_deep_list) s
+ 16  )
+ 17  SELECT  rps.bench_run_statistic_id,
+ 18          rdp.bench_run_id,
+ 19          qry.name query_name,
+ 20          rps.hash_value,
+ 21          rps.sql_id,
+ 22          rps.plan_hash_value,
+ 23          rdp.point_wide,
+ 24          rdp.point_deep,
+ 25          wid.siz size_wide,
+ 26          dee.siz size_deep,
+ 27          rdp.num_records num_records_total,
+ 28          brs.num_records_out,
+ 29          brs.cpu_time,
+ 30          brs.elapsed_time,
+ 31          To_Char (brs.creation_date, 'dd-Mon-yy hh24:mi:ss') created,
+ 32          Max (rps.last_tempseg_size)                         tempseg_size,
+ 33          Max (rps.last_memory_used)                          memory_used,
+ 34          Max (rps.last_cr_buffer_gets + rps.last_cu_buffer_gets) buffers,
+ 35          Max (rps.last_disk_reads)                           disk_reads,
+ 36          Max (rps.last_disk_writes)                          disk_writes,
+ 37          Max (rps.cardinality)                               cardinality,
+ 38          Max (rps.last_output_rows)                          output_rows,
+ 39          Max (Abs (rps.last_output_rows - rps.last_starts * rps.cardinality))  cardinality_error
+ 40    FROM bench_run_v$sql_plan_stats_all rps
+ 41    JOIN bench_run_statistics brs
+ 42      ON brs.id = rps.bench_run_statistic_id
+ 43    JOIN bench_run_data_points rdp
+ 44      ON rdp.id = brs.bench_run_data_point_id
+ 45    JOIN last_run_v lrv
+ 46      ON lrv.id = rdp.bench_run_id
+ 47    JOIN wide_v wid
+ 48      ON wid.id = rdp.bench_run_id
+ 49     AND wid.ind = rdp.point_wide
+ 50    JOIN deep_v dee
+ 51      ON dee.id = rdp.bench_run_id
+ 52     AND dee.ind = rdp.point_deep
+ 53    JOIN queries qry
+ 54      ON qry.id = brs.query_id
+ 55   WHERE rps.bench_run_statistic_id IN (
+ 56      SELECT id
+ 57        FROM bench_run_statistics
+ 58       WHERE bench_run_id = lrv.id
+ 59      )
+ 60   GROUP BY rps.bench_run_statistic_id,
+ 61          rdp.bench_run_id,
+ 62          qry.name,
+ 63          rps.hash_value,
+ 64          rps.sql_id,
+ 65          rps.plan_hash_value,
+ 66          rdp.point_wide,
+ 67          rdp.point_deep,
+ 68          wid.siz,
+ 69          dee.siz,
+ 70          rdp.num_records,
+ 71          brs.num_records_out,
+ 72          brs.cpu_time,
+ 73          brs.elapsed_time,
+ 74          To_Char (brs.creation_date, 'dd-Mon-yy hh24:mi:ss')
+ 75  /
+
+View created.
+
+SQL> PROMPT bench_run_v$stats_v
+bench_run_v$stats_v
+SQL> CREATE OR REPLACE VIEW bench_run_v$stats_v (
+  2          bench_run_statistic_id,
+  3          query_name,
+  4          point_wide,
+  5          point_deep,
+  6          size_wide,
+  7          size_deep,
+  8          stat_type,
+  9          statistic#,
+ 10          level#,
+ 11          stat_name,
+ 12          stat_val,
+ 13          wait_time)
+ 14  AS
+ 15  WITH last_run_v AS (
+ 16  SELECT Max (id) id FROM bench_runs
+ 17  ), wide_v AS (
+ 18  SELECT r.id, ROWNUM ind, s.COLUMN_VALUE siz
+ 19    FROM bench_runs r
+ 20    JOIN last_run_v l
+ 21      ON l.id = r.id
+ 22    CROSS JOIN TABLE (r.points_wide_list) s
+ 23  ), deep_v AS (
+ 24  SELECT r.id, ROWNUM ind, s.COLUMN_VALUE siz
+ 25    FROM bench_runs r
+ 26    JOIN last_run_v l
+ 27      ON l.id = r.id
+ 28    CROSS JOIN TABLE (r.points_deep_list) s
+ 29  )
+ 30  SELECT  v$s.bench_run_statistic_id,
+ 31          qry.name query_name,
+ 32          rdp.point_wide,
+ 33          rdp.point_deep,
+ 34          wid.siz,
+ 35          dee.siz,
+ 36          v$s.stat_type,
+ 37          v$s.statistic#,
+ 38          v$s.level#,
+ 39          v$s.stat_name,
+ 40          Nvl (v$s.value_after, 0) - Nvl (v$s.value_before, 0),
+ 41          Nvl (v$s.wait_after, 0) - Nvl (v$s.wait_before, 0)
+ 42    FROM bench_run_v$stats v$s
+ 43    JOIN bench_run_statistics brs
+ 44      ON brs.id = v$s.bench_run_statistic_id
+ 45    JOIN bench_run_data_points rdp
+ 46      ON rdp.id = brs.bench_run_data_point_id
+ 47    JOIN last_run_v lrv
+ 48      ON lrv.id = rdp.bench_run_id
+ 49    JOIN wide_v wid
+ 50      ON wid.id = rdp.bench_run_id
+ 51     AND wid.ind = rdp.point_wide
+ 52    JOIN deep_v dee
+ 53      ON dee.id = rdp.bench_run_id
+ 54     AND dee.ind = rdp.point_deep
+ 55    JOIN queries qry
+ 56      ON qry.id = brs.query_id
+ 57   WHERE v$s.bench_run_statistic_id IN (
+ 58      SELECT id
+ 59        FROM bench_run_statistics
+ 60       WHERE bench_run_id = lrv.id
+ 61      )
+ 62  /
+
+View created.
+
+SQL> CREATE OR REPLACE VIEW bench_run_dp_statistics_v (
+  2      bench_run_data_point_id,
+  3      bench_run_id,
+  4      point_wide,
+  5      point_deep,
+  6      size_wide,
+  7      size_deep,
+  8      rdp_cpu_time,
+  9      rdp_elapsed_time,
+ 10      num_records,
+ 11      num_records_per_part,
+ 12      group_size,
+ 13      rdp_creation_date,
+ 14      text,
+ 15      bench_run_statistic_id,
+ 16      query_id,
+ 17      query_name,
+ 18      rst_cpu_time,
+ 19      rst_elapsed_time,
+ 20      num_records_out,
+ 21      rst_creation_date,
+ 22      status,
+ 23      message
+ 24  ) AS
+ 25  WITH last_run_v AS (
+ 26  SELECT Max (id) id FROM bench_runs
+ 27  ), wide_v AS (
+ 28  SELECT r.id, ROWNUM ind, s.COLUMN_VALUE siz
+ 29    FROM bench_runs r
+ 30    JOIN last_run_v l
+ 31      ON l.id = r.id
+ 32    CROSS JOIN TABLE (r.points_wide_list) s
+ 33  ), deep_v AS (
+ 34  SELECT r.id, ROWNUM ind, s.COLUMN_VALUE siz
+ 35    FROM bench_runs r
+ 36    JOIN last_run_v l
+ 37      ON l.id = r.id
+ 38    CROSS JOIN TABLE (r.points_deep_list) s
+ 39  )
+ 40  SELECT
+ 41      rdp.id,
+ 42      rdp.bench_run_id,
+ 43      rdp.point_wide,
+ 44      rdp.point_deep,
+ 45      wid.siz,
+ 46      dee.siz,
+ 47      rdp.cpu_time,
+ 48      rdp.elapsed_time,
+ 49      rdp.num_records,
+ 50      rdp.num_records_per_part,
+ 51      rdp.group_size,
+ 52      rdp.creation_date,
+ 53      rdp.text,
+ 54      rst.id,
+ 55      rst.query_id,
+ 56      qry.name,
+ 57      rst.cpu_time,
+ 58      rst.elapsed_time,
+ 59      rst.num_records_out,
+ 60      rst.creation_date,
+ 61      rst.status,
+ 62      rst.message
+ 63    FROM bench_run_data_points rdp
+ 64    JOIN last_run_v lrv
+ 65      ON lrv.id = rdp.bench_run_id
+ 66    JOIN wide_v wid
+ 67      ON wid.id = rdp.bench_run_id
+ 68     AND wid.ind = rdp.point_wide
+ 69    JOIN deep_v dee
+ 70      ON dee.id = rdp.bench_run_id
+ 71     AND dee.ind = rdp.point_deep
+ 72    LEFT JOIN bench_run_statistics rst
+ 73      ON bench_run_data_point_id = rdp.id
+ 74    LEFT JOIN queries qry
+ 75      ON qry.id = rst.query_id
+ 76  /
+
+View created.
+
+SQL> DROP TYPE query_list_type
+  2  /
+DROP TYPE query_list_type
+*
+ERROR at line 1:
+ORA-04043: object QUERY_LIST_TYPE does not exist
+
+
+SQL> CREATE OR REPLACE TYPE query_type AS OBJECT (id INTEGER, name VARCHAR2(30), text CLOB, pre_query_sql CLOB)
+  2  /
+
+Type created.
+
+SQL> CREATE OR REPLACE TYPE query_list_type AS VARRAY(100) OF query_type
+  2  /
+
+Type created.
+
+SQL> CREATE OR REPLACE CONTEXT bench_ctx USING Bench_Datasets;
+
+Context created.
+
+SQL> 
+SQL> PROMPT Packages creation
+Packages creation
+SQL> PROMPT =================
+=================
+SQL> 
+SQL> PROMPT Create general packages
+Create general packages
+SQL> @..\pkg\Bench_Datasets.pks
+
+Package created.
+
+No errors.
+SQL> @..\pkg\Bench_Queries.pks
+
+Package created.
+
+No errors.
+SQL> @..\pkg\Bench_Queries.pkb
+
+Package body created.
+
+No errors.
+SQL> 
+SQL> PROMPT Next scripts are specific to the query group being tested
+Next scripts are specific to the query group being tested
+SQL> @..\sql\Act_Bur
+DROP TABLE activity
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+
+Table created.
+
+
+Index created.
+
+
+Index created.
+
+DROP  SEQUENCE act_s
+               *
+ERROR at line 1:
+ORA-02289: sequence does not exist
+
+
+
+Sequence created.
+
+DROP TABLE activity_tmp
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+
+Table created.
+
+
+Index created.
+
+
+PL/SQL procedure successfully completed.
+
+
+PL/SQL procedure successfully completed.
+
+
+PL/SQL procedure successfully completed.
+
+Group counts via model
+
+ PERSON_ID   # Groups
+---------- ----------
+         3          3
+         4          3
+         5          3
+
+Elapsed: 00:00:00.00
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.21
+Model - All records
+
+ PERSON_ID START_DAT END_DATE  GROUP_STA GROUP_END
+---------- --------- --------- --------- ---------
+         3 01-JUN-11 03-JUN-11 01-JUN-11 07-JUN-11
+           02-JUN-11 05-JUN-11 01-JUN-11 07-JUN-11
+           04-JUN-11 07-JUN-11 01-JUN-11 07-JUN-11
+           08-JUN-11 16-JUN-11 08-JUN-11 16-JUN-11
+           09-JUN-11 14-JUN-11 08-JUN-11 16-JUN-11
+           20-JUN-11 30-JUN-11 20-JUN-11 30-JUN-11
+
+         4 01-JUN-11 03-JUN-11 01-JUN-11 07-JUN-11
+           02-JUN-11 05-JUN-11 01-JUN-11 07-JUN-11
+           04-JUN-11 07-JUN-11 01-JUN-11 07-JUN-11
+           08-JUN-11 16-JUN-11 08-JUN-11 16-JUN-11
+           09-JUN-11 15-JUN-11 08-JUN-11 16-JUN-11
+           20-JUN-11 30-JUN-11 20-JUN-11 30-JUN-11
+
+         5 01-JUN-11 03-JUN-11 01-JUN-11 07-JUN-11
+           02-JUN-11 05-JUN-11 01-JUN-11 07-JUN-11
+           04-JUN-11 07-JUN-11 01-JUN-11 07-JUN-11
+           08-JUN-11 16-JUN-11 08-JUN-11 16-JUN-11
+           09-JUN-11 14-JUN-11 08-JUN-11 16-JUN-11
+           15-JUN-11 30-JUN-11 15-JUN-11 30-JUN-11
+
+
+18 rows selected.
+
+Elapsed: 00:00:00.01
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.03
+Recursive Subquery Factor - Groups
+
+ PERSON_ID GROUP_STA GROUP_END   NUM_ROWS
+---------- --------- --------- ----------
+         3 01-JUN-11 07-JUN-11          3
+           08-JUN-11 16-JUN-11          2
+           20-JUN-11 30-JUN-11          1
+
+         4 01-JUN-11 07-JUN-11          3
+           08-JUN-11 16-JUN-11          2
+           20-JUN-11 30-JUN-11          1
+
+         5 01-JUN-11 07-JUN-11          3
+           08-JUN-11 16-JUN-11          2
+           15-JUN-11 30-JUN-11          1
+
+
+9 rows selected.
+
+Elapsed: 00:00:00.00
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.03
+SQL> @..\sql\I_Queries
+BURST
+
+PL/SQL procedure successfully completed.
+
+SQL> @..\pkg\Bench_Datasets.pkb
+
+Package body created.
+
+No errors.
+SQL> 
+SQL> @..\sql\L_Log_Default
+
+TEXT
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID  21mywgp0t9242, child number 0
+-------------------------------------
+SELECT /*+ GRP_CNT gather_plan_statistics */        person_id, Count
+(DISTINCT group_start) "# Groups"   FROM ( SELECT person_id,
+start_date, end_date, group_start   FROM activity  MODEL     PARTITION
+BY (person_id)     DIMENSION BY (Row_Number() OVER (PARTITION BY
+person_id ORDER BY start_date) rn)     MEASURES (start_date, end_date,
+start_date group_start)     RULES (        group_start[rn = 1] =
+start_date[cv()],        group_start[rn > 1] = CASE WHEN
+start_date[cv()] - group_start[cv()-1] > :DEPTH THEN start_date[cv()]
+ELSE group_start[cv()-1] END     ) )  GROUP BY person_id  ORDER BY 1
+
+Plan hash value: 524487941
+
+---------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                          | Name        | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+---------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                   |             |      1 |        |      3 |00:00:00.01 |       2 |       |       |          |
+|   1 |  SORT GROUP BY                     |             |      1 |     18 |      3 |00:00:00.01 |       2 |  2048 |  2048 | 2048  (0)|
+|   2 |   VIEW                             | VW_DAG_0    |      1 |     18 |      9 |00:00:00.01 |       2 |       |       |          |
+|   3 |    HASH GROUP BY                   |             |      1 |     18 |      9 |00:00:00.01 |       2 |  1646K|  1646K|  959K (0)|
+|   4 |     VIEW                           |             |      1 |     18 |     18 |00:00:00.01 |       2 |       |       |          |
+|   5 |      BUFFER SORT                   |             |      1 |     18 |     18 |00:00:00.01 |       2 |  2048 |  2048 | 2048  (0)|
+|   6 |       SQL MODEL ORDERED            |             |      1 |     18 |     18 |00:00:00.01 |       2 |   998K|   998K|  612K (0)|
+|   7 |        WINDOW NOSORT               |             |      1 |     18 |     18 |00:00:00.01 |       2 | 73728 | 73728 |          |
+|   8 |         TABLE ACCESS BY INDEX ROWID| ACTIVITY    |      1 |     18 |     18 |00:00:00.01 |       2 |       |       |          |
+|   9 |          INDEX FULL SCAN           | ACTIVITY_N1 |      1 |     18 |     18 |00:00:00.01 |       1 |       |       |          |
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
+
+SQL_ID  9st3rq6z1h3h7, child number 0
+-------------------------------------
+WITH mod AS ( SELECT person_id, start_date, end_date, group_start
+FROM activity  MODEL     PARTITION BY (person_id)     DIMENSION BY
+(Row_Number() OVER (PARTITION BY person_id ORDER BY start_date) rn)
+MEASURES (start_date, end_date, start_date group_start, end_date
+group_end)     RULES (        group_start[rn > 1] = CASE WHEN
+start_date[cv()] - group_start[cv()-1] > :DEPTH THEN start_date[cv()]
+ELSE group_start[cv()-1] END,        group_end[ANY] ORDER BY rn DESC =
+PRESENTV (group_start[cv()+1],             CASE WHEN group_start[cv()]
+< group_start[cv()+1] THEN end_date[cv()] ELSE group_end[cv()+1] END,
+          end_date[cv()])     ) ) SELECT /*+ MOD gather_plan_statistics
+*/         person_id, start_date, end_date, group_start,
+Max(end_date) KEEP (DENSE_RANK LAST ORDER BY end_date NULLS LAST) OVER
+(PARTITION BY person_id, group_start) group_end   FROM mod ORDER BY 1,
+2, 3
+
+Plan hash value: 1892179646
+
+--------------------------------------------------------------------------------------------
+| Id  | Operation                        | Name        | E-Rows |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                 |             |        |       |       |          |
+|   1 |  SORT ORDER BY                   |             |     18 |  2048 |  2048 | 2048  (0)|
+|   2 |   WINDOW SORT                    |             |     18 |  2048 |  2048 | 2048  (0)|
+|   3 |    VIEW                          |             |     18 |       |       |          |
+|   4 |     SQL MODEL ORDERED            |             |     18 |   983K|   983K|  603K (0)|
+|   5 |      WINDOW NOSORT               |             |     18 | 73728 | 73728 |          |
+|   6 |       TABLE ACCESS BY INDEX ROWID| ACTIVITY    |     18 |       |       |          |
+|   7 |        INDEX FULL SCAN           | ACTIVITY_N1 |     18 |       |       |          |
+--------------------------------------------------------------------------------------------
+
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
+   - Warning: basic plan statistics not available. These are only collected when:
+       * hint 'gather_plan_statistics' is used for the statement or
+       * parameter 'statistics_level' is set to 'ALL', at session or system level
+
+SQL_ID  4mnpc7zjhb7sx, child number 0
+-------------------------------------
+WITH act AS ( SELECT person_id, start_date, end_date, Row_Number() OVER
+(PARTITION BY person_id ORDER BY start_date) rn   FROM activity ), rsq
+(person_id, rn, start_date, end_date, group_start) AS ( SELECT
+person_id, rn, start_date, end_date, start_date   FROM act  WHERE rn =
+1  UNION ALL SELECT  act.person_id,         act.rn,
+act.start_date,         act.end_date,         CASE WHEN act.start_date
+- rsq.group_start <= :DEPTH THEN rsq.group_start ELSE act.start_date
+end   FROM act   JOIN rsq     ON rsq.rn              = act.rn - 1
+AND rsq.person_id       = act.person_id ) SELECT /*+ RSF
+gather_plan_statistics */         person_id       person_id,
+group_start     group_start,         Max (end_date)  group_end,
+COUNT(*)        num_rows FROM rsq GROUP BY person_id, group_start ORDER
+BY person_id, group_start
+
+Plan hash value: 31113001
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                  | Name        | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-----------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                           |             |      1 |        |      9 |00:00:00.01 |      14 |       |       |          |
+|   1 |  SORT GROUP BY                             |             |      1 |      2 |      9 |00:00:00.01 |      14 |  2048 |  2048 | 2048  (0)|
+|   2 |   VIEW                                     |             |      1 |      2 |     18 |00:00:00.01 |      14 |       |       |          |
+|   3 |    UNION ALL (RECURSIVE WITH) BREADTH FIRST|             |      1 |        |     18 |00:00:00.01 |      14 |  2048 |  2048 | 2048  (0)|
+|*  4 |     VIEW                                   |             |      1 |      1 |      3 |00:00:00.01 |       2 |       |       |          |
+|*  5 |      WINDOW NOSORT                         |             |      1 |     18 |     18 |00:00:00.01 |       2 | 73728 | 73728 |          |
+|   6 |       TABLE ACCESS BY INDEX ROWID          | ACTIVITY    |      1 |     18 |     18 |00:00:00.01 |       2 |       |       |          |
+|   7 |        INDEX FULL SCAN                     | ACTIVITY_N1 |      1 |     18 |     18 |00:00:00.01 |       1 |       |       |          |
+|*  8 |     HASH JOIN                              |             |      6 |      1 |     15 |00:00:00.01 |      12 |  1321K|  1321K|  667K (0)|
+|   9 |      RECURSIVE WITH PUMP                   |             |      6 |        |     18 |00:00:00.01 |       0 |       |       |          |
+|  10 |      VIEW                                  |             |      6 |     18 |    108 |00:00:00.01 |      12 |       |       |          |
+|  11 |       WINDOW BUFFER                        |             |      6 |     18 |    108 |00:00:00.01 |      12 |  2048 |  2048 | 2048  (0)|
+|  12 |        TABLE ACCESS BY INDEX ROWID         | ACTIVITY    |      6 |     18 |    108 |00:00:00.01 |      12 |       |       |          |
+|  13 |         INDEX FULL SCAN                    | ACTIVITY_N1 |      6 |     18 |    108 |00:00:00.01 |       6 |       |       |          |
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   4 - filter("RN"=1)
+   5 - filter(ROW_NUMBER() OVER ( PARTITION BY "PERSON_ID" ORDER BY "START_DATE")<=1)
+   8 - access("RSQ"."RN"="ACT"."RN"-1 AND "RSQ"."PERSON_ID"="ACT"."PERSON_ID")
+
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
+
+Oracle major version: 12 - making 12c MTH_QRY inactive for 8, 9, 10, 11...
+12c MTH_QRY is active
+
+122 rows selected.
+
+SQL> 
+SQL> SPOOL OFF

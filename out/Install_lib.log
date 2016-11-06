@@ -1,0 +1,237 @@
+SQL> 
+SQL> REM Run this script from schema for library objects (bench IN this case) to create the common objects
+SQL> 
+SQL> PROMPT Common types creation
+Common types creation
+SQL> PROMPT =====================
+=====================
+SQL> 
+SQL> PROMPT Drop type L3_chr_arr
+Drop type L3_chr_arr
+SQL> DROP TYPE L3_chr_arr
+  2  /
+DROP TYPE L3_chr_arr
+*
+ERROR at line 1:
+ORA-04043: object L3_CHR_ARR does not exist
+
+
+SQL> PROMPT Drop type L2_chr_arr
+Drop type L2_chr_arr
+SQL> DROP TYPE L2_chr_arr
+  2  /
+DROP TYPE L2_chr_arr
+*
+ERROR at line 1:
+ORA-04043: object L2_CHR_ARR does not exist
+
+
+SQL> PROMPT Create type L1_chr_db_arr
+Create type L1_chr_db_arr
+SQL> CREATE OR REPLACE TYPE L1_chr_db_arr IS VARRAY(4000) OF VARCHAR2(4000)
+  2  /
+
+Type created.
+
+SQL> PROMPT Create type L1_chr_arr
+Create type L1_chr_arr
+SQL> CREATE OR REPLACE TYPE L1_chr_arr IS VARRAY(32767) OF VARCHAR2(32767)
+  2  /
+
+Type created.
+
+SQL> PROMPT Create type L2_chr_arr
+Create type L2_chr_arr
+SQL> CREATE OR REPLACE TYPE L2_chr_arr IS VARRAY(32767) OF L1_chr_arr
+  2  /
+
+Type created.
+
+SQL> PROMPT Create type L3_chr_arr
+Create type L3_chr_arr
+SQL> CREATE OR REPLACE TYPE L3_chr_arr IS VARRAY(32767) OF L2_chr_arr
+  2  /
+
+Type created.
+
+SQL> GRANT EXECUTE ON L1_chr_arr TO PUBLIC
+  2  /
+
+Grant succeeded.
+
+SQL> GRANT EXECUTE ON L2_chr_arr TO PUBLIC
+  2  /
+
+Grant succeeded.
+
+SQL> GRANT EXECUTE ON L3_chr_arr TO PUBLIC
+  2  /
+
+Grant succeeded.
+
+SQL> PROMPT Create type L1_num_arr
+Create type L1_num_arr
+SQL> CREATE OR REPLACE TYPE L1_num_arr IS VARRAY(32767) OF NUMBER
+  2  /
+
+Type created.
+
+SQL> GRANT EXECUTE ON L1_num_arr TO PUBLIC
+  2  /
+
+Grant succeeded.
+
+SQL> 
+SQL> PROMPT Common tables creation
+Common tables creation
+SQL> PROMPT ======================
+======================
+SQL> 
+SQL> PROMPT Create table log_headers
+Create table log_headers
+SQL> DROP TABLE log_lines
+  2  /
+DROP TABLE log_lines
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL> DROP TABLE log_headers
+  2  /
+DROP TABLE log_headers
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL> CREATE TABLE log_headers (
+  2          id                      INTEGER NOT NULL,
+  3          description             VARCHAR2(500),
+  4          creation_date           TIMESTAMP,
+  5          CONSTRAINT hdr_pk       PRIMARY KEY (id)
+  6  )
+  7  /
+
+Table created.
+
+SQL> COMMENT ON TABLE log_headers IS 'Log header, 0-id is for miscellaneous logging'
+  2  /
+
+Comment created.
+
+SQL> PROMPT Insert the default log header
+Insert the default log header
+SQL> INSERT INTO log_headers VALUES (0, 'Miscellaneous output', SYSTIMESTAMP)
+  2  /
+
+1 row created.
+
+SQL> GRANT ALL ON log_headers TO PUBLIC
+  2  /
+
+Grant succeeded.
+
+SQL> DROP SEQUENCE log_headers_s
+  2  /
+DROP SEQUENCE log_headers_s
+              *
+ERROR at line 1:
+ORA-02289: sequence does not exist
+
+
+SQL> CREATE SEQUENCE log_headers_s START WITH 1
+  2  /
+
+Sequence created.
+
+SQL> GRANT SELECT ON log_headers_s TO PUBLIC
+  2  /
+
+Grant succeeded.
+
+SQL> PROMPT Create table log_lines
+Create table log_lines
+SQL> CREATE TABLE log_lines (
+  2          id                      INTEGER NOT NULL,
+  3          log_header_id           INTEGER NOT NULL,
+  4          group_text              VARCHAR2(100),
+  5          line_text               VARCHAR2(4000),
+  6          creation_date           TIMESTAMP,
+  7          CONSTRAINT lin_pk       PRIMARY KEY (id, log_header_id),
+  8          CONSTRAINT lin_hdr_fk   FOREIGN KEY (log_header_id) REFERENCES log_headers (id)
+  9  )
+ 10  /
+
+Table created.
+
+SQL> COMMENT ON TABLE log_lines IS 'Log lines, linked to header'
+  2  /
+
+Comment created.
+
+SQL> GRANT ALL ON log_lines TO PUBLIC
+  2  /
+
+Grant succeeded.
+
+SQL> DROP SEQUENCE log_lines_s
+  2  /
+DROP SEQUENCE log_lines_s
+              *
+ERROR at line 1:
+ORA-02289: sequence does not exist
+
+
+SQL> CREATE SEQUENCE log_lines_s START WITH 1
+  2  /
+
+Sequence created.
+
+SQL> GRANT SELECT ON log_lines_s TO PUBLIC
+  2  /
+
+Grant succeeded.
+
+SQL> 
+SQL> PROMPT Packages creation
+Packages creation
+SQL> PROMPT =================
+=================
+SQL> 
+SQL> PROMPT Create package Utils
+Create package Utils
+SQL> @..\pkg\Utils.pks
+
+Package created.
+
+No errors.
+SQL> @..\pkg\Utils.pkb
+
+Package body created.
+
+No errors.
+SQL> GRANT EXECUTE ON Utils TO PUBLIC
+  2  /
+
+Grant succeeded.
+
+SQL> 
+SQL> PROMPT Create package Timer_Set
+Create package Timer_Set
+SQL> @..\pkg\Timer_Set.pks
+
+Package created.
+
+No errors.
+SQL> @..\pkg\Timer_Set.pkb
+
+Package body created.
+
+No errors.
+SQL> GRANT EXECUTE ON Timer_Set TO PUBLIC;
+
+Grant succeeded.
+
+SQL> 
+SQL> SPOOL OFF

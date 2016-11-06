@@ -1,0 +1,1 @@
+sqlplus sys/sys@pdborcl AS SYSDBA
