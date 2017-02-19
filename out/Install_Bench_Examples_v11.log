@@ -1,0 +1,1082 @@
+SQL> 
+SQL> PROMPT Activity simple bursting example
+Activity simple bursting example
+SQL> PROMPT ================================
+================================
+SQL> @..\sql\Setup_Bur
+DROP TABLE activity
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+
+Table created.
+
+
+Index created.
+
+
+Index created.
+
+DROP  SEQUENCE act_s
+               *
+ERROR at line 1:
+ORA-02289: sequence does not exist
+
+
+
+Sequence created.
+
+DROP TABLE activity_tmp
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+
+Table created.
+
+
+Index created.
+
+
+PL/SQL procedure successfully completed.
+
+
+PL/SQL procedure successfully completed.
+
+
+PL/SQL procedure successfully completed.
+
+Group counts via model
+
+ PERSON_ID   # Groups
+---------- ----------
+         3          3
+         4          3
+         5          3
+
+Elapsed: 00:00:00.00
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.08
+Model - All records
+
+ PERSON_ID START_DAT END_DATE  GROUP_STA GROUP_END
+---------- --------- --------- --------- ---------
+         3 01-JUN-11 03-JUN-11 01-JUN-11 07-JUN-11
+           02-JUN-11 05-JUN-11 01-JUN-11 07-JUN-11
+           04-JUN-11 07-JUN-11 01-JUN-11 07-JUN-11
+           08-JUN-11 16-JUN-11 08-JUN-11 16-JUN-11
+           09-JUN-11 14-JUN-11 08-JUN-11 16-JUN-11
+           20-JUN-11 30-JUN-11 20-JUN-11 30-JUN-11
+
+         4 01-JUN-11 03-JUN-11 01-JUN-11 07-JUN-11
+           02-JUN-11 05-JUN-11 01-JUN-11 07-JUN-11
+           04-JUN-11 07-JUN-11 01-JUN-11 07-JUN-11
+           08-JUN-11 16-JUN-11 08-JUN-11 16-JUN-11
+           09-JUN-11 15-JUN-11 08-JUN-11 16-JUN-11
+           20-JUN-11 30-JUN-11 20-JUN-11 30-JUN-11
+
+         5 01-JUN-11 03-JUN-11 01-JUN-11 07-JUN-11
+           02-JUN-11 05-JUN-11 01-JUN-11 07-JUN-11
+           04-JUN-11 07-JUN-11 01-JUN-11 07-JUN-11
+           08-JUN-11 16-JUN-11 08-JUN-11 16-JUN-11
+           09-JUN-11 14-JUN-11 08-JUN-11 16-JUN-11
+           15-JUN-11 30-JUN-11 15-JUN-11 30-JUN-11
+
+
+18 rows selected.
+
+Elapsed: 00:00:00.01
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.05
+Recursive Subquery Factor - Groups
+
+ PERSON_ID GROUP_STA GROUP_END   NUM_ROWS
+---------- --------- --------- ----------
+         3 01-JUN-11 07-JUN-11          3
+           08-JUN-11 16-JUN-11          2
+           20-JUN-11 30-JUN-11          1
+
+         4 01-JUN-11 07-JUN-11          3
+           08-JUN-11 16-JUN-11          2
+           20-JUN-11 30-JUN-11          1
+
+         5 01-JUN-11 07-JUN-11          3
+           08-JUN-11 16-JUN-11          2
+           15-JUN-11 30-JUN-11          1
+
+
+9 rows selected.
+
+Elapsed: 00:00:00.00
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.05
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> PROMPT Item weights generalised bursting example
+Item weights generalised bursting example
+SQL> PROMPT =========================================
+=========================================
+SQL> @..\sql\Setup_Wts
+DROP TABLE items
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+
+Table created.
+
+
+Index created.
+
+DROP  SEQUENCE itm_s
+               *
+ERROR at line 1:
+ORA-02289: sequence does not exist
+
+
+
+Sequence created.
+
+DROP TABLE items_tmp
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+
+Table created.
+
+
+Index created.
+
+
+PL/SQL procedure successfully completed.
+
+
+PL/SQL procedure successfully completed.
+
+
+PL/SQL procedure successfully completed.
+
+Group counts via model for limiting record in next group
+
+CAT                              # Groups
+------------------------------ ----------
+Rural                                   4
+Suburban                                1
+Urban                                   7
+
+Elapsed: 00:00:00.00
+Group counts via model where group is defined as first id in group not last
+
+CAT                              # Groups
+------------------------------ ----------
+Rural                                   6
+Suburban                                1
+Urban                                   8
+
+Elapsed: 00:00:00.00
+Group counts via model
+
+CAT                              # Groups
+------------------------------ ----------
+Rural                                   4
+Suburban                                1
+Urban                                   5
+
+Elapsed: 00:00:00.00
+Model - All records
+
+ ID CAT                                   SEQ     WEIGHT SUB_WEIGHT  FINAL_GRP
+--- ------------------------------ ---------- ---------- ---------- ----------
+  1 Rural                                  10          2          2          4
+  2                                         9          3          5          4
+  3                                         8          1          6          4
+  4                                         7          4         10          4
+  5                                         6         11         11          5
+  6                                         5          2          2          9
+  7                                         4          2          4          9
+  8                                         3          4          8          9
+  9                                         2         30         38          9
+ 10                                         1         12         12         10
+
+ 11 Urban                                  10          1          1         12
+ 12                                         9         12         13         12
+ 13                                         8          2          2         15
+ 14                                         7          5          7         15
+ 15                                         6          7         14         15
+ 16                                         5         15         15         16
+ 17                                         4         25         25         17
+ 18                                         3          2          2         20
+ 19                                         2          1          3         20
+ 20                                         1          8         11         20
+
+ 21 Suburban                               10          2          2         22
+ 22                                         9          1          3         22
+
+
+22 rows selected.
+
+Elapsed: 00:00:00.01
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.05
+Recursive Subquery Factor - Groups
+
+ ID CAT                                   SEQ     WEIGHT SUB_WEIGHT  FINAL_GRP
+--- ------------------------------ ---------- ---------- ---------- ----------
+  1 Rural                                  10          2          2          4
+  2                                         9          3          5          4
+  3                                         8          1          6          4
+  4                                         7          4         10          4
+  5                                         6         11         11          5
+  6                                         5          2          2          9
+  7                                         4          2          4          9
+  8                                         3          4          8          9
+  9                                         2         30         38          9
+ 10                                         1         12         12         10
+
+ 11 Urban                                  10          1          1         12
+ 12                                         9         12         13         12
+ 13                                         8          2          2         15
+ 14                                         7          5          7         15
+ 15                                         6          7         14         15
+ 16                                         5         15         15         16
+ 17                                         4         25         25         17
+ 18                                         3          2          2         20
+ 19                                         2          1          3         20
+ 20                                         1          8         11         20
+
+ 21 Suburban                               10          2          2         22
+ 22                                         9          1          3         22
+
+
+22 rows selected.
+
+Elapsed: 00:00:00.01
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.05
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> PROMPT Strings package, used by both bracket parsing and string splitting examples
+Strings package, used by both bracket parsing and string splitting examples
+SQL> PROMPT ===========================================================================
+===========================================================================
+SQL> @..\pkg\Strings.pks
+Types for bracket parsing example, needed for package
+DROP TYPE bra_lis_type
+*
+ERROR at line 1:
+ORA-04043: object BRA_LIS_TYPE does not exist
+
+
+
+Type created.
+
+
+Type created.
+
+
+Package created.
+
+No errors.
+SQL> @..\pkg\Strings.pkb
+
+Package body created.
+
+No errors.
+SQL> 
+SQL> PROMPT String splitting example
+String splitting example
+SQL> PROMPT ========================
+========================
+SQL> @..\sql\Setup_Str_v11
+DROP TABLE delimited_lists PURGE
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+
+Table created.
+
+
+1 row created.
+
+
+1 row created.
+
+
+1 row created.
+
+
+1 row created.
+
+
+1 row created.
+
+
+Commit complete.
+
+
+Commit complete.
+
+Test Data
+
+     ID LIST_COL
+------- ------------------------------------------------------------
+      1 token_11|token_12
+      2 |token_21|token_22
+      3 token_31|token_32|
+      4 token_41||token_42
+      5 |
+
+xmltable
+
+     ID TOKEN
+------- ----------
+      1 token_11
+        token_12
+      2
+        token_21
+        token_22
+      3 token_31
+        token_32
+
+      4 token_41
+
+        token_42
+      5
+
+12 rows selected.
+
+Elapsed: 00:00:00.00
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.05
+MULTISET
+
+     ID TOKEN
+------- ----------
+      1 token_11
+        token_12
+      2
+        token_21
+        token_22
+      3 token_31
+        token_32
+
+      4 token_41
+
+        token_42
+      5
+
+
+13 rows selected.
+
+Elapsed: 00:00:00.00
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.08
+sys_guid
+
+     ID TOKEN
+------- ----------
+      1 token_11
+        token_12
+      2 token_21
+        token_22
+
+      3 token_31
+        token_32
+
+      4 token_41
+        token_42
+
+      5
+
+
+13 rows selected.
+
+Elapsed: 00:00:00.00
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.08
+Row generator, Instr
+
+     ID TOKEN
+------- ----------
+      1 token_11
+      2
+      3 token_31
+      4 token_41
+      5
+      1 token_12
+      2 token_21
+      3 token_32
+      4
+      5
+      2 token_22
+      3
+      4 token_42
+
+13 rows selected.
+
+Elapsed: 00:00:00.00
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.05
+Row generator, regex
+
+     ID TOKEN
+------- ----------
+      1 token_11
+        token_12
+      2
+        token_21
+        token_22
+      3 token_31
+        token_32
+
+      4 token_41
+
+        token_42
+      5
+
+
+13 rows selected.
+
+Elapsed: 00:00:00.00
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.05
+Pipelined function
+
+     ID TOKEN
+------- ----------
+      1 token_11
+        token_12
+      2
+        token_21
+        token_22
+      3 token_31
+        token_32
+
+      4 token_41
+
+        token_42
+      5
+
+
+13 rows selected.
+
+Elapsed: 00:00:00.00
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.05
+Model
+
+     ID TOKEN
+------- ----------
+      1 token_11
+        token_12
+      2
+        token_21
+        token_22
+      4 token_41
+      5
+
+      4
+        token_42
+      3 token_31
+        token_32
+
+
+13 rows selected.
+
+Elapsed: 00:00:00.00
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.05
+Recursive subquery factor
+
+     ID TOKEN
+------- ----------
+      1 token_11
+        token_12
+      2 token_21
+        token_22
+
+      3 token_31
+        token_32
+
+      4 token_41
+        token_42
+
+      5
+
+
+13 rows selected.
+
+Elapsed: 00:00:00.00
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.05
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> PROMPT Bracket parsing example
+Bracket parsing example
+SQL> PROMPT =======================
+=======================
+SQL> @..\sql\Setup_Bra_v11
+DROP TABLE bracket_strings
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+
+Table created.
+
+
+4 rows created.
+
+
+Commit complete.
+
+
+Commit complete.
+
+Test Data
+
+     ID STR
+------- ----------------------------------------
+      1  ((Hello ( Hi Hi hi ( A B C ( D)) (EF)
+        why Whwy whyhhh )
+        )
+        )
+
+      2 (1+3*(3-1) + 3*(2+1))
+      3 ()()*(())a()(())
+      4 b0(b1(b2(b3(x))(xy)))
+
+Elapsed: 00:00:00.00
+PFB_QRY
+
+     ID      O_POS      C_POS STR
+------- ---------- ---------- ----------------------------------------
+      1          2         60 ((Hello ( Hi Hi hi ( A B C ( D)) (EF)
+                              why Whwy whyhhh )
+                              )
+                              )
+
+                 3         58 (Hello ( Hi Hi hi ( A B C ( D)) (EF)
+                              why Whwy whyhhh )
+                              )
+
+                10         56 ( Hi Hi hi ( A B C ( D)) (EF)
+                              why Whwy whyhhh )
+
+                21         33 ( A B C ( D))
+                29         32 ( D)
+                35         38 (EF)
+      2          1         21 (1+3*(3-1) + 3*(2+1))
+                 6         10 (3-1)
+                16         20 (2+1)
+      3          1          2 ()
+                 3          4 ()
+                 6          9 (())
+                 7          8 ()
+                11         12 ()
+                13         16 (())
+                14         15 ()
+      4          3         21 (b1(b2(b3(x))(xy)))
+                 6         20 (b2(b3(x))(xy))
+                 9         15 (b3(x))
+                12         14 (x)
+                16         19 (xy)
+
+21 rows selected.
+
+Elapsed: 00:00:00.00
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.05
+CBL_QRY
+
+     ID      O_POS      C_POS STR
+------- ---------- ---------- ----------------------------------------
+      1          2         60 ((Hello ( Hi Hi hi ( A B C ( D)) (EF)
+                              why Whwy whyhhh )
+                              )
+                              )
+
+                 3         58 (Hello ( Hi Hi hi ( A B C ( D)) (EF)
+                              why Whwy whyhhh )
+                              )
+
+                10         56 ( Hi Hi hi ( A B C ( D)) (EF)
+                              why Whwy whyhhh )
+
+                21         33 ( A B C ( D))
+                29         32 ( D)
+                35         38 (EF)
+      2          1         21 (1+3*(3-1) + 3*(2+1))
+                 6         10 (3-1)
+                16         20 (2+1)
+      3          1          2 ()
+                 3          4 ()
+                 6          9 (())
+                 7          8 ()
+                11         12 ()
+                13         16 (())
+                14         15 ()
+      4          3         21 (b1(b2(b3(x))(xy)))
+                 6         20 (b2(b3(x))(xy))
+                 9         15 (b3(x))
+                12         14 (x)
+                16         19 (xy)
+
+21 rows selected.
+
+Elapsed: 00:00:00.00
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.08
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> PROMPT Bench_Datasets package body creation
+Bench_Datasets package body creation
+SQL> PROMPT ====================================
+====================================
+SQL> 
+SQL> @..\pkg\Bench_Datasets_v11.pkb
+
+Package body created.
+
+No errors.
+SQL> 
+SQL> @..\sql\L_Log_Default
+
+TEXT
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SQL_ID  bq9bnw3m4grsn, child number 0
+-------------------------------------
+SELECT /*+ MOD_QRY gather_plan_statistics */         id,         cat,
+      seq,         weight,         sub_weight,         final_grp   FROM
+items  MODEL     PARTITION BY (cat)     DIMENSION BY (Row_Number() OVER
+(PARTITION BY cat ORDER BY seq DESC) rn)     MEASURES (id, weight,
+weight sub_weight, id final_grp, seq)     RULES AUTOMATIC ORDER (
+ sub_weight[rn > 1] = CASE WHEN sub_weight[cv()-1] >= :DEPTH THEN
+weight[cv()] ELSE sub_weight[cv()-1] + weight[cv()] END,
+final_grp[ANY] = PRESENTV (final_grp[cv()+1], CASE WHEN
+sub_weight[cv()] >= :DEPTH THEN id[cv()] ELSE final_grp[cv()+1] END,
+id[cv()])     ) ORDER BY 1, 2, 3
+
+Plan hash value: 3044652663
+
+-------------------------------------------------------------------------------------------------------------------
+| Id  | Operation            | Name  | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT     |       |      1 |        |     22 |00:00:00.01 |       7 |       |       |          |
+|   1 |  SORT ORDER BY       |       |      1 |     22 |     22 |00:00:00.01 |       7 |  2048 |  2048 | 2048  (0)|
+|   2 |   SQL MODEL CYCLIC   |       |      1 |     22 |     22 |00:00:00.01 |       7 |   759K|   759K|  718K (0)|
+|   3 |    WINDOW SORT       |       |      1 |     22 |     22 |00:00:00.01 |       7 |  2048 |  2048 | 2048  (0)|
+|   4 |     TABLE ACCESS FULL| ITEMS |      1 |     22 |     22 |00:00:00.01 |       7 |       |       |          |
+-------------------------------------------------------------------------------------------------------------------
+
+Note
+-----
+   - dynamic sampling used for this statement (level=2)
+
+SQL_ID  1u98dutrzfatz, child number 0
+-------------------------------------
+WITH itm AS ( SELECT id, cat, seq, weight, Row_Number() OVER (PARTITION
+BY cat ORDER BY seq DESC) rn   FROM items ), rsq (id, cat, rn, seq,
+weight, sub_weight, grp_num) AS ( SELECT id, cat, rn, seq, weight,
+weight, 1   FROM itm  WHERE rn = 1  UNION ALL SELECT  itm.id,
+itm.cat,         itm.rn,         itm.seq,         itm.weight,
+itm.weight + CASE WHEN rsq.sub_weight >= :DEPTH THEN 0 ELSE
+rsq.sub_weight END,         RSQ.grp_num + CASE WHEN rsq.sub_weight >=
+:DEPTH THEN 1 ELSE 0 END   FROM rsq   JOIN itm     ON itm.rn        =
+rsq.rn + 1    AND itm.cat       = rsq.cat ) SELECT /*+ RSF_QRY
+gather_plan_statistics */         id,         cat             cat,
+   seq,         weight         weight,         sub_weight
+sub_weight,         FIRST_VALUE(id) OVER (PARTITION BY cat, grp_num
+ORDER BY seq) final_grp FROM rsq ORDER BY 1
+
+Plan hash value: 1065044816
+
+------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                   | Name  | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                            |       |      1 |        |     22 |00:00:00.01 |      77 |       |       |          |
+|   1 |  SORT ORDER BY                              |       |      1 |     27 |     22 |00:00:00.01 |      77 |  2048 |  2048 | 2048  (0)|
+|   2 |   WINDOW SORT                               |       |      1 |     27 |     22 |00:00:00.01 |      77 |  2048 |  2048 | 2048  (0)|
+|   3 |    VIEW                                     |       |      1 |     27 |     22 |00:00:00.01 |      77 |       |       |          |
+|   4 |     UNION ALL (RECURSIVE WITH) BREADTH FIRST|       |      1 |        |     22 |00:00:00.01 |      77 |       |       |          |
+|*  5 |      VIEW                                   |       |      1 |     22 |      3 |00:00:00.01 |       7 |       |       |          |
+|*  6 |       WINDOW SORT PUSHED RANK               |       |      1 |     22 |      6 |00:00:00.01 |       7 |  2048 |  2048 | 2048  (0)|
+|   7 |        TABLE ACCESS FULL                    | ITEMS |      1 |     22 |     22 |00:00:00.01 |       7 |       |       |          |
+|*  8 |      HASH JOIN                              |       |     10 |      5 |     19 |00:00:00.01 |      70 |   940K|   940K|  613K (0)|
+|   9 |       RECURSIVE WITH PUMP                   |       |     10 |        |     22 |00:00:00.01 |       0 |       |       |          |
+|  10 |       VIEW                                  |       |     10 |     22 |    220 |00:00:00.01 |      70 |       |       |          |
+|  11 |        WINDOW SORT                          |       |     10 |     22 |    220 |00:00:00.01 |      70 |  2048 |  2048 | 2048  (0)|
+|  12 |         TABLE ACCESS FULL                   | ITEMS |     10 |     22 |    220 |00:00:00.01 |      70 |       |       |          |
+------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   5 - filter("RN"=1)
+   6 - filter(ROW_NUMBER() OVER ( PARTITION BY "CAT" ORDER BY INTERNAL_FUNCTION("SEQ") DESC )<=1)
+   8 - access("ITM"."RN"="RSQ"."RN"+1 AND "ITM"."CAT"="RSQ"."CAT")
+
+Note
+-----
+   - dynamic sampling used for this statement (level=2)
+
+Oracle major version: 11 - making 12c-only query MTH_QRY inactive for 8, 9, 10, 11...
+SQL_ID  2g3crysffmuax, child number 0
+-------------------------------------
+SELECT /*+ XML_QRY gather_plan_statistics */ id, x2 token   FROM
+delimited_lists, XMLTable (     'if (contains($X2,"|")) then
+ora:tokenize($X2,"\|") else $X2'   PASSING list_col AS x2   COLUMNS x2
+VARCHAR2(4000) PATH '.' )
+
+Plan hash value: 2423482301
+
+----------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                          | Name                  | Starts | E-Rows | A-Rows |   A-Time   | Buffers |
+----------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                   |                       |      1 |        |     12 |00:00:00.01 |      23 |
+|   1 |  NESTED LOOPS                      |                       |      1 |  40840 |     12 |00:00:00.01 |      23 |
+|   2 |   TABLE ACCESS FULL                | DELIMITED_LISTS       |      1 |      5 |      5 |00:00:00.01 |       8 |
+|   3 |   COLLECTION ITERATOR PICKLER FETCH| XQSEQUENCEFROMXMLTYPE |      5 |   8168 |     12 |00:00:00.01 |      15 |
+----------------------------------------------------------------------------------------------------------------------
+
+Note
+-----
+   - dynamic sampling used for this statement (level=2)
+
+SQL_ID  bbnbpdwp2km86, child number 0
+-------------------------------------
+WITH lists_appended AS (         SELECT id,  '|' || list_col || '|'
+list_col FROM delimited_lists ) SELECT /*+ MUL_QRY
+gather_plan_statistics */        d.id,        Substr (d.list_col ||
+'|', Instr (d.list_col, '|', 1, t.COLUMN_VALUE) + 1,
+      Instr (d.list_col, '|', 1, t.COLUMN_VALUE + 1) -
+        Instr (d.list_col, '|', 1, t.COLUMN_VALUE) - 1) token   FROM
+lists_appended d,        TABLE (CAST (MULTISET (SELECT LEVEL FROM DUAL
+CONNECT BY LEVEL <= Nvl (Length(d.list_col), 0) - Nvl (Length (Replace
+(d.list_col, '|')), 0)-1) AS SYS.ODCINumberlist)) t
+
+Plan hash value: 462687286
+
+-----------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |
+-----------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |     13 |00:00:00.01 |       8 |
+|   1 |  NESTED LOOPS                       |                 |      1 |  40840 |     13 |00:00:00.01 |       8 |
+|   2 |   TABLE ACCESS FULL                 | DELIMITED_LISTS |      1 |      5 |      5 |00:00:00.01 |       8 |
+|   3 |   COLLECTION ITERATOR SUBQUERY FETCH|                 |      5 |   8168 |     13 |00:00:00.01 |       0 |
+|   4 |    CONNECT BY WITHOUT FILTERING     |                 |      5 |        |     13 |00:00:00.01 |       0 |
+|   5 |     FAST DUAL                       |                 |      5 |      1 |      5 |00:00:00.01 |       0 |
+-----------------------------------------------------------------------------------------------------------------
+
+Note
+-----
+   - dynamic sampling used for this statement (level=2)
+
+SQL_ID  7k7ju1v7920mp, child number 0
+-------------------------------------
+WITH guid_cby AS (   SELECT id, level rn, list_col,Instr ('|' ||
+d.list_col, '|', 1, LEVEL) pos     FROM delimited_lists d   CONNECT BY
+prior id = id and prior sys_guid() is not null and     LEVEL <= Length
+(d.list_col) - Nvl (Length (Replace (d.list_col, '|')), 0) + 1 ) SELECT
+/*+ GUI_QRY gather_plan_statistics */     id,     Substr (list_col,
+pos, Lead (pos, 1, 4000) OVER (partition by id ORDER BY pos) - pos - 1)
+token   FROM guid_cby  ORDER BY 1, 2
+
+Plan hash value: 4020885438
+
+----------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                       | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+----------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                |                 |      1 |        |     13 |00:00:00.01 |       7 |       |       |          |
+|   1 |  SORT ORDER BY                  |                 |      1 |      5 |     13 |00:00:00.01 |       7 |  9216 |  9216 | 8192  (0)|
+|   2 |   WINDOW SORT                   |                 |      1 |      5 |     13 |00:00:00.01 |       7 |  2048 |  2048 | 2048  (0)|
+|   3 |    VIEW                         |                 |      1 |      5 |     13 |00:00:00.01 |       7 |       |       |          |
+|*  4 |     CONNECT BY WITHOUT FILTERING|                 |      1 |        |     13 |00:00:00.01 |       7 |       |       |          |
+|   5 |      TABLE ACCESS FULL          | DELIMITED_LISTS |      1 |      5 |      5 |00:00:00.01 |       7 |       |       |          |
+----------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   4 - access("ID"=PRIOR NULL)
+
+Note
+-----
+   - dynamic sampling used for this statement (level=2)
+
+SQL_ID  7x61swg3fck1m, child number 0
+-------------------------------------
+WITH row_gen AS (         SELECT LEVEL rn FROM DUAL CONNECT BY LEVEL <=
+            (SELECT Max (Nvl (Length(list_col), 0) - Nvl (Length
+(Replace (list_col,'|')), 0) + 1)                FROM delimited_lists)
+), lists_appended AS (         SELECT id,  '|' || list_col || '|'
+list_col FROM delimited_lists ) SELECT /*+ RGN_QRY
+gather_plan_statistics */        d.id, Substr (d.list_col , Instr
+(d.list_col, '|', 1, r.rn) + 1,                         Instr
+(d.list_col, '|', 1, r.rn + 1) -                         Instr
+(d.list_col, '|', 1, r.rn) - 1) token   FROM lists_appended d   JOIN
+row_gen r     ON r.rn <= Nvl (Length(d.list_col), 0) - Nvl (Length
+(Replace (d.list_col,'|')), 0) - 1
+
+Plan hash value: 747926158
+
+------------------------------------------------------------------------------------------------------------
+| Id  | Operation                      | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |
+------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT               |                 |      1 |        |     13 |00:00:00.01 |      29 |
+|   1 |  NESTED LOOPS                  |                 |      1 |      1 |     13 |00:00:00.01 |      29 |
+|   2 |   VIEW                         |                 |      1 |      1 |      3 |00:00:00.01 |       7 |
+|   3 |    CONNECT BY WITHOUT FILTERING|                 |      1 |        |      3 |00:00:00.01 |       7 |
+|   4 |     FAST DUAL                  |                 |      1 |      1 |      1 |00:00:00.01 |       0 |
+|   5 |     SORT AGGREGATE             |                 |      1 |      1 |      1 |00:00:00.01 |       7 |
+|   6 |      TABLE ACCESS FULL         | DELIMITED_LISTS |      1 |      5 |      5 |00:00:00.01 |       7 |
+|*  7 |   TABLE ACCESS FULL            | DELIMITED_LISTS |      3 |      1 |     13 |00:00:00.01 |      22 |
+------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   7 - filter("R"."RN"<=NVL(LENGTH('|'||"LIST_COL"||'|'),0)-NVL(LENGTH(REPLACE('|'||"LIST_COL"||'|',
+              '|')),0)-1)
+
+Note
+-----
+   - dynamic sampling used for this statement (level=2)
+
+SQL_ID  b0q559gstckdh, child number 0
+-------------------------------------
+WITH row_gen AS (         SELECT LEVEL rn FROM DUAL CONNECT BY LEVEL <=
+            (SELECT Max (Nvl (Length(list_col), 0) - Nvl (Length
+(Replace (list_col,'|')), 0) + 1)                FROM delimited_lists)
+) SELECT /*+ RGX_QRY gather_plan_statistics leading (d) */        d.id,
+RTrim (Regexp_Substr (d.list_col || '|', '(.*?)\|', 1, r.rn), '|')
+token   FROM delimited_lists d   JOIN row_gen r     ON r.rn <= Nvl
+(Length(d.list_col), 0) - Nvl (Length (Replace (d.list_col,'|')), 0) +
+1 ORDER BY d.id, r.rn
+
+Plan hash value: 3888919281
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                        | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-----------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                 |                 |      1 |        |     13 |00:00:00.01 |      14 |       |       |          |
+|   1 |  SORT ORDER BY                   |                 |      1 |      1 |     13 |00:00:00.01 |      14 |  2048 |  2048 | 2048  (0)|
+|   2 |   MERGE JOIN                     |                 |      1 |      1 |     13 |00:00:00.01 |      14 |       |       |          |
+|   3 |    SORT JOIN                     |                 |      1 |      5 |      5 |00:00:00.01 |       7 |  2048 |  2048 | 2048  (0)|
+|   4 |     TABLE ACCESS FULL            | DELIMITED_LISTS |      1 |      5 |      5 |00:00:00.01 |       7 |       |       |          |
+|*  5 |    SORT JOIN                     |                 |      5 |      1 |     13 |00:00:00.01 |       7 |  2048 |  2048 | 2048  (0)|
+|   6 |     VIEW                         |                 |      1 |      1 |      3 |00:00:00.01 |       7 |       |       |          |
+|   7 |      CONNECT BY WITHOUT FILTERING|                 |      1 |        |      3 |00:00:00.01 |       7 |       |       |          |
+|   8 |       FAST DUAL                  |                 |      1 |      1 |      1 |00:00:00.01 |       0 |       |       |          |
+|   9 |       SORT AGGREGATE             |                 |      1 |      1 |      1 |00:00:00.01 |       7 |       |       |          |
+|  10 |        TABLE ACCESS FULL         | DELIMITED_LISTS |      1 |      5 |      5 |00:00:00.01 |       7 |       |       |          |
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   5 - access(INTERNAL_FUNCTION("R"."RN")<=NVL(LENGTH("D"."LIST_COL"),0)-NVL(LENGTH(REPLACE("D"."LIST_COL",'|')),0)+1)
+       filter(INTERNAL_FUNCTION("R"."RN")<=NVL(LENGTH("D"."LIST_COL"),0)-NVL(LENGTH(REPLACE("D"."LIST_COL",'|')),0)+1)
+
+Note
+-----
+   - dynamic sampling used for this statement (level=2)
+
+SQL_ID  1d3t0fm0rxy2x, child number 0
+-------------------------------------
+SELECT /*+ PLF_QRY gather_plan_statistics */        d.id,
+s.COLUMN_VALUE token   FROM delimited_lists d  CROSS JOIN TABLE
+(Strings.Split(d.list_col, '|')) s
+
+Plan hash value: 2608399241
+
+----------------------------------------------------------------------------------------------------------------
+| Id  | Operation                          | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |
+----------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                   |                 |      1 |        |     13 |00:00:00.01 |      59 |
+|   1 |  NESTED LOOPS                      |                 |      1 |  40840 |     13 |00:00:00.01 |      59 |
+|   2 |   TABLE ACCESS FULL                | DELIMITED_LISTS |      1 |      5 |      5 |00:00:00.01 |       8 |
+|   3 |   COLLECTION ITERATOR PICKLER FETCH| SPLIT           |      5 |   8168 |     13 |00:00:00.01 |      51 |
+----------------------------------------------------------------------------------------------------------------
+
+Note
+-----
+   - dynamic sampling used for this statement (level=2)
+
+SQL_ID  6thu5pwut9n74, child number 0
+-------------------------------------
+SELECT /*+ MOD_QRY gather_plan_statistics */        id,        token
+FROM delimited_lists  MODEL     PARTITION BY (id)     DIMENSION BY (1
+rn)     MEASURES (CAST('' AS VARCHAR2(4000)) AS token, '|' || list_col
+|| '|' list_col, 2 pos, 0 nxtpos, Length(list_col) + 2 len)     RULES
+ITERATE (2000) UNTIL pos[1] > len[1] (        nxtpos[1] = Instr
+(list_col[1], '|', pos[1], 1),        token[iteration_number+1] =
+Substr (list_col[1], pos[1], nxtpos[1] - pos[1]),        pos[1] =
+nxtpos[1] + 1     )
+
+Plan hash value: 1656081500
+
+-------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation              | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT       |                 |      1 |        |     13 |00:00:00.01 |       7 |       |       |          |
+|   1 |  SQL MODEL ORDERED FAST|                 |      1 |      5 |     13 |00:00:00.01 |       7 |   677K|   677K|  820K (0)|
+|   2 |   TABLE ACCESS FULL    | DELIMITED_LISTS |      1 |      5 |      5 |00:00:00.01 |       7 |       |       |          |
+-------------------------------------------------------------------------------------------------------------------------------
+
+Note
+-----
+   - dynamic sampling used for this statement (level=2)
+
+SQL_ID  6k7f6cfhd5d4w, child number 0
+-------------------------------------
+WITH rsf (id, token, nxtpos, nxtpos2, list_col, len, iter) AS ( SELECT
+id,        Substr (list_col, 1, Instr (list_col || '|', '|', 1, 1) -
+1),        Instr (list_col || '|', '|', 1, 1) + 1,        Instr
+(list_col || '|', '|', 1, 2),        list_col || '|',        Length
+(list_col) + 1,        1   FROM delimited_lists UNION ALL SELECT id,
+    Substr (list_col, nxtpos, nxtpos2 - nxtpos),        nxtpos2 + 1,
+--Instr (list_col, '|', 1, iter + 1) + 1,        Instr (list_col, '|',
+nxtpos2 + 1, 1),        list_col,        len,        iter + 1   FROM
+rsf r  WHERE nxtpos <= len ) SELECT /*+ RSF_QRY gather_plan_statistics
+*/        id,        token   FROM rsf  ORDER BY 1, 2
+
+Plan hash value: 849745703
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                  | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+---------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                           |                 |      1 |        |     13 |00:00:00.01 |       7 |       |       |          |
+|   1 |  SORT ORDER BY                             |                 |      1 |     10 |     13 |00:00:00.01 |       7 |  9216 |  9216 | 8192  (0)|
+|   2 |   VIEW                                     |                 |      1 |     10 |     13 |00:00:00.01 |       7 |       |       |          |
+|   3 |    UNION ALL (RECURSIVE WITH) BREADTH FIRST|                 |      1 |        |     13 |00:00:00.01 |       7 |       |       |          |
+|   4 |     TABLE ACCESS FULL                      | DELIMITED_LISTS |      1 |      5 |      5 |00:00:00.01 |       7 |       |       |          |
+|   5 |     RECURSIVE WITH PUMP                    |                 |      3 |        |      8 |00:00:00.01 |       0 |       |       |          |
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+Note
+-----
+   - dynamic sampling used for this statement (level=2)
+
+Oracle major version: 11 - making 12c-only query LAT_QRY inactive for 8, 9, 10, 11...
+SQL_ID  02r0ras63vafq, child number 0
+-------------------------------------
+SELECT  /*+ PFB_QRY gather_plan_statistics */         b.id        id,
+      t.o_pos     o_pos,         t.c_pos     c_pos,         t.str
+str   FROM bracket_strings b  CROSS JOIN TABLE (Strings.Parse_Brackets
+(Nvl (b.str, ' '))) t  ORDER BY b.id, t.o_pos
+
+Plan hash value: 3734693571
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |     21 |00:00:00.01 |       7 |       |       |          |
+|   1 |  SORT ORDER BY                      |                 |      1 |  32672 |     21 |00:00:00.01 |       7 |  2048 |  2048 | 2048  (0)|
+|   2 |   NESTED LOOPS                      |                 |      1 |  32672 |     21 |00:00:00.01 |       7 |       |       |          |
+|   3 |    TABLE ACCESS FULL                | BRACKET_STRINGS |      1 |      4 |      4 |00:00:00.01 |       7 |       |       |          |
+|   4 |    COLLECTION ITERATOR PICKLER FETCH| PARSE_BRACKETS  |      4 |   8168 |     21 |00:00:00.01 |       0 |       |       |          |
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+Note
+-----
+   - dynamic sampling used for this statement (level=2)
+
+SQL_ID  awrr3bbpr0mgn, child number 0
+-------------------------------------
+WITH    d ( id, str, pos ) as (       select id, str, regexp_instr(str,
+'\(|\)', 1, level)       from   bracket_strings       connect by level
+<= length(str) - length(translate(str, 'x()', 'x'))              and
+prior id = id              and prior sys_guid() is not null     ),
+p ( id, str, pos, flag, l_ct, ct ) as (       select id, str, pos, case
+substr(str, pos, 1) when '(' then 1 else -1 end,              sum(case
+substr(str, pos, 1) when '(' then 1         end) over (partition by id
+order by pos),              sum(case substr(str, pos, 1) when '(' then
+1 else -1 end) over (partition by id order by pos)       from   d
+),     f ( id, str, pos, flag, l_ct, ct, o_ct ) as (       select id,
+str, pos, flag, l_ct, ct + case flag when 1 then 0 else 1 end as ct,
+          row_number() over (partition by id, flag, ct order by pos)
+   from   p     ) select   /*+ CBL_QRY gather_plan_statistics */ id,
+     min(case when flag =  1 then pos end) as o_pos,         min(case
+when f
+
+Plan hash value: 2736674058
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |     21 |00:00:00.01 |       7 |       |       |          |
+|   1 |  SORT ORDER BY                      |                 |      1 |      4 |     21 |00:00:00.01 |       7 |  2048 |  2048 | 2048  (0)|
+|   2 |   HASH GROUP BY                     |                 |      1 |      4 |     21 |00:00:00.01 |       7 |   750K|   750K| 1331K (0)|
+|   3 |    VIEW                             |                 |      1 |      4 |     42 |00:00:00.01 |       7 |       |       |          |
+|   4 |     WINDOW SORT                     |                 |      1 |      4 |     42 |00:00:00.01 |       7 |  4096 |  4096 | 4096  (0)|
+|   5 |      VIEW                           |                 |      1 |      4 |     42 |00:00:00.01 |       7 |       |       |          |
+|   6 |       WINDOW SORT                   |                 |      1 |      4 |     42 |00:00:00.01 |       7 |  4096 |  4096 | 4096  (0)|
+|   7 |        VIEW                         |                 |      1 |      4 |     42 |00:00:00.01 |       7 |       |       |          |
+|*  8 |         CONNECT BY WITHOUT FILTERING|                 |      1 |        |     42 |00:00:00.01 |       7 |       |       |          |
+|   9 |          TABLE ACCESS FULL          | BRACKET_STRINGS |      1 |      4 |      4 |00:00:00.01 |       7 |       |       |          |
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   8 - access("ID"=PRIOR NULL)
+
+Note
+-----
+   - dynamic sampling used for this statement (level=2)
+
+Oracle major version: 11 - making 12c-only query WFB_QRY inactive for 8, 9, 10, 11...
+Oracle major version: 11 - making 12c-only query MRB_QRY inactive for 8, 9, 10, 11...
+
+384 rows selected.
+
+SQL> 
+SQL> SPOOL OFF

@@ -63,7 +63,7 @@ new   1: GRANT CREATE ANY CONTEXT TO bench
 
 Grant succeeded.
 
-DIRECTORY output_dir - C:\input *** Change this if necessary, write access required ***
+DIRECTORY output_dir - C:\output_v11 *** Change this if necessary, write access required ***
 
 Directory created.
 

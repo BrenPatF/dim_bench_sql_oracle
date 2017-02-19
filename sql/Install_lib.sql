@@ -16,7 +16,7 @@ Objects:
 
                 Types           Level 2         Level 3         Comment
                 =====           =======         =======         =======
-                L1_num_arr
+                L1_num_arr      L2_num_arr
                 L1_chr_arr      L2_chr_arr      L3_chr_arr      L1_chr_arr is 32,767 
                 L1_chr_db_arr                                   4000 for db storage 
 
@@ -29,6 +29,8 @@ Modification History
 Who                  When        Which What
 -------------------- ----------- ----- -------------------------------------------------------------
 Brendan Furey        05-Nov-2016 1.0   Created
+Brendan Furey        30-Nov-2016 1.1   L2_num_arr added
+Brendan Furey        01-Dec-2016 1.2   log_headers CASCADE CONSTRAINTS
 
 ***************************************************************************************************/
 SET SERVEROUTPUT ON
@@ -38,7 +40,7 @@ SET LINES 500
 
 SPOOL ..\out\Install_lib.log
 
-REM Run this script from schema for library objects (bench IN this case) to create the common objects 
+REM Run this script from schema for library objects (bench in this case) to create the common objects 
 
 PROMPT Common types creation
 PROMPT =====================
@@ -67,10 +69,18 @@ GRANT EXECUTE ON L2_chr_arr TO PUBLIC
 /
 GRANT EXECUTE ON L3_chr_arr TO PUBLIC
 /
+PROMPT Drop type L2_num_arr
+DROP TYPE L2_num_arr
+/
 PROMPT Create type L1_num_arr
 CREATE OR REPLACE TYPE L1_num_arr IS VARRAY(32767) OF NUMBER
 /
 GRANT EXECUTE ON L1_num_arr TO PUBLIC
+/
+PROMPT Create type L2_num_arr
+CREATE OR REPLACE TYPE L2_num_arr IS VARRAY(32767) OF L1_num_arr
+/
+GRANT EXECUTE ON L2_num_arr TO PUBLIC
 /
 
 PROMPT Common tables creation
@@ -79,7 +89,7 @@ PROMPT ======================
 PROMPT Create table log_headers
 DROP TABLE log_lines
 /
-DROP TABLE log_headers
+DROP TABLE log_headers CASCADE CONSTRAINTS
 /
 CREATE TABLE log_headers (
         id                      INTEGER NOT NULL,
@@ -138,3 +148,5 @@ PROMPT Create package Timer_Set
 GRANT EXECUTE ON Timer_Set TO PUBLIC;
 
 SPOOL OFF
+
+

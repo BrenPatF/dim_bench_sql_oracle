@@ -15,7 +15,7 @@ Modification History
 Who                  When        Which What
 -------------------- ----------- ----- -------------------------------------------------------------
 Brendan Furey        05-Nov-2016 1.0   Created
-Brendan Furey        18-Feb-2016 1.1   Grants switched from public to bench
+Brendan Furey        18-Feb-2016 1.1   Grants switched from public to bench; added v_$session
 
 ***************************************************************************************************/
 SET SERVEROUTPUT ON
@@ -23,17 +23,15 @@ SET TRIMSPOOL ON
 SET PAGES 1000
 SET LINES 500
 
-SPOOL ..\out\Install_SYS.log
+SPOOL ..\out\Install_SYS_v11.log
 REM
 REM Run this script from sys schema to create new schema for Brendan's benchmarking demo
 REM
 
 @..\sql\C_User bench
 
-PROMPT DIRECTORY output_dir - C:\input *** Change this if necessary, write access required ***
-CREATE OR REPLACE DIRECTORY output_dir AS 'C:\output'
-/
-GRANT READ ON DIRECTORY input_dir TO bench
+PROMPT DIRECTORY output_dir - C:\output_v11 *** Change this if necessary, write access required ***
+CREATE OR REPLACE DIRECTORY output_dir AS 'C:\output_v11'
 /
 GRANT WRITE ON DIRECTORY output_dir TO bench
 /
@@ -55,6 +53,9 @@ GRANT SELECT ON v_$database TO bench
 /
 GRANT SELECT ON v_$version TO bench
 /
+GRANT SELECT ON v_$session TO bench
+/
 GRANT EXECUTE ON dbms_xplan_type_table TO bench
 /
 SPOOL OFF
+

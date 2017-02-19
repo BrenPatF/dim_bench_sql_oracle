@@ -8,6 +8,7 @@ Description: Bench_SQL SQL benchmarking framework - test queries across a 2-d da
                 Create_Run:     procedure to set up the data points and query group for a run
                 Execute_Run:    procedures to do the benchmarking for the last run created, or for
                                 an id passed in
+                Execute_Run_Batch:  procedures to do benchmarking for a batch of data sets 
                 Plan_Lines:     function to return the SQL execution plan lines for a marker passed
 
 Further details: A Framework for Dimensional Benchmarking of SQL Performance 
@@ -17,6 +18,7 @@ Modification History
 Who                  When        Which What
 -------------------- ----------- ----- -------------------------------------------------------------
 Brendan Furey        05-Nov-2016 1.0   Created.
+Brendan Furey        03-Dec-2016 1.1   Execute_Run_Batch added; Add_Query: Added p_v12_active_only
 
 ***************************************************************************************************/
 
@@ -46,13 +48,18 @@ Add_Query: Entry point procedure merges a query, with its group into the queries
            tables
 
 ***************************************************************************************************/
-PROCEDURE Add_Query (p_query_name            VARCHAR2,              -- query name
-                     p_query_group           VARCHAR2,              -- query group
-                     p_description           VARCHAR2 DEFAULT NULL, -- description of query
-                     p_group_description     VARCHAR2 DEFAULT NULL, -- description of group
-                     p_active_yn             VARCHAR2 DEFAULT 'Y',  -- active, i.e. includein run?
-                     p_text                  CLOB,                  -- query text
-                     p_pre_query_sql         CLOB DEFAULT NULL) IS  -- SQL to run in advance of query
+PROCEDURE Add_Query (p_query_name            VARCHAR2,                 -- query name
+                     p_query_group           VARCHAR2,                 -- query group
+                     p_description           VARCHAR2 DEFAULT NULL,    -- description of query
+                     p_group_description     VARCHAR2 DEFAULT NULL,    -- description of group
+                     p_active_yn             VARCHAR2 DEFAULT 'Y',     -- active, i.e. includein run?
+                     p_text                  CLOB,                     -- query text
+                     p_pre_query_sql         CLOB DEFAULT NULL,        -- SQL to run in advance of query
+                     p_v12_active_only       BOOLEAN DEFAULT FALSE) IS -- De-activate if Oracle version < 12
+
+  l_active_yn   VARCHAR2(1) := p_active_yn;
+  l_ora_vsn     VARCHAR2(10);
+
 BEGIN
 
   IF p_group_description IS NOT NULL THEN
@@ -73,8 +80,22 @@ BEGIN
 
   END IF;
 
+  IF p_v12_active_only THEN
+
+    SELECT Substr (version, 1, Instr (version, '.', 1, 1) - 1)
+      INTO l_ora_vsn
+      FROM product_component_version
+     WHERE product LIKE 'Oracle Database%';
+    Utils.Write_Log ('Oracle major version: ' || l_ora_vsn || ' - making 12c-only query ' || p_query_name || ' inactive for 8, 9, 10, 11...');
+
+    IF l_ora_vsn IN ('8', '9', '10', '11') THEN
+      l_active_yn := 'N';
+    END IF;
+
+  END IF;
+
   MERGE INTO queries qry
-  USING (SELECT p_query_group query_group, p_query_name query_name, p_description description, p_active_yn active_yn, p_text text, p_pre_query_sql pre_query_sql FROM DUAL) par
+  USING (SELECT p_query_group query_group, p_query_name query_name, p_description description, l_active_yn active_yn, p_text text, p_pre_query_sql pre_query_sql FROM DUAL) par
      ON (qry.name = par.query_name AND qry.query_group = par.query_group)
    WHEN MATCHED THEN
     UPDATE SET description      = par.description,
@@ -122,7 +143,7 @@ BEGIN
    )
    WITH unv AS (
           SELECT 'STAT'         stat_type,
-	         snm.statistic#,
+                 snm.statistic#,
                  NULL           level#,
                  snm.name       stat_name,
                  stt.value      stat_val,
@@ -134,7 +155,7 @@ BEGIN
           SELECT 'LATCH',
                  latch#,
                  level#,
-	             name,
+                     name,
                  gets,
                  wait_time
             FROM v$latch
@@ -142,7 +163,7 @@ BEGIN
           SELECT 'TIME',
                  stat_id,
                  NULL,
-	         stat_name,
+                 stat_name,
                  value,
                  NULL
             FROM v$sess_time_model
@@ -196,7 +217,7 @@ BEGIN
 
    MERGE INTO bench_run_v$stats stt
    USING (SELECT 'STAT'         stat_type,
-	             snm.statistic#,
+                     snm.statistic#,
                  NULL           level#,
                  snm.name       stat_name,
                  stt.value      stat_val,
@@ -208,7 +229,7 @@ BEGIN
           SELECT 'LATCH',
                  latch#,
                  level#,
-	         name,
+                 name,
                  gets,
                  wait_time
             FROM v$latch
@@ -216,7 +237,7 @@ BEGIN
           SELECT 'TIME',
                  stat_id,
                  NULL,
-	         stat_name,
+                 stat_name,
                  value,
                  NULL
             FROM v$sess_time_model
@@ -1481,6 +1502,40 @@ EXCEPTION
 
 END Execute_Run;
 
+/***************************************************************************************************
+
+Execute_Run_Batch: Execute 1 or more runs in a loop, calling Create_Run and Execute_Run
+
+***************************************************************************************************/
+PROCEDURE Execute_Run_Batch (p_run_desc              VARCHAR2,                -- run description
+                             p_points_wide_2lis      L2_num_arr,              -- list of wide data points, for each run
+                             p_points_deep_2lis      L2_num_arr,              -- list of deep data points, for each run
+                             p_query_group           VARCHAR2,                -- query group
+                             p_redo_data_yn          VARCHAR2 DEFAULT 'Y') IS -- recreate data set?
+BEGIN
+
+  IF p_points_wide_2lis.COUNT != p_points_deep_2lis.COUNT THEN
+
+    RAISE_APPLICATION_ERROR (-200001, 'Error wide, deep counts differ (' || p_points_wide_2lis.COUNT || ', ' || p_points_deep_2lis.COUNT || ')');
+
+  END IF;
+
+  Utils.Write_Log ('Executing batch of ' || p_points_wide_2lis.COUNT || ' runs...');
+  FOR i IN 1..p_points_wide_2lis.COUNT LOOP
+
+    Create_Run (p_run_desc              => p_run_desc || ' - ' || i,
+                p_points_wide_list      => p_points_wide_2lis(i),
+                p_points_deep_list      => p_points_deep_2lis(i),
+                p_query_group           => p_query_group,
+                p_redo_data_yn          => p_redo_data_yn);
+    Execute_Run;
+
+  END LOOP;
+
+END Execute_Run_Batch;
+
 END Bench_Queries;
 /
 SHO ERR
+
+

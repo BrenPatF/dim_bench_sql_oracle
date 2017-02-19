@@ -42,17 +42,11 @@ General bench Objects:
              Bench_Queries                   Generic dimensional benchmarking
              Bench_Datasets                  Generic spec for specific problem data setup body
 
-Bursting demo scripts:
-
-             ..\sql\Act_Bur.sql              Sets up the bursting data structures and populates 
-                                             table with simple functional test data, queries it
-             ..\sql\I_Queries.sql            Insert queries for bursting problem
-             ..\pkg\Bench_Datasets.pkb       Specific problem data setup body (with generic spec)
-
 Modification History
 Who                  When        Which What
 -------------------- ----------- ----- -------------------------------------------------------------
 Brendan Furey        05-Nov-2016 1.0   Created
+Brendan Furey        01-Dec-2016 1.1   Move out the demo example installation
 
 ***************************************************************************************************/
 SET SERVEROUTPUT ON
@@ -590,11 +584,6 @@ PROMPT Create general packages
 @..\pkg\Bench_Queries.pks
 @..\pkg\Bench_Queries.pkb
 
-PROMPT Next scripts are specific to the query group being tested
-@..\sql\Act_Bur
-@..\sql\I_Queries
-@..\pkg\Bench_Datasets.pkb
-
-@..\sql\L_Log_Default
-
 SPOOL OFF
+
+

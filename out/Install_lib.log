@@ -1,5 +1,5 @@
 SQL> 
-SQL> REM Run this script from schema for library objects (bench IN this case) to create the common objects
+SQL> REM Run this script from schema for library objects (bench in this case) to create the common objects
 SQL> 
 SQL> PROMPT Common types creation
 Common types creation
@@ -69,6 +69,16 @@ SQL> GRANT EXECUTE ON L3_chr_arr TO PUBLIC
 
 Grant succeeded.
 
+SQL> PROMPT Drop type L2_num_arr
+Drop type L2_num_arr
+SQL> DROP TYPE L2_num_arr
+  2  /
+DROP TYPE L2_num_arr
+*
+ERROR at line 1:
+ORA-04043: object L2_NUM_ARR does not exist
+
+
 SQL> PROMPT Create type L1_num_arr
 Create type L1_num_arr
 SQL> CREATE OR REPLACE TYPE L1_num_arr IS VARRAY(32767) OF NUMBER
@@ -77,6 +87,18 @@ SQL> CREATE OR REPLACE TYPE L1_num_arr IS VARRAY(32767) OF NUMBER
 Type created.
 
 SQL> GRANT EXECUTE ON L1_num_arr TO PUBLIC
+  2  /
+
+Grant succeeded.
+
+SQL> PROMPT Create type L2_num_arr
+Create type L2_num_arr
+SQL> CREATE OR REPLACE TYPE L2_num_arr IS VARRAY(32767) OF L1_num_arr
+  2  /
+
+Type created.
+
+SQL> GRANT EXECUTE ON L2_num_arr TO PUBLIC
   2  /
 
 Grant succeeded.
@@ -97,9 +119,9 @@ ERROR at line 1:
 ORA-00942: table or view does not exist
 
 
-SQL> DROP TABLE log_headers
+SQL> DROP TABLE log_headers CASCADE CONSTRAINTS
   2  /
-DROP TABLE log_headers
+DROP TABLE log_headers CASCADE CONSTRAINTS
            *
 ERROR at line 1:
 ORA-00942: table or view does not exist

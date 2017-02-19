@@ -1,0 +1,2312 @@
+SQL> 
+SQL> COLUMN "Database"       FORMAT A20
+SQL> COLUMN "Time"           FORMAT A20
+SQL> COLUMN "Version"        FORMAT A30
+SQL> COLUMN "Session"        FORMAT 9999990
+SQL> COLUMN "OS User"        FORMAT A10
+SQL> COLUMN "Machine"        FORMAT A20
+SQL> SET LINES 180
+SQL> SET PAGES 1000
+SQL> 
+SQL> SELECT 'Start: ' || dbs.name "Database", To_Char (SYSDATE,'DD-MON-YYYY HH24:MI:SS') "Time",
+  2          Replace (Substr(ver.banner, 1, Instr(ver.banner, '64')-4), 'Enterprise Edition Release ', '') "Version"
+  3    FROM v$database dbs,  v$version ver
+  4   WHERE ver.banner LIKE 'Oracle%';
+
+Database             Time                 Version
+-------------------- -------------------- ------------------------------
+Start: XE            19-FEB-2017 15:25:54 Oracle Database 11g Express Ed
+                                          ition Release 11.2.0.2.0
+
+
+SQL> 
+SQL> DEFINE RUNDESC='Bra-One'
+SQL> 
+SQL> SET SERVEROUTPUT ON
+SQL> SET TIMING ON
+SQL> 
+SQL> ALTER SESSION SET NLS_DATE_FORMAT = 'DD-MON-YYYY';
+
+Session altered.
+
+Elapsed: 00:00:00.00
+SQL> BEGIN
+  2  
+  3    Utils.Clear_Log;
+  4    Bench_Queries.Execute_Run_Batch (
+  5                          p_run_desc              => '&RUNDESC',
+  6                          p_points_wide_2lis      => L2_num_arr (L1_num_arr (100, 200, 300, 400),
+  7                                                                 L1_num_arr (400)),
+  8                          p_points_deep_2lis      => L2_num_arr (L1_num_arr (100),
+  9                                                                 L1_num_arr (0, 100, 200, 300, 400)),
+ 10                          p_query_group           => 'BRACKET',
+ 11                          p_redo_data_yn          => 'Y');
+ 12  
+ 13  END;
+ 14  /
+old   5:                         p_run_desc              => '&RUNDESC',
+new   5:                         p_run_desc              => 'Bra-One',
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:04:35.73
+SQL> PROMPT Default log
+Default log
+SQL> @../sql/L_Log_Default
+
+TEXT
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Executing batch of 2 runs...
+Bench run 1 created
+
+Elapsed: 00:00:00.00
+SQL> PROMPT Execute_Run logs
+Execute_Run logs
+SQL> @../sql/L_Log_Gp 0
+
+TEXT
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Bench run id = 2
+
+Wide Points
+===========
+400
+
+Deep Points
+===========
+0, 100, 200, 300, 400
+Header="id","o_pos","c_pos","str","Random"
+mid=
+        id        id,
+        min(case when flag =  1 then pos end) o_pos,
+        min(case when flag = -1 then pos end) c_pos,
+        Substr (str, min(case when flag =  1 then pos end), min(case when flag = -1 then pos end) - min(case when flag =  1 then pos end) + 1)       str
+
+new='"' ||  id        || '","' || min(case when flag =  1 then pos end) || '","' || min(case when flag = -1 then pos end) || '","' ||
+        Substr (str, min(case when flag =  1 then pos end), min(case when flag = -1 then pos end) - min(case when flag =  1 then pos end) + 1) || '","#?"'
+
+/* CBL_QRY */ WITH d ( id, str, pos ) as ( select id, str, regexp_instr(str, '\(|\)', 1, level) from bracket_strings connect by level <= length(str) - length(translate(str, 'x()', 'x')) and prior id =
+ id and prior sys_guid() is not null ), p ( id, str, pos, flag, l_ct, ct ) as ( select id, str, pos, case substr(str, pos, 1) when '(' then 1 else -1 end, sum(case substr(str, pos, 1) when '(' then 1
+end) over (partition by id order by pos), sum(case substr(str, pos, 1) when '(' then 1 else -1 end) over (partition by id order by pos) from d ), f ( id, str, pos, flag, l_ct, ct, o_ct ) as ( select i
+d, str, pos, flag, l_ct, ct + case flag when 1 then 0 else 1 end as ct, row_number() over (partition by id, flag, ct order by pos) from p ) SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || id || '","' || m
+in(case when flag = 1 then pos end) || '","' || min(case when flag = -1 then pos end) || '","' || Substr (str, min(case when flag = 1 then pos end), min(case when flag = -1 then pos end) - min(case wh
+en flag = 1 then pos end) + 1) || '","#?"' /*+ GATHER_PLAN_STATISTICS */ from f group by id, str, ct, o_ct order by id, min(case when flag = 1 then pos end)
+
+Header="id","o_pos","c_pos","str","Random"
+mid=
+        b.id        id,
+        t.o_pos     o_pos,
+        t.c_pos     c_pos,
+        t.str       str
+
+new='"' ||  b.id        || '","' || t.o_pos     || '","' || t.c_pos     || '","' ||
+        t.str || '","#?"'
+
+/* PFB_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || b.id || '","' || t.o_pos || '","' || t.c_pos || '","' || t.str || '","#?"' FROM bracket_strings b CROSS JOIN TABLE (Strings.Parse_Brackets (b.
+str)) t ORDER BY b.id, t.o_pos
+
+bracket_strings truncated
+400 copies of base string, 0 tokens
+
+Timer Set: Setup, Constructed at 19 Feb 2017 15:27:10, written at 15:27:10
+==========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
+
+Timer                      Elapsed         CPU         Calls       Ela/Call       CPU/Call
+----------------------  ----------  ----------  ------------  -------------  -------------
+Insert bracket_strings        0.01        0.00             1        0.01200        0.00000
+Gather_Table_Stats            0.02        0.02             1        0.01600        0.02000
+GRP_CNT                       0.00        0.00             1        0.00000        0.00000
+(Other)                       0.00        0.00             1        0.00100        0.00000
+----------------------  ----------  ----------  ------------  -------------  -------------
+Total                         0.03        0.02             4        0.00725        0.00500
+----------------------  ----------  ----------  ------------  -------------  -------------
+/* CBL_QRY */ WITH d ( id, str, pos ) as ( select id, str, regexp_instr(str, '\(|\)', 1, level) from bracket_strings connect by level <= length(str) - length(translate(str, 'x()', 'x')) and prior id =
+ id and prior sys_guid() is not null ), p ( id, str, pos, flag, l_ct, ct ) as ( select id, str, pos, case substr(str, pos, 1) when '(' then 1 else -1 end, sum(case substr(str, pos, 1) when '(' then 1
+end) over (partition by id order by pos), sum(case substr(str, pos, 1) when '(' then 1 else -1 end) over (partition by id order by pos) from d ), f ( id, str, pos, flag, l_ct, ct, o_ct ) as ( select i
+d, str, pos, flag, l_ct, ct + case flag when 1 then 0 else 1 end as ct, row_number() over (partition by id, flag, ct order by pos) from p ) SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || id || '","' || m
+in(case when flag = 1 then pos end) || '","' || min(case when flag = -1 then pos end) || '","' || Substr (str, min(case when flag = 1 then pos end), min(case when flag = -1 then pos end) - min(case wh
+en flag = 1 then pos end) + 1) || '","3226"' /*+ GATHER_PLAN_STATISTICS */ from f group by id, str, ct, o_ct order by id, min(case when flag = 1 then pos end)
+
+SQL_ID  3fjt367yn7ubb, child number 0
+-------------------------------------
+/* CBL_QRY */ WITH d ( id, str, pos ) as ( select id, str,
+regexp_instr(str, '\(|\)', 1, level) from bracket_strings connect by
+level <= length(str) - length(translate(str, 'x()', 'x')) and prior id
+= id and prior sys_guid() is not null ), p ( id, str, pos, flag, l_ct,
+ct ) as ( select id, str, pos, case substr(str, pos, 1) when '(' then 1
+else -1 end, sum(case substr(str, pos, 1) when '(' then 1 end) over
+(partition by id order by pos), sum(case substr(str, pos, 1) when '('
+then 1 else -1 end) over (partition by id order by pos) from d ), f (
+id, str, pos, flag, l_ct, ct, o_ct ) as ( select id, str, pos, flag,
+l_ct, ct + case flag when 1 then 0 else 1 end as ct, row_number() over
+(partition by id, flag, ct order by pos) from p ) SELECT /*+
+GATHER_PLAN_STATISTICS */ '"' || id || '","' || min(case when flag = 1
+then pos end) || '","' || min(case when flag = -1 then pos end) ||
+'","' || Substr (str, min(case when flag = 1 then pos end), min(case
+when flag = -1 then pos end) - min(case wh
+
+Plan hash value: 2736674058
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |  40000 |00:00:35.35 |      47 |  60428 |  59442 |       |       |          |         |
+|   1 |  SORT ORDER BY                      |                 |      1 |    100 |  40000 |00:00:35.35 |      47 |  60428 |  59442 |  2746K|   746K| 2440K (0)|         |
+|   2 |   HASH GROUP BY                     |                 |      1 |    100 |  40000 |00:00:29.87 |      47 |  60428 |  59442 |   158M|  7244K|   20M (1)|     162K|
+|   3 |    VIEW                             |                 |      1 |    100 |  80000 |00:00:58.48 |      47 |  40988 |  40002 |       |       |          |         |
+|   4 |     WINDOW SORT                     |                 |      1 |    100 |  80000 |00:00:58.43 |      47 |  40988 |  40002 |   175M|  4459K|   66M (1)|     157K|
+|   5 |      VIEW                           |                 |      1 |    100 |  80000 |00:02:18.20 |      39 |  20986 |  20000 |       |       |          |         |
+|   6 |       WINDOW SORT                   |                 |      1 |    100 |  80000 |00:02:17.85 |      39 |  20986 |  20000 |   175M|  4457K|   66M (0)|     157K|
+|   7 |        VIEW                         |                 |      1 |    100 |  80000 |00:00:19.08 |      37 |      0 |      0 |       |       |          |         |
+|*  8 |         CONNECT BY WITHOUT FILTERING|                 |      1 |        |  80000 |00:00:07.48 |      37 |      0 |      0 |       |       |          |         |
+|   9 |          TABLE ACCESS FULL          | BRACKET_STRINGS |      1 |    100 |    100 |00:00:00.01 |      37 |      0 |      0 |       |       |          |         |
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   8 - access("ID"=PRIOR NULL)
+
+
+Timer Set: Cursor, Constructed at 19 Feb 2017 15:27:10, written at 15:27:45
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.01 (0.000010), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  0.00        0.00             1        0.00000        0.00000
+Open cursor              0.00        0.00             1        0.00200        0.00000
+First fetch             35.34       20.71             1       35.34100       20.71000
+Write to file            0.09        0.10            41        0.00207        0.00244
+Remaining fetches        0.01        0.00            40        0.00028        0.00000
+Write plan               0.14        0.14             1        0.14400        0.14000
+(Other)                  0.01        0.00             1        0.00500        0.00000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                   35.59       20.95            86        0.41381        0.24360
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 19 Feb 2017 15:27:10, written at 15:27:45
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.07        0.04            41        0.00159        0.00098
+(Other)       35.54       20.92             1       35.53500       20.92000
+-------  ----------  ----------  ------------  -------------  -------------
+Total         35.60       20.96            42        0.84762        0.49905
+-------  ----------  ----------  ------------  -------------  -------------
+40001 rows written to CBL_QRY.csv
+Summary for W/D = 400/0 , bench_run_statistics_id = 9
+
+Timer Set: Run_One, Constructed at 19 Feb 2017 15:27:10, written at 15:27:45
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run           35.61       20.98             1       35.60800       20.98000
+(Other)        0.00        0.00             1        0.00000        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total         35.61       20.98             2       17.80400       10.49000
+-------  ----------  ----------  ------------  -------------  -------------
+/* PFB_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || b.id || '","' || t.o_pos || '","' || t.c_pos || '","' || t.str || '","7105"' FROM bracket_strings b CROSS JOIN TABLE (Strings.Parse_Brackets (
+b.str)) t ORDER BY b.id, t.o_pos
+
+SQL_ID  064ndkdfdypfg, child number 0
+-------------------------------------
+/* PFB_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || b.id || '","'
+|| t.o_pos || '","' || t.c_pos || '","' || t.str || '","7105"' FROM
+bracket_strings b CROSS JOIN TABLE (Strings.Parse_Brackets (b.str)) t
+ORDER BY b.id, t.o_pos
+
+Plan hash value: 3734693571
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |  40000 |00:00:00.82 |      37 |       |       |          |
+|   1 |  SORT ORDER BY                      |                 |      1 |    816K|  40000 |00:00:00.82 |      37 |  2746K|   746K| 2440K (0)|
+|   2 |   NESTED LOOPS                      |                 |      1 |    816K|  40000 |00:00:01.56 |      37 |       |       |          |
+|   3 |    TABLE ACCESS FULL                | BRACKET_STRINGS |      1 |    100 |    100 |00:00:00.01 |      37 |       |       |          |
+|   4 |    COLLECTION ITERATOR PICKLER FETCH| PARSE_BRACKETS  |    100 |   8168 |  40000 |00:00:00.61 |       0 |       |       |          |
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Timer Set: Cursor, Constructed at 19 Feb 2017 15:27:45, written at 15:27:46
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  0.00        0.00             1        0.00000        0.00000
+Open cursor              0.00        0.02             1        0.00400        0.02000
+First fetch              0.81        0.81             1        0.81200        0.81000
+Write to file            0.09        0.09            41        0.00207        0.00220
+Remaining fetches        0.01        0.00            40        0.00025        0.00000
+Write plan               0.14        0.14             1        0.14200        0.14000
+(Other)                  0.01        0.00             1        0.00600        0.00000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                    1.06        1.06            86        0.01231        0.01233
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 19 Feb 2017 15:27:45, written at 15:27:46
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.06        0.08            41        0.00154        0.00195
+(Other)        1.01        0.98             1        1.00800        0.98000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          1.07        1.06            42        0.02550        0.02524
+-------  ----------  ----------  ------------  -------------  -------------
+40001 rows written to PFB_QRY.csv
+Summary for W/D = 400/0 , bench_run_statistics_id = 10
+
+Timer Set: Run_One, Constructed at 19 Feb 2017 15:27:45, written at 15:27:46
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run            1.08        1.06             1        1.07800        1.06000
+(Other)        0.00        0.00             1        0.00000        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          1.08        1.06             2        0.53900        0.53000
+-------  ----------  ----------  ------------  -------------  -------------
+bracket_strings truncated
+400 copies of base string, 100 tokens
+
+Timer Set: Setup, Constructed at 19 Feb 2017 15:27:46, written at 15:27:46
+==========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer                      Elapsed         CPU         Calls       Ela/Call       CPU/Call
+----------------------  ----------  ----------  ------------  -------------  -------------
+Insert bracket_strings        0.04        0.03             1        0.03500        0.03000
+Gather_Table_Stats            0.02        0.02             1        0.01600        0.02000
+GRP_CNT                       0.00        0.00             1        0.00000        0.00000
+(Other)                       0.00        0.00             1        0.00000        0.00000
+----------------------  ----------  ----------  ------------  -------------  -------------
+Total                         0.05        0.05             4        0.01275        0.01250
+----------------------  ----------  ----------  ------------  -------------  -------------
+/* CBL_QRY */ WITH d ( id, str, pos ) as ( select id, str, regexp_instr(str, '\(|\)', 1, level) from bracket_strings connect by level <= length(str) - length(translate(str, 'x()', 'x')) and prior id =
+ id and prior sys_guid() is not null ), p ( id, str, pos, flag, l_ct, ct ) as ( select id, str, pos, case substr(str, pos, 1) when '(' then 1 else -1 end, sum(case substr(str, pos, 1) when '(' then 1
+end) over (partition by id order by pos), sum(case substr(str, pos, 1) when '(' then 1 else -1 end) over (partition by id order by pos) from d ), f ( id, str, pos, flag, l_ct, ct, o_ct ) as ( select i
+d, str, pos, flag, l_ct, ct + case flag when 1 then 0 else 1 end as ct, row_number() over (partition by id, flag, ct order by pos) from p ) SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || id || '","' || m
+in(case when flag = 1 then pos end) || '","' || min(case when flag = -1 then pos end) || '","' || Substr (str, min(case when flag = 1 then pos end), min(case when flag = -1 then pos end) - min(case wh
+en flag = 1 then pos end) + 1) || '","1192"' /*+ GATHER_PLAN_STATISTICS */ from f group by id, str, ct, o_ct order by id, min(case when flag = 1 then pos end)
+
+SQL_ID  1tgv86anbkjaf, child number 0
+-------------------------------------
+/* CBL_QRY */ WITH d ( id, str, pos ) as ( select id, str,
+regexp_instr(str, '\(|\)', 1, level) from bracket_strings connect by
+level <= length(str) - length(translate(str, 'x()', 'x')) and prior id
+= id and prior sys_guid() is not null ), p ( id, str, pos, flag, l_ct,
+ct ) as ( select id, str, pos, case substr(str, pos, 1) when '(' then 1
+else -1 end, sum(case substr(str, pos, 1) when '(' then 1 end) over
+(partition by id order by pos), sum(case substr(str, pos, 1) when '('
+then 1 else -1 end) over (partition by id order by pos) from d ), f (
+id, str, pos, flag, l_ct, ct, o_ct ) as ( select id, str, pos, flag,
+l_ct, ct + case flag when 1 then 0 else 1 end as ct, row_number() over
+(partition by id, flag, ct order by pos) from p ) SELECT /*+
+GATHER_PLAN_STATISTICS */ '"' || id || '","' || min(case when flag = 1
+then pos end) || '","' || min(case when flag = -1 then pos end) ||
+'","' || Substr (str, min(case when flag = 1 then pos end), min(case
+when flag = -1 then pos end) - min(case wh
+
+Plan hash value: 2736674058
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |  40000 |00:00:36.99 |      47 |  60443 |  59457 |       |       |          |         |
+|   1 |  SORT ORDER BY                      |                 |      1 |    100 |  40000 |00:00:36.99 |      47 |  60443 |  59457 |    21M|  1702K|   19M (0)|         |
+|   2 |   HASH GROUP BY                     |                 |      1 |    100 |  40000 |00:00:31.33 |      47 |  60443 |  59457 |   158M|  7244K|   20M (1)|     163K|
+|   3 |    VIEW                             |                 |      1 |    100 |  80000 |00:01:47.40 |      47 |  40988 |  40002 |       |       |          |         |
+|   4 |     WINDOW SORT                     |                 |      1 |    100 |  80000 |00:01:47.35 |      47 |  40988 |  40002 |   175M|  4459K|   66M (1)|     157K|
+|   5 |      VIEW                           |                 |      1 |    100 |  80000 |00:02:15.74 |      39 |  20986 |  20000 |       |       |          |         |
+|   6 |       WINDOW SORT                   |                 |      1 |    100 |  80000 |00:02:15.37 |      39 |  20986 |  20000 |   175M|  4457K|   66M (0)|     157K|
+|   7 |        VIEW                         |                 |      1 |    100 |  80000 |00:00:20.15 |      37 |      0 |      0 |       |       |          |         |
+|*  8 |         CONNECT BY WITHOUT FILTERING|                 |      1 |        |  80000 |00:00:07.51 |      37 |      0 |      0 |       |       |          |         |
+|   9 |          TABLE ACCESS FULL          | BRACKET_STRINGS |      1 |    100 |    100 |00:00:00.01 |      37 |      0 |      0 |       |       |          |         |
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   8 - access("ID"=PRIOR NULL)
+
+
+Timer Set: Cursor, Constructed at 19 Feb 2017 15:27:46, written at 15:28:24
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  0.00        0.00             1        0.00000        0.00000
+Open cursor              0.00        0.00             1        0.00100        0.00000
+First fetch             36.98       21.91             1       36.97900       21.91000
+Write to file            0.33        0.36            41        0.00810        0.00878
+Remaining fetches        0.02        0.00            40        0.00040        0.00000
+Write plan               0.14        0.14             1        0.14400        0.14000
+(Other)                  0.01        0.01             1        0.00800        0.01000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                   37.48       22.42            86        0.43581        0.26070
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 19 Feb 2017 15:27:46, written at 15:28:24
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000005), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.23        0.28           590        0.00039        0.00047
+(Other)       37.26       22.16             1       37.25900       22.16000
+-------  ----------  ----------  ------------  -------------  -------------
+Total         37.49       22.44           591        0.06343        0.03797
+-------  ----------  ----------  ------------  -------------  -------------
+40001 rows written to CBL_QRY.csv
+Summary for W/D = 400/100 , bench_run_statistics_id = 11
+
+Timer Set: Run_One, Constructed at 19 Feb 2017 15:27:46, written at 15:28:24
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000005), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run           37.50       22.44             1       37.49700       22.44000
+(Other)        0.00        0.00             1        0.00000        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total         37.50       22.44             2       18.74850       11.22000
+-------  ----------  ----------  ------------  -------------  -------------
+/* PFB_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || b.id || '","' || t.o_pos || '","' || t.c_pos || '","' || t.str || '","1409"' FROM bracket_strings b CROSS JOIN TABLE (Strings.Parse_Brackets (
+b.str)) t ORDER BY b.id, t.o_pos
+
+SQL_ID  bmhpr5vxg9d6w, child number 0
+-------------------------------------
+/* PFB_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || b.id || '","'
+|| t.o_pos || '","' || t.c_pos || '","' || t.str || '","1409"' FROM
+bracket_strings b CROSS JOIN TABLE (Strings.Parse_Brackets (b.str)) t
+ORDER BY b.id, t.o_pos
+
+Plan hash value: 3734693571
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |  40000 |00:00:01.08 |      37 |       |       |          |
+|   1 |  SORT ORDER BY                      |                 |      1 |    816K|  40000 |00:00:01.08 |      37 |    21M|  1702K|   19M (0)|
+|   2 |   NESTED LOOPS                      |                 |      1 |    816K|  40000 |00:00:01.95 |      37 |       |       |          |
+|   3 |    TABLE ACCESS FULL                | BRACKET_STRINGS |      1 |    100 |    100 |00:00:00.01 |      37 |       |       |          |
+|   4 |    COLLECTION ITERATOR PICKLER FETCH| PARSE_BRACKETS  |    100 |   8168 |  40000 |00:00:01.43 |       0 |       |       |          |
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Timer Set: Cursor, Constructed at 19 Feb 2017 15:28:24, written at 15:28:26
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  0.00        0.00             1        0.00000        0.00000
+Open cursor              0.00        0.00             1        0.00400        0.00000
+First fetch              1.07        1.06             1        1.06600        1.06000
+Write to file            0.32        0.35            41        0.00788        0.00854
+Remaining fetches        0.01        0.00            40        0.00030        0.00000
+Write plan               0.14        0.14             1        0.14300        0.14000
+(Other)                  0.01        0.01             1        0.00700        0.01000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                    1.56        1.56            86        0.01808        0.01814
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 19 Feb 2017 15:28:24, written at 15:28:26
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.22        0.30           590        0.00038        0.00051
+(Other)        1.34        1.26             1        1.34100        1.26000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          1.57        1.56           591        0.00265        0.00264
+-------  ----------  ----------  ------------  -------------  -------------
+40001 rows written to PFB_QRY.csv
+Summary for W/D = 400/100 , bench_run_statistics_id = 12
+
+Timer Set: Run_One, Constructed at 19 Feb 2017 15:28:24, written at 15:28:26
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run            1.57        1.56             1        1.57300        1.56000
+(Other)        0.00        0.00             1        0.00000        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          1.57        1.56             2        0.78650        0.78000
+-------  ----------  ----------  ------------  -------------  -------------
+bracket_strings truncated
+400 copies of base string, 200 tokens
+
+Timer Set: Setup, Constructed at 19 Feb 2017 15:28:26, written at 15:28:26
+==========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
+
+Timer                      Elapsed         CPU         Calls       Ela/Call       CPU/Call
+----------------------  ----------  ----------  ------------  -------------  -------------
+Insert bracket_strings        0.03        0.00             1        0.02500        0.00000
+Gather_Table_Stats            0.02        0.02             1        0.01500        0.02000
+GRP_CNT                       0.00        0.00             1        0.00000        0.00000
+(Other)                       0.00        0.00             1        0.00000        0.00000
+----------------------  ----------  ----------  ------------  -------------  -------------
+Total                         0.04        0.02             4        0.01000        0.00500
+----------------------  ----------  ----------  ------------  -------------  -------------
+/* CBL_QRY */ WITH d ( id, str, pos ) as ( select id, str, regexp_instr(str, '\(|\)', 1, level) from bracket_strings connect by level <= length(str) - length(translate(str, 'x()', 'x')) and prior id =
+ id and prior sys_guid() is not null ), p ( id, str, pos, flag, l_ct, ct ) as ( select id, str, pos, case substr(str, pos, 1) when '(' then 1 else -1 end, sum(case substr(str, pos, 1) when '(' then 1
+end) over (partition by id order by pos), sum(case substr(str, pos, 1) when '(' then 1 else -1 end) over (partition by id order by pos) from d ), f ( id, str, pos, flag, l_ct, ct, o_ct ) as ( select i
+d, str, pos, flag, l_ct, ct + case flag when 1 then 0 else 1 end as ct, row_number() over (partition by id, flag, ct order by pos) from p ) SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || id || '","' || m
+in(case when flag = 1 then pos end) || '","' || min(case when flag = -1 then pos end) || '","' || Substr (str, min(case when flag = 1 then pos end), min(case when flag = -1 then pos end) - min(case wh
+en flag = 1 then pos end) + 1) || '","6859"' /*+ GATHER_PLAN_STATISTICS */ from f group by id, str, ct, o_ct order by id, min(case when flag = 1 then pos end)
+
+SQL_ID  9awpwtp01ysh7, child number 0
+-------------------------------------
+/* CBL_QRY */ WITH d ( id, str, pos ) as ( select id, str,
+regexp_instr(str, '\(|\)', 1, level) from bracket_strings connect by
+level <= length(str) - length(translate(str, 'x()', 'x')) and prior id
+= id and prior sys_guid() is not null ), p ( id, str, pos, flag, l_ct,
+ct ) as ( select id, str, pos, case substr(str, pos, 1) when '(' then 1
+else -1 end, sum(case substr(str, pos, 1) when '(' then 1 end) over
+(partition by id order by pos), sum(case substr(str, pos, 1) when '('
+then 1 else -1 end) over (partition by id order by pos) from d ), f (
+id, str, pos, flag, l_ct, ct, o_ct ) as ( select id, str, pos, flag,
+l_ct, ct + case flag when 1 then 0 else 1 end as ct, row_number() over
+(partition by id, flag, ct order by pos) from p ) SELECT /*+
+GATHER_PLAN_STATISTICS */ '"' || id || '","' || min(case when flag = 1
+then pos end) || '","' || min(case when flag = -1 then pos end) ||
+'","' || Substr (str, min(case when flag = 1 then pos end), min(case
+when flag = -1 then pos end) - min(case wh
+
+Plan hash value: 2736674058
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |  40000 |00:00:36.73 |      47 |  60384 |  59398 |       |       |          |         |
+|   1 |  SORT ORDER BY                      |                 |      1 |    100 |  40000 |00:00:36.73 |      47 |  60384 |  59398 |    34M|  2109K|   30M (0)|         |
+|   2 |   HASH GROUP BY                     |                 |      1 |    100 |  40000 |00:00:31.75 |      47 |  60384 |  59398 |   158M|  7244K|   20M (1)|     162K|
+|   3 |    VIEW                             |                 |      1 |    100 |  80000 |00:01:00.32 |      47 |  40989 |  40003 |       |       |          |         |
+|   4 |     WINDOW SORT                     |                 |      1 |    100 |  80000 |00:01:00.28 |      47 |  40989 |  40003 |   175M|  4459K|   66M (1)|     157K|
+|   5 |      VIEW                           |                 |      1 |    100 |  80000 |00:02:02.43 |      39 |  20986 |  20000 |       |       |          |         |
+|   6 |       WINDOW SORT                   |                 |      1 |    100 |  80000 |00:02:02.03 |      39 |  20986 |  20000 |   175M|  4457K|   66M (0)|     157K|
+|   7 |        VIEW                         |                 |      1 |    100 |  80000 |00:00:20.87 |      37 |      0 |      0 |       |       |          |         |
+|*  8 |         CONNECT BY WITHOUT FILTERING|                 |      1 |        |  80000 |00:00:07.47 |      37 |      0 |      0 |       |       |          |         |
+|   9 |          TABLE ACCESS FULL          | BRACKET_STRINGS |      1 |    100 |    100 |00:00:00.01 |      37 |      0 |      0 |       |       |          |         |
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   8 - access("ID"=PRIOR NULL)
+
+
+Timer Set: Cursor, Constructed at 19 Feb 2017 15:28:26, written at 15:29:03
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  0.00        0.00             1        0.00000        0.00000
+Open cursor              0.00        0.00             1        0.00100        0.00000
+First fetch             36.72       22.98             1       36.71600       22.98000
+Write to file            0.50        0.51            41        0.01229        0.01244
+Remaining fetches        0.02        0.01            40        0.00053        0.00025
+Write plan               0.15        0.15             1        0.14600        0.15000
+(Other)                  0.01        0.00             1        0.00600        0.00000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                   37.39       23.65            86        0.43481        0.27500
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 19 Feb 2017 15:28:26, written at 15:29:03
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.33        0.30           978        0.00034        0.00031
+(Other)       37.11       23.35             1       37.11400       23.35000
+-------  ----------  ----------  ------------  -------------  -------------
+Total         37.44       23.65           979        0.03825        0.02416
+-------  ----------  ----------  ------------  -------------  -------------
+40001 rows written to CBL_QRY.csv
+Summary for W/D = 400/200 , bench_run_statistics_id = 13
+
+Timer Set: Run_One, Constructed at 19 Feb 2017 15:28:26, written at 15:29:03
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run           37.45       23.65             1       37.45100       23.65000
+(Other)        0.00        0.00             1        0.00000        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total         37.45       23.65             2       18.72550       11.82500
+-------  ----------  ----------  ------------  -------------  -------------
+/* PFB_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || b.id || '","' || t.o_pos || '","' || t.c_pos || '","' || t.str || '","2543"' FROM bracket_strings b CROSS JOIN TABLE (Strings.Parse_Brackets (
+b.str)) t ORDER BY b.id, t.o_pos
+
+SQL_ID  8yh8vrp0q2930, child number 0
+-------------------------------------
+/* PFB_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || b.id || '","'
+|| t.o_pos || '","' || t.c_pos || '","' || t.str || '","2543"' FROM
+bracket_strings b CROSS JOIN TABLE (Strings.Parse_Brackets (b.str)) t
+ORDER BY b.id, t.o_pos
+
+Plan hash value: 3734693571
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |  40000 |00:00:01.30 |      37 |       |       |          |
+|   1 |  SORT ORDER BY                      |                 |      1 |    816K|  40000 |00:00:01.30 |      37 |    34M|  2109K|   30M (0)|
+|   2 |   NESTED LOOPS                      |                 |      1 |    816K|  40000 |00:00:02.10 |      37 |       |       |          |
+|   3 |    TABLE ACCESS FULL                | BRACKET_STRINGS |      1 |    100 |    100 |00:00:00.01 |      37 |       |       |          |
+|   4 |    COLLECTION ITERATOR PICKLER FETCH| PARSE_BRACKETS  |    100 |   8168 |  40000 |00:00:01.57 |       0 |       |       |          |
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Timer Set: Cursor, Constructed at 19 Feb 2017 15:29:03, written at 15:29:05
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  0.00        0.00             1        0.00000        0.00000
+Open cursor              0.00        0.01             1        0.00400        0.01000
+First fetch              1.29        1.28             1        1.28800        1.28000
+Write to file            0.49        0.48            41        0.01205        0.01171
+Remaining fetches        0.02        0.04            40        0.00043        0.00100
+Write plan               0.14        0.14             1        0.14000        0.14000
+(Other)                  0.01        0.00             1        0.00600        0.00000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                    1.95        1.95            86        0.02266        0.02267
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 19 Feb 2017 15:29:03, written at 15:29:05
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.34        0.32           978        0.00034        0.00033
+(Other)        1.62        1.63             1        1.62400        1.63000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          1.96        1.95           979        0.00200        0.00199
+-------  ----------  ----------  ------------  -------------  -------------
+40001 rows written to PFB_QRY.csv
+Summary for W/D = 400/200 , bench_run_statistics_id = 14
+
+Timer Set: Run_One, Constructed at 19 Feb 2017 15:29:03, written at 15:29:05
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run            1.97        1.97             1        1.96800        1.97000
+(Other)        0.00        0.00             1        0.00000        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          1.97        1.97             2        0.98400        0.98500
+-------  ----------  ----------  ------------  -------------  -------------
+bracket_strings truncated
+400 copies of base string, 300 tokens
+
+Timer Set: Setup, Constructed at 19 Feb 2017 15:29:05, written at 15:29:05
+==========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer                      Elapsed         CPU         Calls       Ela/Call       CPU/Call
+----------------------  ----------  ----------  ------------  -------------  -------------
+Insert bracket_strings        0.02        0.01             1        0.02100        0.01000
+Gather_Table_Stats            0.02        0.02             1        0.01600        0.02000
+GRP_CNT                       0.00        0.00             1        0.00000        0.00000
+(Other)                       0.00        0.00             1        0.00000        0.00000
+----------------------  ----------  ----------  ------------  -------------  -------------
+Total                         0.04        0.03             4        0.00925        0.00750
+----------------------  ----------  ----------  ------------  -------------  -------------
+/* CBL_QRY */ WITH d ( id, str, pos ) as ( select id, str, regexp_instr(str, '\(|\)', 1, level) from bracket_strings connect by level <= length(str) - length(translate(str, 'x()', 'x')) and prior id =
+ id and prior sys_guid() is not null ), p ( id, str, pos, flag, l_ct, ct ) as ( select id, str, pos, case substr(str, pos, 1) when '(' then 1 else -1 end, sum(case substr(str, pos, 1) when '(' then 1
+end) over (partition by id order by pos), sum(case substr(str, pos, 1) when '(' then 1 else -1 end) over (partition by id order by pos) from d ), f ( id, str, pos, flag, l_ct, ct, o_ct ) as ( select i
+d, str, pos, flag, l_ct, ct + case flag when 1 then 0 else 1 end as ct, row_number() over (partition by id, flag, ct order by pos) from p ) SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || id || '","' || m
+in(case when flag = 1 then pos end) || '","' || min(case when flag = -1 then pos end) || '","' || Substr (str, min(case when flag = 1 then pos end), min(case when flag = -1 then pos end) - min(case wh
+en flag = 1 then pos end) + 1) || '","5903"' /*+ GATHER_PLAN_STATISTICS */ from f group by id, str, ct, o_ct order by id, min(case when flag = 1 then pos end)
+
+SQL_ID  059uph7nsuhkm, child number 0
+-------------------------------------
+/* CBL_QRY */ WITH d ( id, str, pos ) as ( select id, str,
+regexp_instr(str, '\(|\)', 1, level) from bracket_strings connect by
+level <= length(str) - length(translate(str, 'x()', 'x')) and prior id
+= id and prior sys_guid() is not null ), p ( id, str, pos, flag, l_ct,
+ct ) as ( select id, str, pos, case substr(str, pos, 1) when '(' then 1
+else -1 end, sum(case substr(str, pos, 1) when '(' then 1 end) over
+(partition by id order by pos), sum(case substr(str, pos, 1) when '('
+then 1 else -1 end) over (partition by id order by pos) from d ), f (
+id, str, pos, flag, l_ct, ct, o_ct ) as ( select id, str, pos, flag,
+l_ct, ct + case flag when 1 then 0 else 1 end as ct, row_number() over
+(partition by id, flag, ct order by pos) from p ) SELECT /*+
+GATHER_PLAN_STATISTICS */ '"' || id || '","' || min(case when flag = 1
+then pos end) || '","' || min(case when flag = -1 then pos end) ||
+'","' || Substr (str, min(case when flag = 1 then pos end), min(case
+when flag = -1 then pos end) - min(case wh
+
+Plan hash value: 2736674058
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |  40000 |00:00:38.19 |      47 |  60413 |  59427 |       |       |          |         |
+|   1 |  SORT ORDER BY                      |                 |      1 |    100 |  40000 |00:00:38.19 |      47 |  60413 |  59427 |    42M|  2315K|   38M (0)|         |
+|   2 |   HASH GROUP BY                     |                 |      1 |    100 |  40000 |00:01:56.84 |      47 |  60413 |  59427 |   158M|  7244K|   20M (1)|     162K|
+|   3 |    VIEW                             |                 |      1 |    100 |  80000 |00:01:59.12 |      47 |  40988 |  40002 |       |       |          |         |
+|   4 |     WINDOW SORT                     |                 |      1 |    100 |  80000 |00:01:59.07 |      47 |  40988 |  40002 |   175M|  4459K|   66M (1)|     157K|
+|   5 |      VIEW                           |                 |      1 |    100 |  80000 |00:02:01.13 |      39 |  20986 |  20000 |       |       |          |         |
+|   6 |       WINDOW SORT                   |                 |      1 |    100 |  80000 |00:02:00.72 |      39 |  20986 |  20000 |   175M|  4457K|   66M (0)|     157K|
+|   7 |        VIEW                         |                 |      1 |    100 |  80000 |00:00:21.60 |      37 |      0 |      0 |       |       |          |         |
+|*  8 |         CONNECT BY WITHOUT FILTERING|                 |      1 |        |  80000 |00:00:07.57 |      37 |      0 |      0 |       |       |          |         |
+|   9 |          TABLE ACCESS FULL          | BRACKET_STRINGS |      1 |    100 |    100 |00:00:00.01 |      37 |      0 |      0 |       |       |          |         |
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   8 - access("ID"=PRIOR NULL)
+
+
+Timer Set: Cursor, Constructed at 19 Feb 2017 15:29:05, written at 15:29:44
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  0.00        0.00             1        0.00000        0.00000
+Open cursor              0.00        0.00             1        0.00300        0.00000
+First fetch             38.18       23.52             1       38.17600       23.52000
+Write to file            0.62        0.63            41        0.01520        0.01537
+Remaining fetches        0.01        0.01            40        0.00030        0.00025
+Write plan               0.15        0.14             1        0.15000        0.14000
+(Other)                  0.01        0.01             1        0.00700        0.01000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                   38.97       24.31            86        0.45315        0.28267
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 19 Feb 2017 15:29:05, written at 15:29:44
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.42        0.41         1,201        0.00035        0.00034
+(Other)       38.56       23.92             1       38.56200       23.92000
+-------  ----------  ----------  ------------  -------------  -------------
+Total         38.98       24.33         1,202        0.03243        0.02024
+-------  ----------  ----------  ------------  -------------  -------------
+40001 rows written to CBL_QRY.csv
+Summary for W/D = 400/300 , bench_run_statistics_id = 15
+
+Timer Set: Run_One, Constructed at 19 Feb 2017 15:29:05, written at 15:29:44
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.01 (0.000010), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run           38.99       24.33             1       38.98900       24.33000
+(Other)        0.00        0.00             1        0.00100        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total         38.99       24.33             2       19.49500       12.16500
+-------  ----------  ----------  ------------  -------------  -------------
+/* PFB_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || b.id || '","' || t.o_pos || '","' || t.c_pos || '","' || t.str || '","3923"' FROM bracket_strings b CROSS JOIN TABLE (Strings.Parse_Brackets (
+b.str)) t ORDER BY b.id, t.o_pos
+
+SQL_ID  5h4dm8dqcvgg7, child number 0
+-------------------------------------
+/* PFB_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || b.id || '","'
+|| t.o_pos || '","' || t.c_pos || '","' || t.str || '","3923"' FROM
+bracket_strings b CROSS JOIN TABLE (Strings.Parse_Brackets (b.str)) t
+ORDER BY b.id, t.o_pos
+
+Plan hash value: 3734693571
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |  40000 |00:00:01.40 |      37 |       |       |          |
+|   1 |  SORT ORDER BY                      |                 |      1 |    816K|  40000 |00:00:01.40 |      37 |    42M|  2315K|   38M (0)|
+|   2 |   NESTED LOOPS                      |                 |      1 |    816K|  40000 |00:00:02.25 |      37 |       |       |          |
+|   3 |    TABLE ACCESS FULL                | BRACKET_STRINGS |      1 |    100 |    100 |00:00:00.01 |      37 |       |       |          |
+|   4 |    COLLECTION ITERATOR PICKLER FETCH| PARSE_BRACKETS  |    100 |   8168 |  40000 |00:00:01.66 |       0 |       |       |          |
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Timer Set: Cursor, Constructed at 19 Feb 2017 15:29:44, written at 15:29:46
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  0.00        0.00             1        0.00000        0.00000
+Open cursor              0.00        0.02             1        0.00400        0.02000
+First fetch              1.40        1.39             1        1.39500        1.39000
+Write to file            0.60        0.59            41        0.01466        0.01439
+Remaining fetches        0.02        0.03            40        0.00053        0.00075
+Write plan               0.14        0.14             1        0.14000        0.14000
+(Other)                  0.01        0.00             1        0.00600        0.00000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                    2.17        2.17            86        0.02520        0.02523
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 19 Feb 2017 15:29:44, written at 15:29:46
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.40        0.44         1,201        0.00033        0.00037
+(Other)        1.78        1.73             1        1.78100        1.73000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          2.18        2.17         1,202        0.00181        0.00181
+-------  ----------  ----------  ------------  -------------  -------------
+40001 rows written to PFB_QRY.csv
+Summary for W/D = 400/300 , bench_run_statistics_id = 16
+
+Timer Set: Run_One, Constructed at 19 Feb 2017 15:29:44, written at 15:29:46
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run            2.19        2.19             1        2.18500        2.19000
+(Other)        0.00        0.00             1        0.00000        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          2.19        2.19             2        1.09250        1.09500
+-------  ----------  ----------  ------------  -------------  -------------
+bracket_strings truncated
+400 copies of base string, 400 tokens
+
+Timer Set: Setup, Constructed at 19 Feb 2017 15:29:46, written at 15:29:46
+==========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer                      Elapsed         CPU         Calls       Ela/Call       CPU/Call
+----------------------  ----------  ----------  ------------  -------------  -------------
+Insert bracket_strings        0.01        0.00             1        0.01300        0.00000
+Gather_Table_Stats            0.02        0.01             1        0.01500        0.01000
+GRP_CNT                       0.00        0.00             1        0.00000        0.00000
+(Other)                       0.00        0.00             1        0.00100        0.00000
+----------------------  ----------  ----------  ------------  -------------  -------------
+Total                         0.03        0.01             4        0.00725        0.00250
+----------------------  ----------  ----------  ------------  -------------  -------------
+/* CBL_QRY */ WITH d ( id, str, pos ) as ( select id, str, regexp_instr(str, '\(|\)', 1, level) from bracket_strings connect by level <= length(str) - length(translate(str, 'x()', 'x')) and prior id =
+ id and prior sys_guid() is not null ), p ( id, str, pos, flag, l_ct, ct ) as ( select id, str, pos, case substr(str, pos, 1) when '(' then 1 else -1 end, sum(case substr(str, pos, 1) when '(' then 1
+end) over (partition by id order by pos), sum(case substr(str, pos, 1) when '(' then 1 else -1 end) over (partition by id order by pos) from d ), f ( id, str, pos, flag, l_ct, ct, o_ct ) as ( select i
+d, str, pos, flag, l_ct, ct + case flag when 1 then 0 else 1 end as ct, row_number() over (partition by id, flag, ct order by pos) from p ) SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || id || '","' || m
+in(case when flag = 1 then pos end) || '","' || min(case when flag = -1 then pos end) || '","' || Substr (str, min(case when flag = 1 then pos end), min(case when flag = -1 then pos end) - min(case wh
+en flag = 1 then pos end) + 1) || '","6724"' /*+ GATHER_PLAN_STATISTICS */ from f group by id, str, ct, o_ct order by id, min(case when flag = 1 then pos end)
+
+SQL_ID  c57pxwm8gc9nr, child number 0
+-------------------------------------
+/* CBL_QRY */ WITH d ( id, str, pos ) as ( select id, str,
+regexp_instr(str, '\(|\)', 1, level) from bracket_strings connect by
+level <= length(str) - length(translate(str, 'x()', 'x')) and prior id
+= id and prior sys_guid() is not null ), p ( id, str, pos, flag, l_ct,
+ct ) as ( select id, str, pos, case substr(str, pos, 1) when '(' then 1
+else -1 end, sum(case substr(str, pos, 1) when '(' then 1 end) over
+(partition by id order by pos), sum(case substr(str, pos, 1) when '('
+then 1 else -1 end) over (partition by id order by pos) from d ), f (
+id, str, pos, flag, l_ct, ct, o_ct ) as ( select id, str, pos, flag,
+l_ct, ct + case flag when 1 then 0 else 1 end as ct, row_number() over
+(partition by id, flag, ct order by pos) from p ) SELECT /*+
+GATHER_PLAN_STATISTICS */ '"' || id || '","' || min(case when flag = 1
+then pos end) || '","' || min(case when flag = -1 then pos end) ||
+'","' || Substr (str, min(case when flag = 1 then pos end), min(case
+when flag = -1 then pos end) - min(case wh
+
+Plan hash value: 2736674058
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |  40000 |00:00:38.01 |      47 |  60414 |  59428 |       |       |          |         |
+|   1 |  SORT ORDER BY                      |                 |      1 |    100 |  40000 |00:00:38.01 |      47 |  60414 |  59428 |    45M|  2378K|   40M (0)|         |
+|   2 |   HASH GROUP BY                     |                 |      1 |    100 |  40000 |00:02:10.14 |      47 |  60414 |  59428 |   158M|  7244K|   20M (1)|     162K|
+|   3 |    VIEW                             |                 |      1 |    100 |  80000 |00:01:04.47 |      47 |  40989 |  40003 |       |       |          |         |
+|   4 |     WINDOW SORT                     |                 |      1 |    100 |  80000 |00:01:04.42 |      47 |  40989 |  40003 |   175M|  4459K|   66M (1)|     157K|
+|   5 |      VIEW                           |                 |      1 |    100 |  80000 |00:01:56.24 |      39 |  20986 |  20000 |       |       |          |         |
+|   6 |       WINDOW SORT                   |                 |      1 |    100 |  80000 |00:01:55.82 |      39 |  20986 |  20000 |   175M|  4457K|   66M (0)|     157K|
+|   7 |        VIEW                         |                 |      1 |    100 |  80000 |00:00:21.79 |      37 |      0 |      0 |       |       |          |         |
+|*  8 |         CONNECT BY WITHOUT FILTERING|                 |      1 |        |  80000 |00:00:07.59 |      37 |      0 |      0 |       |       |          |         |
+|   9 |          TABLE ACCESS FULL          | BRACKET_STRINGS |      1 |    100 |    100 |00:00:00.01 |      37 |      0 |      0 |       |       |          |         |
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   8 - access("ID"=PRIOR NULL)
+
+
+Timer Set: Cursor, Constructed at 19 Feb 2017 15:29:46, written at 15:30:25
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000005), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  0.00        0.00             1        0.00000        0.00000
+Open cursor              0.00        0.00             1        0.00100        0.00000
+First fetch             38.00       23.92             1       38.00000       23.92000
+Write to file            0.68        0.71            41        0.01663        0.01732
+Remaining fetches        0.02        0.00            40        0.00060        0.00000
+Write plan               0.15        0.15             1        0.14800        0.15000
+(Other)                  0.01        0.00             1        0.00600        0.00000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                   38.86       24.78            86        0.45187        0.28814
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 19 Feb 2017 15:29:46, written at 15:30:25
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.48        0.42         1,286        0.00038        0.00033
+(Other)       38.52       24.36             1       38.52100       24.36000
+-------  ----------  ----------  ------------  -------------  -------------
+Total         39.01       24.78         1,287        0.03031        0.01925
+-------  ----------  ----------  ------------  -------------  -------------
+40001 rows written to CBL_QRY.csv
+Summary for W/D = 400/400 , bench_run_statistics_id = 17
+
+Timer Set: Run_One, Constructed at 19 Feb 2017 15:29:46, written at 15:30:25
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000005), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run           39.01       24.78             1       39.01200       24.78000
+(Other)        0.00        0.00             1        0.00000        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total         39.01       24.78             2       19.50600       12.39000
+-------  ----------  ----------  ------------  -------------  -------------
+/* PFB_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || b.id || '","' || t.o_pos || '","' || t.c_pos || '","' || t.str || '","4494"' FROM bracket_strings b CROSS JOIN TABLE (Strings.Parse_Brackets (
+b.str)) t ORDER BY b.id, t.o_pos
+
+SQL_ID  6yxgab2pjbcrr, child number 0
+-------------------------------------
+/* PFB_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || b.id || '","'
+|| t.o_pos || '","' || t.c_pos || '","' || t.str || '","4494"' FROM
+bracket_strings b CROSS JOIN TABLE (Strings.Parse_Brackets (b.str)) t
+ORDER BY b.id, t.o_pos
+
+Plan hash value: 3734693571
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |  40000 |00:00:01.45 |      37 |       |       |          |
+|   1 |  SORT ORDER BY                      |                 |      1 |    816K|  40000 |00:00:01.45 |      37 |    45M|  2378K|   40M (0)|
+|   2 |   NESTED LOOPS                      |                 |      1 |    816K|  40000 |00:00:02.28 |      37 |       |       |          |
+|   3 |    TABLE ACCESS FULL                | BRACKET_STRINGS |      1 |    100 |    100 |00:00:00.01 |      37 |       |       |          |
+|   4 |    COLLECTION ITERATOR PICKLER FETCH| PARSE_BRACKETS  |    100 |   8168 |  40000 |00:00:01.69 |       0 |       |       |          |
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Timer Set: Cursor, Constructed at 19 Feb 2017 15:30:25, written at 15:30:28
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.01 (0.000010), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  0.00        0.00             1        0.00000        0.00000
+Open cursor              0.00        0.00             1        0.00300        0.00000
+First fetch              1.44        1.43             1        1.43700        1.43000
+Write to file            0.65        0.64            41        0.01585        0.01561
+Remaining fetches        0.02        0.04            40        0.00048        0.00100
+Write plan               0.14        0.14             1        0.14300        0.14000
+(Other)                  0.01        0.00             1        0.00600        0.00000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                    2.26        2.25            86        0.02626        0.02616
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 19 Feb 2017 15:30:25, written at 15:30:28
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.44        0.45         1,286        0.00035        0.00035
+(Other)        1.83        1.81             1        1.82500        1.81000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          2.27        2.26         1,287        0.00176        0.00176
+-------  ----------  ----------  ------------  -------------  -------------
+40001 rows written to PFB_QRY.csv
+Summary for W/D = 400/400 , bench_run_statistics_id = 18
+
+Timer Set: Run_One, Constructed at 19 Feb 2017 15:30:25, written at 15:30:28
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run            2.28        2.26             1        2.27600        2.26000
+(Other)        0.00        0.00             1        0.00000        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          2.28        2.26             2        1.13800        1.13000
+-------  ----------  ----------  ------------  -------------  -------------
+
+Distinct Plans
+==============
+CBL_QRY: 1/5 (1 of 1)
+SQL_ID  c57pxwm8gc9nr, child number 0
+-------------------------------------
+/* CBL_QRY */ WITH d ( id, str, pos ) as ( select id, str,
+regexp_instr(str, '\(|\)', 1, level) from bracket_strings connect by
+level <= length(str) - length(translate(str, 'x()', 'x')) and prior id
+= id and prior sys_guid() is not null ), p ( id, str, pos, flag, l_ct,
+ct ) as ( select id, str, pos, case substr(str, pos, 1) when '(' then 1
+else -1 end, sum(case substr(str, pos, 1) when '(' then 1 end) over
+(partition by id order by pos), sum(case substr(str, pos, 1) when '('
+then 1 else -1 end) over (partition by id order by pos) from d ), f (
+id, str, pos, flag, l_ct, ct, o_ct ) as ( select id, str, pos, flag,
+l_ct, ct + case flag when 1 then 0 else 1 end as ct, row_number() over
+(partition by id, flag, ct order by pos) from p ) SELECT /*+
+GATHER_PLAN_STATISTICS */ '"' || id || '","' || min(case when flag = 1
+then pos end) || '","' || min(case when flag = -1 then pos end) ||
+'","' || Substr (str, min(case when flag = 1 then pos end), min(case
+when flag = -1 then pos end) - min(case wh
+
+Plan hash value: 2736674058
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |  40000 |00:00:38.01 |      47 |  60414 |  59428 |       |       |          |         |
+|   1 |  SORT ORDER BY                      |                 |      1 |    100 |  40000 |00:00:38.01 |      47 |  60414 |  59428 |    45M|  2378K|   40M (0)|         |
+|   2 |   HASH GROUP BY                     |                 |      1 |    100 |  40000 |00:02:10.14 |      47 |  60414 |  59428 |   158M|  7244K|   20M (1)|     162K|
+|   3 |    VIEW                             |                 |      1 |    100 |  80000 |00:01:04.47 |      47 |  40989 |  40003 |       |       |          |         |
+|   4 |     WINDOW SORT                     |                 |      1 |    100 |  80000 |00:01:04.42 |      47 |  40989 |  40003 |   175M|  4459K|   66M (1)|     157K|
+|   5 |      VIEW                           |                 |      1 |    100 |  80000 |00:01:56.24 |      39 |  20986 |  20000 |       |       |          |         |
+|   6 |       WINDOW SORT                   |                 |      1 |    100 |  80000 |00:01:55.82 |      39 |  20986 |  20000 |   175M|  4457K|   66M (0)|     157K|
+|   7 |        VIEW                         |                 |      1 |    100 |  80000 |00:00:21.79 |      37 |      0 |      0 |       |       |          |         |
+|*  8 |         CONNECT BY WITHOUT FILTERING|                 |      1 |        |  80000 |00:00:07.59 |      37 |      0 |      0 |       |       |          |         |
+|   9 |          TABLE ACCESS FULL          | BRACKET_STRINGS |      1 |    100 |    100 |00:00:00.01 |      37 |      0 |      0 |       |       |          |         |
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   8 - access("ID"=PRIOR NULL)
+
+PFB_QRY: 1/5 (1 of 1)
+SQL_ID  6yxgab2pjbcrr, child number 0
+-------------------------------------
+/* PFB_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || b.id || '","'
+|| t.o_pos || '","' || t.c_pos || '","' || t.str || '","4494"' FROM
+bracket_strings b CROSS JOIN TABLE (Strings.Parse_Brackets (b.str)) t
+ORDER BY b.id, t.o_pos
+
+Plan hash value: 3734693571
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |  40000 |00:00:01.45 |      37 |       |       |          |
+|   1 |  SORT ORDER BY                      |                 |      1 |    816K|  40000 |00:00:01.45 |      37 |    45M|  2378K|   40M (0)|
+|   2 |   NESTED LOOPS                      |                 |      1 |    816K|  40000 |00:00:02.28 |      37 |       |       |          |
+|   3 |    TABLE ACCESS FULL                | BRACKET_STRINGS |      1 |    100 |    100 |00:00:00.01 |      37 |       |       |          |
+|   4 |    COLLECTION ITERATOR PICKLER FETCH| PARSE_BRACKETS  |    100 |   8168 |  40000 |00:00:01.69 |       0 |       |       |          |
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Data Points
+===========
+Data Point:               size_wide      size_deep       cpu_time        elapsed       num_recs       per_part     group_size
+Data Point                      400              0            .04           .036            100            100            100
+Data Point                      400            100            .05           .058            100            100            100
+Data Point                      400            200            .04           .048            100            100            100
+Data Point                      400            300            .03           .044            100            100            100
+Data Point                      400            400            .03           .036            100            100            100
+
+num_records_out
+===============
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400          40000          40000          40000          40000          40000
+PFB_QRY                        W400          40000          40000          40000          40000          40000
+
+num_records_out_SLICE
+=====================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                       40000          40000          40000          40000          40000
+PFB_QRY                       40000          40000          40000          40000          40000
+
+num_records_out_RATIO
+=====================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400              1              1              1              1              1
+PFB_QRY                        W400              1              1              1              1              1
+
+num_records_out_SLICE_RATIO
+===========================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                           1              1              1              1              1
+PFB_QRY                           1              1              1              1              1
+
+cpu_time
+========
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400          20.71          21.91          22.99          23.53          23.92
+PFB_QRY                        W400            .83           1.06           1.33           1.44           1.47
+
+cpu_time_SLICE
+==============
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                       20.71          21.91          22.99          23.53          23.92
+PFB_QRY                         .83           1.06           1.33           1.44           1.47
+
+cpu_time_RATIO
+==============
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400          24.95          20.67          17.29          16.34          16.27
+PFB_QRY                        W400              1              1              1              1              1
+
+cpu_time_SLICE_RATIO
+====================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                       24.95          20.67          17.29          16.34          16.27
+PFB_QRY                           1              1              1              1              1
+
+elapsed_time
+============
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400         35.354         36.996         36.738         38.191         38.025
+PFB_QRY                        W400           .826          1.082          1.309           1.42          1.459
+
+elapsed_time_SLICE
+==================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                      35.354         36.996         36.738         38.191         38.025
+PFB_QRY                        .826          1.082          1.309           1.42          1.459
+
+elapsed_time_RATIO
+==================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400           42.8          34.19          28.07           26.9          26.06
+PFB_QRY                        W400              1              1              1              1              1
+
+elapsed_time_SLICE_RATIO
+========================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                        42.8          34.19          28.07           26.9          26.06
+PFB_QRY                           1              1              1              1              1
+
+memory_used
+===========
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400       69913600       69913600       69913600       69913600       69913600
+PFB_QRY                        W400        2498560       19981312       32496640       39980032       42431488
+
+memory_used_SLICE
+=================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                    69913600       69913600       69913600       69913600       69913600
+PFB_QRY                     2498560       19981312       32496640       39980032       42431488
+
+memory_used_RATIO
+=================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400          27.98            3.5           2.15           1.75           1.65
+PFB_QRY                        W400              1              1              1              1              1
+
+memory_used_SLICE_RATIO
+=======================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                       27.98            3.5           2.15           1.75           1.65
+PFB_QRY                           1              1              1              1              1
+
+buffers
+=======
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400             47             47             47             47             47
+PFB_QRY                        W400             37             37             37             37             37
+
+buffers_SLICE
+=============
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                          47             47             47             47             47
+PFB_QRY                          37             37             37             37             37
+
+buffers_RATIO
+=============
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400           1.27           1.27           1.27           1.27           1.27
+PFB_QRY                        W400              1              1              1              1              1
+
+buffers_SLICE_RATIO
+===================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                        1.27           1.27           1.27           1.27           1.27
+PFB_QRY                           1              1              1              1              1
+
+disk_reads
+==========
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400          60428          60443          60384          60413          60414
+PFB_QRY                        W400              0              0              0              0              0
+
+disk_reads_SLICE
+================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                       60428          60443          60384          60413          60414
+PFB_QRY                           0              0              0              0              0
+
+disk_reads_RATIO
+================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400    60428000000    60443000000    60384000000    60413000000    60414000000
+PFB_QRY                        W400              0              0              0              0              0
+
+disk_reads_SLICE_RATIO
+======================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                 60428000000    60443000000    60384000000    60413000000    60414000000
+PFB_QRY                           0              0              0              0              0
+
+disk_writes
+===========
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400          59442          59457          59398          59427          59428
+PFB_QRY                        W400              0              0              0              0              0
+
+disk_writes_SLICE
+=================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                       59442          59457          59398          59427          59428
+PFB_QRY                           0              0              0              0              0
+
+disk_writes_RATIO
+=================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400    59442000000    59457000000    59398000000    59427000000    59428000000
+PFB_QRY                        W400              0              0              0              0              0
+
+disk_writes_SLICE_RATIO
+=======================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                 59442000000    59457000000    59398000000    59427000000    59428000000
+PFB_QRY                           0              0              0              0              0
+
+tempseg_size
+============
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400         165888         166912         165888         165888         165888
+PFB_QRY                        W400
+
+tempseg_size_SLICE
+==================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                      165888         166912         165888         165888         165888
+PFB_QRY
+
+tempseg_size_RATIO
+==================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400              1              1              1              1              1
+PFB_QRY                        W400
+
+tempseg_size_SLICE_RATIO
+========================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                           1              1              1              1              1
+PFB_QRY
+
+cardinality
+===========
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400            100            100            100            100            100
+PFB_QRY                        W400         816800         816800         816800         816800         816800
+
+cardinality_SLICE
+=================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                         100            100            100            100            100
+PFB_QRY                      816800         816800         816800         816800         816800
+
+cardinality_RATIO
+=================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400              1              1              1              1              1
+PFB_QRY                        W400           8168           8168           8168           8168           8168
+
+cardinality_SLICE_RATIO
+=======================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                           1              1              1              1              1
+PFB_QRY                        8168           8168           8168           8168           8168
+
+output_rows
+===========
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400          80000          80000          80000          80000          80000
+PFB_QRY                        W400          40000          40000          40000          40000          40000
+
+output_rows_SLICE
+=================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                       80000          80000          80000          80000          80000
+PFB_QRY                       40000          40000          40000          40000          40000
+
+output_rows_RATIO
+=================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400              2              2              2              2              2
+PFB_QRY                        W400              1              1              1              1              1
+
+output_rows_SLICE_RATIO
+=======================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                           2              2              2              2              2
+PFB_QRY                           1              1              1              1              1
+
+cardinality_error
+=================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400          79900          79900          79900          79900          79900
+PFB_QRY                        W400         776800         776800         776800         776800         776800
+
+cardinality_error_SLICE
+=======================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                       79900          79900          79900          79900          79900
+PFB_QRY                      776800         776800         776800         776800         776800
+
+cardinality_error_RATIO
+=======================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400              1              1              1              1              1
+PFB_QRY                        W400           9.72           9.72           9.72           9.72           9.72
+
+cardinality_error_SLICE_RATIO
+=============================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                           1              1              1              1              1
+PFB_QRY                        9.72           9.72           9.72           9.72           9.72
+WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'sorts (rows)' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE point_deep WH
+EN 1 THEN f_real END) || '","' || Max (CASE point_deep WHEN 2 THEN f_real END) || '","' || Max (CASE point_deep WHEN 3 THEN f_real END) || '","' || Max (CASE point_deep WHEN 4 THEN f_real END) || '","
+' || Max (CASE point_deep WHEN 5 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+
+
+sorts (rows)
+============
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400         200100         200100         200100         200100         200100
+PFB_QRY                        W400          40000          40000          40000          40000          40000
+
+sorts (rows)_SLICE
+==================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                      200100         200100         200100         200100         200100
+PFB_QRY                       40000          40000          40000          40000          40000
+
+sorts (rows)_RATIO
+==================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400              5              5              5              5              5
+PFB_QRY                        W400              1              1              1              1              1
+
+sorts (rows)_SLICE_RATIO
+========================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                           5              5              5              5              5
+PFB_QRY                           1              1              1              1              1
+
+Top Stats
+=========
+WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'cell physical IO interconnect bytes' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' ||
+Max (CASE point_deep WHEN 1 THEN f_real END) || '","' || Max (CASE point_deep WHEN 2 THEN f_real END) || '","' || Max (CASE point_deep WHEN 3 THEN f_real END) || '","' || Max (CASE point_deep WHEN 4 T
+HEN f_real END) || '","' || Max (CASE point_deep WHEN 5 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+
+
+cell physical IO interconnect bytes
+===================================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400      981975040      982220800      981254144      981729280      981745664
+PFB_QRY                        W400              0              0              0              0              0
+
+cell physical IO interconnect bytes_SLICE
+=========================================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                   981975040      982220800      981254144      981729280      981745664
+PFB_QRY                           0              0              0              0              0
+
+cell physical IO interconnect bytes_RATIO
+=========================================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400981975040000000982220800000000981254144000000981729280000000981745664000000
+PFB_QRY                        W400              0              0              0              0              0
+
+cell physical IO interconnect bytes_SLICE_RATIO
+===============================================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY             981975040000000982220800000000981254144000000981729280000000981745664000000
+PFB_QRY                           0              0              0              0              0
+WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'physical read bytes' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE point_
+deep WHEN 1 THEN f_real END) || '","' || Max (CASE point_deep WHEN 2 THEN f_real END) || '","' || Max (CASE point_deep WHEN 3 THEN f_real END) || '","' || Max (CASE point_deep WHEN 4 THEN f_real END)
+|| '","' || Max (CASE point_deep WHEN 5 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+
+
+physical read bytes
+===================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400      495026176      495149056      494665728      494903296      494911488
+PFB_QRY                        W400              0              0              0              0              0
+
+physical read bytes_SLICE
+=========================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                   495026176      495149056      494665728      494903296      494911488
+PFB_QRY                           0              0              0              0              0
+
+physical read bytes_RATIO
+=========================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400495026176000000495149056000000494665728000000494903296000000494911488000000
+PFB_QRY                        W400              0              0              0              0              0
+
+physical read bytes_SLICE_RATIO
+===============================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY             495026176000000495149056000000494665728000000494903296000000494911488000000
+PFB_QRY                           0              0              0              0              0
+WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'physical write bytes' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE point
+_deep WHEN 1 THEN f_real END) || '","' || Max (CASE point_deep WHEN 2 THEN f_real END) || '","' || Max (CASE point_deep WHEN 3 THEN f_real END) || '","' || Max (CASE point_deep WHEN 4 THEN f_real END)
+ || '","' || Max (CASE point_deep WHEN 5 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+
+
+physical write bytes
+====================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400      486948864      487071744      486588416      486825984      486834176
+PFB_QRY                        W400              0              0              0              0              0
+
+physical write bytes_SLICE
+==========================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                   486948864      487071744      486588416      486825984      486834176
+PFB_QRY                           0              0              0              0              0
+
+physical write bytes_RATIO
+==========================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400486948864000000487071744000000486588416000000486825984000000486834176000000
+PFB_QRY                        W400              0              0              0              0              0
+
+physical write bytes_SLICE_RATIO
+================================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY             486948864000000487071744000000486588416000000486825984000000486834176000000
+PFB_QRY                           0              0              0              0              0
+WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'session uga memory' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE point_d
+eep WHEN 1 THEN f_real END) || '","' || Max (CASE point_deep WHEN 2 THEN f_real END) || '","' || Max (CASE point_deep WHEN 3 THEN f_real END) || '","' || Max (CASE point_deep WHEN 4 THEN f_real END) |
+| '","' || Max (CASE point_deep WHEN 5 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+
+
+session uga memory
+==================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400          65488         130976         196464         130976         130976
+PFB_QRY                        W400              0              0              0              0              0
+
+session uga memory_SLICE
+========================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                       65488         130976         196464         130976         130976
+PFB_QRY                           0              0              0              0              0
+
+session uga memory_RATIO
+========================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400    65488000000   130976000000   196464000000   130976000000   130976000000
+PFB_QRY                        W400              0              0              0              0              0
+
+session uga memory_SLICE_RATIO
+==============================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                 65488000000   130976000000   196464000000   130976000000   130976000000
+PFB_QRY                           0              0              0              0              0
+WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'sorts (rows)' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE point_deep WH
+EN 1 THEN f_real END) || '","' || Max (CASE point_deep WHEN 2 THEN f_real END) || '","' || Max (CASE point_deep WHEN 3 THEN f_real END) || '","' || Max (CASE point_deep WHEN 4 THEN f_real END) || '","
+' || Max (CASE point_deep WHEN 5 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+
+
+sorts (rows)
+============
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400         200100         200100         200100         200100         200100
+PFB_QRY                        W400          40000          40000          40000          40000          40000
+
+sorts (rows)_SLICE
+==================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                      200100         200100         200100         200100         200100
+PFB_QRY                       40000          40000          40000          40000          40000
+
+sorts (rows)_RATIO
+==================
+Run Type                      Width             D0           D100           D200           D300           D400
+CBL_QRY                        W400              5              5              5              5              5
+PFB_QRY                        W400              1              1              1              1              1
+
+sorts (rows)_SLICE_RATIO
+========================
+Run Type                         D0           D100           D200           D300           D400
+CBL_QRY                           5              5              5              5              5
+PFB_QRY                           1              1              1              1              1
+
+Timer Set: File Writer, Constructed at 19 Feb 2017 15:30:28, written at 15:30:29
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.00        0.00             1        0.00000        0.00000
+(Other)        0.95        0.92             1        0.95200        0.92000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          0.95        0.92             2        0.47600        0.46000
+-------  ----------  ----------  ------------  -------------  -------------
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, FACT f_real, Round (FACT / Greatest (Min (FACT) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM bench_v$sql_pl
+an_stats_all_v) SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE point_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_n
+ame, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+Distinct Plans
+==============
+CBL_QRY: 1/5 (1 of 1)
+SQL_ID  c57pxwm8gc9nr, child number 0
+-------------------------------------
+/* CBL_QRY */ WITH d ( id, str, pos ) as ( select id, str,
+regexp_instr(str, '\(|\)', 1, level) from bracket_strings connect by
+level <= length(str) - length(translate(str, 'x()', 'x')) and prior id
+= id and prior sys_guid() is not null ), p ( id, str, pos, flag, l_ct,
+ct ) as ( select id, str, pos, case substr(str, pos, 1) when '(' then 1
+else -1 end, sum(case substr(str, pos, 1) when '(' then 1 end) over
+(partition by id order by pos), sum(case substr(str, pos, 1) when '('
+then 1 else -1 end) over (partition by id order by pos) from d ), f (
+id, str, pos, flag, l_ct, ct, o_ct ) as ( select id, str, pos, flag,
+l_ct, ct + case flag when 1 then 0 else 1 end as ct, row_number() over
+(partition by id, flag, ct order by pos) from p ) SELECT /*+
+GATHER_PLAN_STATISTICS */ '"' || id || '","' || min(case when flag = 1
+then pos end) || '","' || min(case when flag = -1 then pos end) ||
+'","' || Substr (str, min(case when flag = 1 then pos end), min(case
+when flag = -1 then pos end) - min(case wh
+
+Plan hash value: 2736674058
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |  40000 |00:00:38.01 |      47 |  60414 |  59428 |       |       |          |         |
+|   1 |  SORT ORDER BY                      |                 |      1 |    100 |  40000 |00:00:38.01 |      47 |  60414 |  59428 |    45M|  2378K|   40M (0)|         |
+|   2 |   HASH GROUP BY                     |                 |      1 |    100 |  40000 |00:02:10.14 |      47 |  60414 |  59428 |   158M|  7244K|   20M (1)|     162K|
+|   3 |    VIEW                             |                 |      1 |    100 |  80000 |00:01:04.47 |      47 |  40989 |  40003 |       |       |          |         |
+|   4 |     WINDOW SORT                     |                 |      1 |    100 |  80000 |00:01:04.42 |      47 |  40989 |  40003 |   175M|  4459K|   66M (1)|     157K|
+|   5 |      VIEW                           |                 |      1 |    100 |  80000 |00:01:56.24 |      39 |  20986 |  20000 |       |       |          |         |
+|   6 |       WINDOW SORT                   |                 |      1 |    100 |  80000 |00:01:55.82 |      39 |  20986 |  20000 |   175M|  4457K|   66M (0)|     157K|
+|   7 |        VIEW                         |                 |      1 |    100 |  80000 |00:00:21.79 |      37 |      0 |      0 |       |       |          |         |
+|*  8 |         CONNECT BY WITHOUT FILTERING|                 |      1 |        |  80000 |00:00:07.59 |      37 |      0 |      0 |       |       |          |         |
+|   9 |          TABLE ACCESS FULL          | BRACKET_STRINGS |      1 |    100 |    100 |00:00:00.01 |      37 |      0 |      0 |       |       |          |         |
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   8 - access("ID"=PRIOR NULL)
+
+PFB_QRY: 1/5 (1 of 1)
+SQL_ID  6yxgab2pjbcrr, child number 0
+-------------------------------------
+/* PFB_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || b.id || '","'
+|| t.o_pos || '","' || t.c_pos || '","' || t.str || '","4494"' FROM
+bracket_strings b CROSS JOIN TABLE (Strings.Parse_Brackets (b.str)) t
+ORDER BY b.id, t.o_pos
+
+Plan hash value: 3734693571
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+--------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                 |      1 |        |  40000 |00:00:01.45 |      37 |       |       |          |
+|   1 |  SORT ORDER BY                      |                 |      1 |    816K|  40000 |00:00:01.45 |      37 |    45M|  2378K|   40M (0)|
+|   2 |   NESTED LOOPS                      |                 |      1 |    816K|  40000 |00:00:02.28 |      37 |       |       |          |
+|   3 |    TABLE ACCESS FULL                | BRACKET_STRINGS |      1 |    100 |    100 |00:00:00.01 |      37 |       |       |          |
+|   4 |    COLLECTION ITERATOR PICKLER FETCH| PARSE_BRACKETS  |    100 |   8168 |  40000 |00:00:01.69 |       0 |       |       |          |
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Data Points
+===========
+Data Point:               size_wide      size_deep       cpu_time        elapsed       num_recs       per_part     group_size
+Data Point                      400              0            .04           .036            100            100            100
+Data Point                      400            100            .05           .058            100            100            100
+Data Point                      400            200            .04           .048            100            100            100
+Data Point                      400            300            .03           .044            100            100            100
+Data Point                      400            400            .03           .036            100            100            100
+
+num_records_out
+===============
+Run Type                      Depth           W400
+CBL_QRY                          D0          40000
+CBL_QRY                        D100          40000
+CBL_QRY                        D200          40000
+CBL_QRY                        D300          40000
+CBL_QRY                        D400          40000
+PFB_QRY                          D0          40000
+PFB_QRY                        D100          40000
+PFB_QRY                        D200          40000
+PFB_QRY                        D300          40000
+PFB_QRY                        D400          40000
+
+num_records_out_SLICE
+=====================
+Run Type                       W400
+CBL_QRY                       40000
+PFB_QRY                       40000
+
+num_records_out_RATIO
+=====================
+Run Type                      Depth           W400
+CBL_QRY                          D0              1
+CBL_QRY                        D100              1
+CBL_QRY                        D200              1
+CBL_QRY                        D300              1
+CBL_QRY                        D400              1
+PFB_QRY                          D0              1
+PFB_QRY                        D100              1
+PFB_QRY                        D200              1
+PFB_QRY                        D300              1
+PFB_QRY                        D400              1
+
+num_records_out_SLICE_RATIO
+===========================
+Run Type                       W400
+CBL_QRY                           1
+PFB_QRY                           1
+
+cpu_time
+========
+Run Type                      Depth           W400
+CBL_QRY                          D0          20.71
+CBL_QRY                        D100          21.91
+CBL_QRY                        D200          22.99
+CBL_QRY                        D300          23.53
+CBL_QRY                        D400          23.92
+PFB_QRY                          D0            .83
+PFB_QRY                        D100           1.06
+PFB_QRY                        D200           1.33
+PFB_QRY                        D300           1.44
+PFB_QRY                        D400           1.47
+
+cpu_time_SLICE
+==============
+Run Type                       W400
+CBL_QRY                       23.92
+PFB_QRY                        1.47
+
+cpu_time_RATIO
+==============
+Run Type                      Depth           W400
+CBL_QRY                          D0          24.95
+CBL_QRY                        D100          20.67
+CBL_QRY                        D200          17.29
+CBL_QRY                        D300          16.34
+CBL_QRY                        D400          16.27
+PFB_QRY                          D0              1
+PFB_QRY                        D100              1
+PFB_QRY                        D200              1
+PFB_QRY                        D300              1
+PFB_QRY                        D400              1
+
+cpu_time_SLICE_RATIO
+====================
+Run Type                       W400
+CBL_QRY                       16.27
+PFB_QRY                           1
+
+elapsed_time
+============
+Run Type                      Depth           W400
+CBL_QRY                          D0         35.354
+CBL_QRY                        D100         36.996
+CBL_QRY                        D200         36.738
+CBL_QRY                        D300         38.191
+CBL_QRY                        D400         38.025
+PFB_QRY                          D0           .826
+PFB_QRY                        D100          1.082
+PFB_QRY                        D200          1.309
+PFB_QRY                        D300           1.42
+PFB_QRY                        D400          1.459
+
+elapsed_time_SLICE
+==================
+Run Type                       W400
+CBL_QRY                      38.025
+PFB_QRY                       1.459
+
+elapsed_time_RATIO
+==================
+Run Type                      Depth           W400
+CBL_QRY                          D0           42.8
+CBL_QRY                        D100          34.19
+CBL_QRY                        D200          28.07
+CBL_QRY                        D300           26.9
+CBL_QRY                        D400          26.06
+PFB_QRY                          D0              1
+PFB_QRY                        D100              1
+PFB_QRY                        D200              1
+PFB_QRY                        D300              1
+PFB_QRY                        D400              1
+
+elapsed_time_SLICE_RATIO
+========================
+Run Type                       W400
+CBL_QRY                       26.06
+PFB_QRY                           1
+
+memory_used
+===========
+Run Type                      Depth           W400
+CBL_QRY                          D0       69913600
+CBL_QRY                        D100       69913600
+CBL_QRY                        D200       69913600
+CBL_QRY                        D300       69913600
+CBL_QRY                        D400       69913600
+PFB_QRY                          D0        2498560
+PFB_QRY                        D100       19981312
+PFB_QRY                        D200       32496640
+PFB_QRY                        D300       39980032
+PFB_QRY                        D400       42431488
+
+memory_used_SLICE
+=================
+Run Type                       W400
+CBL_QRY                    69913600
+PFB_QRY                    42431488
+
+memory_used_RATIO
+=================
+Run Type                      Depth           W400
+CBL_QRY                          D0          27.98
+CBL_QRY                        D100            3.5
+CBL_QRY                        D200           2.15
+CBL_QRY                        D300           1.75
+CBL_QRY                        D400           1.65
+PFB_QRY                          D0              1
+PFB_QRY                        D100              1
+PFB_QRY                        D200              1
+PFB_QRY                        D300              1
+PFB_QRY                        D400              1
+
+memory_used_SLICE_RATIO
+=======================
+Run Type                       W400
+CBL_QRY                        1.65
+PFB_QRY                           1
+
+buffers
+=======
+Run Type                      Depth           W400
+CBL_QRY                          D0             47
+CBL_QRY                        D100             47
+CBL_QRY                        D200             47
+CBL_QRY                        D300             47
+CBL_QRY                        D400             47
+PFB_QRY                          D0             37
+PFB_QRY                        D100             37
+PFB_QRY                        D200             37
+PFB_QRY                        D300             37
+PFB_QRY                        D400             37
+
+buffers_SLICE
+=============
+Run Type                       W400
+CBL_QRY                          47
+PFB_QRY                          37
+
+buffers_RATIO
+=============
+Run Type                      Depth           W400
+CBL_QRY                          D0           1.27
+CBL_QRY                        D100           1.27
+CBL_QRY                        D200           1.27
+CBL_QRY                        D300           1.27
+CBL_QRY                        D400           1.27
+PFB_QRY                          D0              1
+PFB_QRY                        D100              1
+PFB_QRY                        D200              1
+PFB_QRY                        D300              1
+PFB_QRY                        D400              1
+
+buffers_SLICE_RATIO
+===================
+Run Type                       W400
+CBL_QRY                        1.27
+PFB_QRY                           1
+
+disk_reads
+==========
+Run Type                      Depth           W400
+CBL_QRY                          D0          60428
+CBL_QRY                        D100          60443
+CBL_QRY                        D200          60384
+CBL_QRY                        D300          60413
+CBL_QRY                        D400          60414
+PFB_QRY                          D0              0
+PFB_QRY                        D100              0
+PFB_QRY                        D200              0
+PFB_QRY                        D300              0
+PFB_QRY                        D400              0
+
+disk_reads_SLICE
+================
+Run Type                       W400
+CBL_QRY                       60414
+PFB_QRY                           0
+
+disk_reads_RATIO
+================
+Run Type                      Depth           W400
+CBL_QRY                          D0    60428000000
+CBL_QRY                        D100    60443000000
+CBL_QRY                        D200    60384000000
+CBL_QRY                        D300    60413000000
+CBL_QRY                        D400    60414000000
+PFB_QRY                          D0              0
+PFB_QRY                        D100              0
+PFB_QRY                        D200              0
+PFB_QRY                        D300              0
+PFB_QRY                        D400              0
+
+disk_reads_SLICE_RATIO
+======================
+Run Type                       W400
+CBL_QRY                 60414000000
+PFB_QRY                           0
+
+disk_writes
+===========
+Run Type                      Depth           W400
+CBL_QRY                          D0          59442
+CBL_QRY                        D100          59457
+CBL_QRY                        D200          59398
+CBL_QRY                        D300          59427
+CBL_QRY                        D400          59428
+PFB_QRY                          D0              0
+PFB_QRY                        D100              0
+PFB_QRY                        D200              0
+PFB_QRY                        D300              0
+PFB_QRY                        D400              0
+
+disk_writes_SLICE
+=================
+Run Type                       W400
+CBL_QRY                       59428
+PFB_QRY                           0
+
+disk_writes_RATIO
+=================
+Run Type                      Depth           W400
+CBL_QRY                          D0    59442000000
+CBL_QRY                        D100    59457000000
+CBL_QRY                        D200    59398000000
+CBL_QRY                        D300    59427000000
+CBL_QRY                        D400    59428000000
+PFB_QRY                          D0              0
+PFB_QRY                        D100              0
+PFB_QRY                        D200              0
+PFB_QRY                        D300              0
+PFB_QRY                        D400              0
+
+disk_writes_SLICE_RATIO
+=======================
+Run Type                       W400
+CBL_QRY                 59428000000
+PFB_QRY                           0
+
+tempseg_size
+============
+Run Type                      Depth           W400
+CBL_QRY                          D0         165888
+CBL_QRY                        D100         166912
+CBL_QRY                        D200         165888
+CBL_QRY                        D300         165888
+CBL_QRY                        D400         165888
+PFB_QRY                          D0
+PFB_QRY                        D100
+PFB_QRY                        D200
+PFB_QRY                        D300
+PFB_QRY                        D400
+
+tempseg_size_SLICE
+==================
+Run Type                       W400
+CBL_QRY                      165888
+PFB_QRY
+
+tempseg_size_RATIO
+==================
+Run Type                      Depth           W400
+CBL_QRY                          D0              1
+CBL_QRY                        D100              1
+CBL_QRY                        D200              1
+CBL_QRY                        D300              1
+CBL_QRY                        D400              1
+PFB_QRY                          D0
+PFB_QRY                        D100
+PFB_QRY                        D200
+PFB_QRY                        D300
+PFB_QRY                        D400
+
+tempseg_size_SLICE_RATIO
+========================
+Run Type                       W400
+CBL_QRY                           1
+PFB_QRY
+
+cardinality
+===========
+Run Type                      Depth           W400
+CBL_QRY                          D0            100
+CBL_QRY                        D100            100
+CBL_QRY                        D200            100
+CBL_QRY                        D300            100
+CBL_QRY                        D400            100
+PFB_QRY                          D0         816800
+PFB_QRY                        D100         816800
+PFB_QRY                        D200         816800
+PFB_QRY                        D300         816800
+PFB_QRY                        D400         816800
+
+cardinality_SLICE
+=================
+Run Type                       W400
+CBL_QRY                         100
+PFB_QRY                      816800
+
+cardinality_RATIO
+=================
+Run Type                      Depth           W400
+CBL_QRY                          D0              1
+CBL_QRY                        D100              1
+CBL_QRY                        D200              1
+CBL_QRY                        D300              1
+CBL_QRY                        D400              1
+PFB_QRY                          D0           8168
+PFB_QRY                        D100           8168
+PFB_QRY                        D200           8168
+PFB_QRY                        D300           8168
+PFB_QRY                        D400           8168
+
+cardinality_SLICE_RATIO
+=======================
+Run Type                       W400
+CBL_QRY                           1
+PFB_QRY                        8168
+
+output_rows
+===========
+Run Type                      Depth           W400
+CBL_QRY                          D0          80000
+CBL_QRY                        D100          80000
+CBL_QRY                        D200          80000
+CBL_QRY                        D300          80000
+CBL_QRY                        D400          80000
+PFB_QRY                          D0          40000
+PFB_QRY                        D100          40000
+PFB_QRY                        D200          40000
+PFB_QRY                        D300          40000
+PFB_QRY                        D400          40000
+
+output_rows_SLICE
+=================
+Run Type                       W400
+CBL_QRY                       80000
+PFB_QRY                       40000
+
+output_rows_RATIO
+=================
+Run Type                      Depth           W400
+CBL_QRY                          D0              2
+CBL_QRY                        D100              2
+CBL_QRY                        D200              2
+CBL_QRY                        D300              2
+CBL_QRY                        D400              2
+PFB_QRY                          D0              1
+PFB_QRY                        D100              1
+PFB_QRY                        D200              1
+PFB_QRY                        D300              1
+PFB_QRY                        D400              1
+
+output_rows_SLICE_RATIO
+=======================
+Run Type                       W400
+CBL_QRY                           2
+PFB_QRY                           1
+
+cardinality_error
+=================
+Run Type                      Depth           W400
+CBL_QRY                          D0          79900
+CBL_QRY                        D100          79900
+CBL_QRY                        D200          79900
+CBL_QRY                        D300          79900
+CBL_QRY                        D400          79900
+PFB_QRY                          D0         776800
+PFB_QRY                        D100         776800
+PFB_QRY                        D200         776800
+PFB_QRY                        D300         776800
+PFB_QRY                        D400         776800
+
+cardinality_error_SLICE
+=======================
+Run Type                       W400
+CBL_QRY                       79900
+PFB_QRY                      776800
+
+cardinality_error_RATIO
+=======================
+Run Type                      Depth           W400
+CBL_QRY                          D0              1
+CBL_QRY                        D100              1
+CBL_QRY                        D200              1
+CBL_QRY                        D300              1
+CBL_QRY                        D400              1
+PFB_QRY                          D0           9.72
+PFB_QRY                        D100           9.72
+PFB_QRY                        D200           9.72
+PFB_QRY                        D300           9.72
+PFB_QRY                        D400           9.72
+
+cardinality_error_SLICE_RATIO
+=============================
+Run Type                       W400
+CBL_QRY                           1
+PFB_QRY                        9.72
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'sorts (rows)' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE point_wide WH
+EN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+sorts (rows)
+============
+Run Type                      Depth           W400
+CBL_QRY                          D0         200100
+CBL_QRY                        D100         200100
+CBL_QRY                        D200         200100
+CBL_QRY                        D300         200100
+CBL_QRY                        D400         200100
+PFB_QRY                          D0          40000
+PFB_QRY                        D100          40000
+PFB_QRY                        D200          40000
+PFB_QRY                        D300          40000
+PFB_QRY                        D400          40000
+
+sorts (rows)_SLICE
+==================
+Run Type                       W400
+CBL_QRY                      200100
+PFB_QRY                       40000
+
+sorts (rows)_RATIO
+==================
+Run Type                      Depth           W400
+CBL_QRY                          D0              5
+CBL_QRY                        D100              5
+CBL_QRY                        D200              5
+CBL_QRY                        D300              5
+CBL_QRY                        D400              5
+PFB_QRY                          D0              1
+PFB_QRY                        D100              1
+PFB_QRY                        D200              1
+PFB_QRY                        D300              1
+PFB_QRY                        D400              1
+
+sorts (rows)_SLICE_RATIO
+========================
+Run Type                       W400
+CBL_QRY                           5
+PFB_QRY                           1
+
+Top Stats
+=========
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'cell physical IO interconnect bytes' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' ||
+Max (CASE point_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+cell physical IO interconnect bytes
+===================================
+Run Type                      Depth           W400
+CBL_QRY                          D0      981975040
+CBL_QRY                        D100      982220800
+CBL_QRY                        D200      981254144
+CBL_QRY                        D300      981729280
+CBL_QRY                        D400      981745664
+PFB_QRY                          D0              0
+PFB_QRY                        D100              0
+PFB_QRY                        D200              0
+PFB_QRY                        D300              0
+PFB_QRY                        D400              0
+
+cell physical IO interconnect bytes_SLICE
+=========================================
+Run Type                       W400
+CBL_QRY                   981745664
+PFB_QRY                           0
+
+cell physical IO interconnect bytes_RATIO
+=========================================
+Run Type                      Depth           W400
+CBL_QRY                          D0981975040000000
+CBL_QRY                        D100982220800000000
+CBL_QRY                        D200981254144000000
+CBL_QRY                        D300981729280000000
+CBL_QRY                        D400981745664000000
+PFB_QRY                          D0              0
+PFB_QRY                        D100              0
+PFB_QRY                        D200              0
+PFB_QRY                        D300              0
+PFB_QRY                        D400              0
+
+cell physical IO interconnect bytes_SLICE_RATIO
+===============================================
+Run Type                       W400
+CBL_QRY             981745664000000
+PFB_QRY                           0
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'physical read bytes' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE point_
+wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+physical read bytes
+===================
+Run Type                      Depth           W400
+CBL_QRY                          D0      495026176
+CBL_QRY                        D100      495149056
+CBL_QRY                        D200      494665728
+CBL_QRY                        D300      494903296
+CBL_QRY                        D400      494911488
+PFB_QRY                          D0              0
+PFB_QRY                        D100              0
+PFB_QRY                        D200              0
+PFB_QRY                        D300              0
+PFB_QRY                        D400              0
+
+physical read bytes_SLICE
+=========================
+Run Type                       W400
+CBL_QRY                   494911488
+PFB_QRY                           0
+
+physical read bytes_RATIO
+=========================
+Run Type                      Depth           W400
+CBL_QRY                          D0495026176000000
+CBL_QRY                        D100495149056000000
+CBL_QRY                        D200494665728000000
+CBL_QRY                        D300494903296000000
+CBL_QRY                        D400494911488000000
+PFB_QRY                          D0              0
+PFB_QRY                        D100              0
+PFB_QRY                        D200              0
+PFB_QRY                        D300              0
+PFB_QRY                        D400              0
+
+physical read bytes_SLICE_RATIO
+===============================
+Run Type                       W400
+CBL_QRY             494911488000000
+PFB_QRY                           0
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'physical write bytes' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE point
+_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+physical write bytes
+====================
+Run Type                      Depth           W400
+CBL_QRY                          D0      486948864
+CBL_QRY                        D100      487071744
+CBL_QRY                        D200      486588416
+CBL_QRY                        D300      486825984
+CBL_QRY                        D400      486834176
+PFB_QRY                          D0              0
+PFB_QRY                        D100              0
+PFB_QRY                        D200              0
+PFB_QRY                        D300              0
+PFB_QRY                        D400              0
+
+physical write bytes_SLICE
+==========================
+Run Type                       W400
+CBL_QRY                   486834176
+PFB_QRY                           0
+
+physical write bytes_RATIO
+==========================
+Run Type                      Depth           W400
+CBL_QRY                          D0486948864000000
+CBL_QRY                        D100487071744000000
+CBL_QRY                        D200486588416000000
+CBL_QRY                        D300486825984000000
+CBL_QRY                        D400486834176000000
+PFB_QRY                          D0              0
+PFB_QRY                        D100              0
+PFB_QRY                        D200              0
+PFB_QRY                        D300              0
+PFB_QRY                        D400              0
+
+physical write bytes_SLICE_RATIO
+================================
+Run Type                       W400
+CBL_QRY             486834176000000
+PFB_QRY                           0
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'session uga memory' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE point_w
+ide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+session uga memory
+==================
+Run Type                      Depth           W400
+CBL_QRY                          D0          65488
+CBL_QRY                        D100         130976
+CBL_QRY                        D200         196464
+CBL_QRY                        D300         130976
+CBL_QRY                        D400         130976
+PFB_QRY                          D0              0
+PFB_QRY                        D100              0
+PFB_QRY                        D200              0
+PFB_QRY                        D300              0
+PFB_QRY                        D400              0
+
+session uga memory_SLICE
+========================
+Run Type                       W400
+CBL_QRY                      130976
+PFB_QRY                           0
+
+session uga memory_RATIO
+========================
+Run Type                      Depth           W400
+CBL_QRY                          D0    65488000000
+CBL_QRY                        D100   130976000000
+CBL_QRY                        D200   196464000000
+CBL_QRY                        D300   130976000000
+CBL_QRY                        D400   130976000000
+PFB_QRY                          D0              0
+PFB_QRY                        D100              0
+PFB_QRY                        D200              0
+PFB_QRY                        D300              0
+PFB_QRY                        D400              0
+
+session uga memory_SLICE_RATIO
+==============================
+Run Type                       W400
+CBL_QRY                130976000000
+PFB_QRY                           0
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'sorts (rows)' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE point_wide WH
+EN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+sorts (rows)
+============
+Run Type                      Depth           W400
+CBL_QRY                          D0         200100
+CBL_QRY                        D100         200100
+CBL_QRY                        D200         200100
+CBL_QRY                        D300         200100
+CBL_QRY                        D400         200100
+PFB_QRY                          D0          40000
+PFB_QRY                        D100          40000
+PFB_QRY                        D200          40000
+PFB_QRY                        D300          40000
+PFB_QRY                        D400          40000
+
+sorts (rows)_SLICE
+==================
+Run Type                       W400
+CBL_QRY                      200100
+PFB_QRY                       40000
+
+sorts (rows)_RATIO
+==================
+Run Type                      Depth           W400
+CBL_QRY                          D0              5
+CBL_QRY                        D100              5
+CBL_QRY                        D200              5
+CBL_QRY                        D300              5
+CBL_QRY                        D400              5
+PFB_QRY                          D0              1
+PFB_QRY                        D100              1
+PFB_QRY                        D200              1
+PFB_QRY                        D300              1
+PFB_QRY                        D400              1
+
+sorts (rows)_SLICE_RATIO
+========================
+Run Type                       W400
+CBL_QRY                           5
+PFB_QRY                           1
+
+Timer Set: File Writer, Constructed at 19 Feb 2017 15:30:29, written at 15:30:30
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.00        0.00             1        0.00000        0.00000
+(Other)        1.63        1.00             1        1.63300        1.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          1.63        1.00             2        0.81650        0.50000
+-------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: Top, Constructed at 19 Feb 2017 15:27:10, written at 15:30:30
+========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
+
+Timer          Elapsed         CPU         Calls       Ela/Call       CPU/Call
+----------  ----------  ----------  ------------  -------------  -------------
+Setup Data        0.22        0.19             5        0.04440        0.03800
+Querying        197.71      125.30             5       39.54160       25.06000
+(Other)           2.61        1.92             1        2.61400        1.92000
+----------  ----------  ----------  ------------  -------------  -------------
+Total           200.54      127.41            11       18.23127       11.58273
+----------  ----------  ----------  ------------  -------------  -------------
+Successfully completed
+
+2123 rows selected.
+
+Elapsed: 00:00:00.18
+SQL> 
+SQL> SELECT 'End: ' || To_Char(SYSDATE,'DD-MON-YYYY HH24:MI:SS') FROM DUAL
+  2  /
+
+'END:'||TO_CHAR(SYSDATE,'DD-MON-YY
+----------------------------------
+End: 19-FEB-2017 15:30:30
+
+Elapsed: 00:00:00.00
+SQL> SPOOL OFF

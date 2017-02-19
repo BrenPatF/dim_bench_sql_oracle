@@ -206,21 +206,23 @@ BEGIN
   SELECT /* GRP_CNT */ Count (DISTINCT final_grp) / p_point_wide
     INTO l_cnt_base
     FROM (
-SELECT
-        cat         cat,
-        final_grp   final_grp,
-        num_rows    num_rows
-  FROM items
- MATCH_RECOGNIZE (
-   PARTITION BY cat
-   ORDER BY seq DESC
-   MEASURES FIRST (seq) final_grp,
-            COUNT(*) num_rows
-      ONE ROW PER MATCH
-   PATTERN (strt sm*)
-   DEFINE sm AS Sum (sm.weight) <= 5000
- ) m
-);
+  SELECT id,
+         cat, 
+         seq, 
+         weight,
+         sub_weight,
+         final_grp
+    FROM items
+   MODEL
+     PARTITION BY (cat)
+     DIMENSION BY (Row_Number() OVER (PARTITION BY cat ORDER BY seq DESC) rn)
+     MEASURES (id, weight, weight sub_weight, id final_grp, seq)
+     RULES AUTOMATIC ORDER (
+       sub_weight[rn > 1] = CASE WHEN sub_weight[cv()-1] >= c_weight_limit THEN weight[cv()] ELSE sub_weight[cv()-1] + weight[cv()] END,
+       final_grp[ANY] = PRESENTV (final_grp[cv()+1], CASE WHEN sub_weight[cv()] >= c_weight_limit THEN id[cv()] ELSE final_grp[cv()+1] END, id[cv()])
+     )
+  );
+
   Timer_Set.Increment_Time (l_timer, 'GRP_CNT');
 
   Utils.Write_Log (p_point_wide * p_point_deep || ' (' || p_point_deep || ') records (per category) added, average group size (from) = ' || Round (p_point_deep / l_cnt_base, 1) || ' (' ||
