@@ -15,12 +15,15 @@ Brendan Furey        05-Nov-2016 1.0   Created, with 'BURST'
 Brendan Furey        19-Nov-2016 1.1   Added 'WEIGHTS'
 Brendan Furey        27-Nov-2016 1.2   Added 'STR_SPLIT'
 Brendan Furey        05-Feb-2017 1.3   Added 'BRACKET'
+Brendan Furey        05-Mar-2017 1.4   Added 'ORG_STRUCT', 'ORG_HINTS'
 
 ***************************************************************************************************/
   c_query_group_wts        CONSTANT VARCHAR2(30) := 'WEIGHTS';
   c_query_group_bur        CONSTANT VARCHAR2(30) := 'BURST';
   c_query_group_str        CONSTANT VARCHAR2(30) := 'STR_SPLIT';
   c_query_group_bra        CONSTANT VARCHAR2(30) := 'BRACKET';
+  c_query_group_org        CONSTANT VARCHAR2(30) := 'ORG_STRUCT';
+  c_query_group_orh        CONSTANT VARCHAR2(30) := 'ORG_HINTS';
 
 /***************************************************************************************************
 
@@ -376,6 +379,116 @@ BEGIN
 
 END Setup_Data_Bra;
 
+PROCEDURE Setup_Data_Org (p_point_wide                PLS_INTEGER, -- wide data point
+                          p_point_deep                PLS_INTEGER, -- deep data point
+                          x_num_records           OUT PLS_INTEGER, -- number of records created
+                          x_num_records_per_part  OUT NUMBER,      -- number of records created per partition key
+                          x_group_size            OUT NUMBER,      -- group size, where applicable
+                          x_text                  OUT VARCHAR2) IS -- descriptive text about the data set
+
+  l_base_org                     VARCHAR2(4000);
+  l_org_wide                     VARCHAR2(4000);
+
+  c_n_top_level_orgs             CONSTANT PLS_INTEGER := 10;
+  c_n_levels                     CONSTANT PLS_INTEGER := 5;
+  c_deep_factor                  CONSTANT NUMBER := 0.001;
+  l_timer                        PLS_INTEGER;
+  l_org_id                       PLS_INTEGER := 0;
+  l_ost_id                       PLS_INTEGER := 0;
+  l_parent_org_id_min            PLS_INTEGER;
+  l_parent_org_id_max            PLS_INTEGER;
+  l_lev_orgs                     PLS_INTEGER := c_n_top_level_orgs;
+
+  l_first_org_lis                L1_num_arr := L1_num_arr ();
+  PROCEDURE Ins_Org (p_level PLS_INTEGER, p_org_name VARCHAR2) IS
+  BEGIN
+
+    l_org_id := l_org_id + 1;
+    INSERT INTO orgs VALUES (l_org_id, p_level, p_org_name);
+    
+  END Ins_Org;
+
+  PROCEDURE Ins_Ost (p_level PLS_INTEGER, p_org_id PLS_INTEGER, p_child_org_id PLS_INTEGER) IS
+  BEGIN
+
+    l_ost_id := l_ost_id + 1;
+    INSERT INTO org_structure VALUES (l_ost_id, p_level, p_org_id, p_child_org_id, DBMS_Random.Value);
+    
+  END Ins_Ost;
+
+BEGIN
+
+  l_timer := Timer_Set.Construct ('Setup');
+
+  Utils.g_group_text := 'Setup data : ' || p_point_wide || '-' || p_point_deep;
+  EXECUTE IMMEDIATE 'TRUNCATE TABLE org_structure';
+  Utils.Write_Log ('org_structure truncated');
+  EXECUTE IMMEDIATE 'TRUNCATE TABLE orgs';
+  Utils.Write_Log ('orgs truncated');
+
+  l_first_org_lis.EXTEND (c_n_levels + 1);
+  FOR i IN 1..c_n_levels LOOP
+
+    l_first_org_lis(i) := l_org_id + 1;
+    FOR j IN 1..l_lev_orgs LOOP
+
+      Ins_Org (i, 'L' || i || ' Org ' || j);
+
+    END LOOP;
+    l_lev_orgs := l_lev_orgs * (1 + p_point_wide/100);
+
+  END LOOP;
+  l_first_org_lis(c_n_levels + 1) := l_org_id + 1;
+
+  FOR i IN REVERSE 2..c_n_levels LOOP
+
+    l_parent_org_id_min := l_first_org_lis(i-1);
+    l_parent_org_id_max := l_first_org_lis(i) - 1;
+    FOR j IN l_first_org_lis(i)..l_first_org_lis(i+1) - 1 LOOP
+
+      FOR k IN 1..Greatest (1, Round (c_deep_factor * p_point_deep * (l_parent_org_id_max - l_parent_org_id_min + 1))) LOOP
+
+        Ins_Ost (i-1, 
+                 l_parent_org_id_min + DBMS_Random.Value * (l_parent_org_id_max - l_parent_org_id_min),
+                 j);
+
+      END LOOP;
+
+    END LOOP;
+    l_lev_orgs := l_lev_orgs * (1 + p_point_wide/100);
+
+  END LOOP;
+  COMMIT;
+
+  Timer_Set.Increment_Time (l_timer, 'Insert data');
+
+  DBMS_Stats.Gather_Table_Stats (
+		ownname			=> 'BENCH',
+		tabname			=> 'orgs');
+  DBMS_Stats.Gather_Table_Stats (
+		ownname			=> 'BENCH',
+		tabname			=> 'org_structure');
+  Timer_Set.Increment_Time (l_timer, 'Gather_Table_Stats');
+
+  FOR r_org IN (SELECT org_level, COUNT(*) n_recs FROM orgs GROUP BY org_level ORDER BY 1) LOOP
+
+    Utils.Write_Log ('orgs level ' || r_org.org_level || ', ' || r_org.n_recs || ' records');
+
+  END LOOP;
+  FOR r_ost IN (SELECT struct_level, COUNT(*) n_recs FROM org_structure GROUP BY struct_level ORDER BY 1) LOOP
+
+    Utils.Write_Log ('org_structure level ' || r_ost.struct_level || ', ' || r_ost.n_recs || ' records');
+
+  END LOOP;
+  Timer_Set.Write_Times (l_timer);
+
+  x_num_records := l_ost_id;
+  x_num_records_per_part := l_ost_id / c_n_top_level_orgs;
+  x_group_size := c_n_top_level_orgs;
+  x_text := 'Org structures';
+
+END Setup_Data_Org;
+
 /***************************************************************************************************
 
 Setup_Data: Set up the test data for a given query group and data point, returning summary info;
@@ -426,6 +539,15 @@ BEGIN
   ELSIF p_query_group = c_query_group_bra THEN
 
     Setup_Data_Bra (p_point_wide           => p_point_wide,
+                    p_point_deep           => p_point_deep,
+                    x_num_records          => x_num_records,
+                    x_num_records_per_part => x_num_records_per_part,
+                    x_group_size           => x_group_size,
+                    x_text                 => x_text);
+
+  ELSIF p_query_group IN (c_query_group_org, c_query_group_orh) THEN
+
+    Setup_Data_Org (p_point_wide           => p_point_wide,
                     p_point_deep           => p_point_deep,
                     x_num_records          => x_num_records,
                     x_num_records_per_part => x_num_records_per_part,

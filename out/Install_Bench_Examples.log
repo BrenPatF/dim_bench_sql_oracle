@@ -61,7 +61,7 @@ Elapsed: 00:00:00.00
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.13
+Elapsed: 00:00:00.44
 Model - All records
 
  PERSON_ID START_DAT END_DATE  GROUP_STA GROUP_END
@@ -90,11 +90,11 @@ Model - All records
 
 18 rows selected.
 
-Elapsed: 00:00:00.01
+Elapsed: 00:00:00.00
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.06
+Elapsed: 00:00:00.15
 Recursive Subquery Factor - Groups
 
  PERSON_ID GROUP_STA GROUP_END   NUM_ROWS
@@ -114,11 +114,11 @@ Recursive Subquery Factor - Groups
 
 9 rows selected.
 
-Elapsed: 00:00:00.00
+Elapsed: 00:00:00.01
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.07
+Elapsed: 00:00:00.16
 
 PL/SQL procedure successfully completed.
 
@@ -178,7 +178,7 @@ Rural                                   4
 Suburban                                1
 Urban                                   7
 
-Elapsed: 00:00:00.00
+Elapsed: 00:00:00.01
 Group counts via model where group is defined as first id in group not last
 
 CAT                              # Groups
@@ -229,11 +229,11 @@ Model - All records
 
 22 rows selected.
 
-Elapsed: 00:00:00.01
+Elapsed: 00:00:00.00
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.07
+Elapsed: 00:00:00.14
 Recursive Subquery Factor - Groups
 
  ID CAT                                   SEQ     WEIGHT SUB_WEIGHT  FINAL_GRP
@@ -266,11 +266,11 @@ Recursive Subquery Factor - Groups
 
 22 rows selected.
 
-Elapsed: 00:00:00.01
+Elapsed: 00:00:00.00
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.07
+Elapsed: 00:00:00.17
 
 PL/SQL procedure successfully completed.
 
@@ -367,11 +367,11 @@ xmltable
 
 12 rows selected.
 
-Elapsed: 00:00:00.01
+Elapsed: 00:00:00.00
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.07
+Elapsed: 00:00:00.17
 MULTISET
 
      ID TOKEN
@@ -396,7 +396,7 @@ Elapsed: 00:00:00.00
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.07
+Elapsed: 00:00:00.15
 sys_guid
 
      ID TOKEN
@@ -421,7 +421,7 @@ Elapsed: 00:00:00.00
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.07
+Elapsed: 00:00:00.15
 Row generator, Instr
 
      ID TOKEN
@@ -446,7 +446,7 @@ Elapsed: 00:00:00.00
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.07
+Elapsed: 00:00:00.15
 Row generator, regex
 
      ID TOKEN
@@ -471,7 +471,7 @@ Elapsed: 00:00:00.00
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.10
+Elapsed: 00:00:00.15
 Pipelined function
 
      ID TOKEN
@@ -492,11 +492,11 @@ Pipelined function
 
 13 rows selected.
 
-Elapsed: 00:00:00.00
+Elapsed: 00:00:00.01
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.09
+Elapsed: 00:00:00.15
 WITH function
 
      ID TOKEN
@@ -517,11 +517,11 @@ WITH function
 
 13 rows selected.
 
-Elapsed: 00:00:00.02
+Elapsed: 00:00:00.03
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.07
+Elapsed: 00:00:00.16
 Model
 
      ID TOKEN
@@ -546,7 +546,7 @@ Elapsed: 00:00:00.00
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.12
+Elapsed: 00:00:00.15
 Recursive subquery factor
 
      ID TOKEN
@@ -567,11 +567,11 @@ Recursive subquery factor
 
 13 rows selected.
 
-Elapsed: 00:00:00.00
+Elapsed: 00:00:00.01
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.07
+Elapsed: 00:00:00.15
 
 PL/SQL procedure successfully completed.
 
@@ -621,7 +621,7 @@ Test Data
       3 ()()*(())a()(())
       4 b0(b1(b2(b3(x))(xy)))
 
-Elapsed: 00:00:00.00
+Elapsed: 00:00:00.01
 WFB_QRY
 
      ID      O_POS      C_POS STR
@@ -659,11 +659,11 @@ WFB_QRY
 
 21 rows selected.
 
-Elapsed: 00:00:00.04
+Elapsed: 00:00:00.03
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.07
+Elapsed: 00:00:00.17
 PFB_QRY
 
      ID      O_POS      C_POS STR
@@ -705,7 +705,7 @@ Elapsed: 00:00:00.03
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.07
+Elapsed: 00:00:00.15
 CBL_QRY
 
      ID      O_POS      C_POS STR
@@ -747,7 +747,7 @@ Elapsed: 00:00:00.00
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.07
+Elapsed: 00:00:00.16
 MRB_QRY
 
      ID      O_POS      C_POS STR
@@ -789,7 +789,241 @@ Elapsed: 00:00:00.00
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:00:00.07
+Elapsed: 00:00:00.15
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> PROMPT Fixed-level hierarchy example
+Fixed-level hierarchy example
+SQL> PROMPT =============================
+=============================
+SQL> @..\sql\Setup_Org
+DROP TYPE org_struct_lis_type
+*
+ERROR at line 1:
+ORA-04043: object ORG_STRUCT_LIS_TYPE does not exist
+
+
+
+Type created.
+
+
+Type created.
+
+DROP TABLE orgs
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+
+Table created.
+
+DROP TABLE org_structure
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+
+Table created.
+
+
+Index created.
+
+
+Index created.
+
+
+Function created.
+
+No errors.
+3: 4, 9
+2: 1, 3
+
+PL/SQL procedure successfully completed.
+
+orgs
+
+     ID  ORG_LEVEL ORG_NAME
+------- ---------- ----------------------------------------------------------------------------------------------------
+      1          1 L1 Org 1
+      2            L1 Org 2
+      3            L1 Org 3
+      4          2 L2 Org 1
+      5            L2 Org 2
+      6            L2 Org 3
+      7            L2 Org 4
+      8            L2 Org 5
+      9            L2 Org 6
+     10          3 L3 Org 1
+     11            L3 Org 2
+     12            L3 Org 3
+     13            L3 Org 4
+     14            L3 Org 5
+     15            L3 Org 6
+     16            L3 Org 7
+     17            L3 Org 8
+     18            L3 Org 9
+     19            L3 Org 10
+     20            L3 Org 11
+     21            L3 Org 12
+
+21 rows selected.
+
+org_structure
+
+     ID STRUCT_LEVEL     ORG_ID CHILD_ORG_ID       FACT
+------- ------------ ---------- ------------ ----------
+     25            1          1            4 .506692819
+     26                       1            5 .490984105
+     27                       2            6 .119213442
+     28                       2            7 .237009782
+     29                       3            8 .780847477
+     30                       2            9 .714784307
+      1            2          6           10 .940657209
+      2                       4           10 .796703195
+      3                       4           11 .008352019
+      4                       5           11 .616808417
+      5                       6           12  .96255341
+      6                       5           12 .896327347
+      7                       6           13  .95253056
+      8                       4           13 .651449134
+      9                       8           14 .947416692
+     10                       7           14 .788527806
+     11                       6           15 .827296335
+     12                       5           15 .491797664
+     13                       9           16 .823921295
+     14                       7           16  .57843678
+     15                       7           17 .155460574
+     16                       6           17 .171302587
+     17                       5           18 .311974576
+     18                       6           18 .293682587
+     19                       5           19  .68289381
+     20                       7           19 .575894935
+     21                       7           20 .416755604
+     22                       5           20 .671662498
+     23                       9           21 .609173462
+     24                       7           21 .639777955
+
+30 rows selected.
+
+Joins
+
+ROOT_ORG   LEAF_ORG   FACT_PRODUCT
+---------- ---------- ------------
+L1 Org 1   L3 Org 1           0.40
+L1 Org 1   L3 Org 10          0.34
+L1 Org 1   L3 Org 11          0.33
+L1 Org 1   L3 Org 2           0.00
+L1 Org 1   L3 Org 2           0.30
+L1 Org 1   L3 Org 3           0.44
+L1 Org 1   L3 Org 4           0.33
+L1 Org 1   L3 Org 6           0.24
+L1 Org 1   L3 Org 9           0.15
+L1 Org 2   L3 Org 1           0.11
+L1 Org 2   L3 Org 10          0.14
+L1 Org 2   L3 Org 11          0.10
+L1 Org 2   L3 Org 12          0.15
+L1 Org 2   L3 Org 12          0.44
+L1 Org 2   L3 Org 3           0.11
+L1 Org 2   L3 Org 4           0.11
+L1 Org 2   L3 Org 5           0.19
+L1 Org 2   L3 Org 6           0.10
+L1 Org 2   L3 Org 7           0.14
+L1 Org 2   L3 Org 7           0.59
+L1 Org 2   L3 Org 8           0.02
+L1 Org 2   L3 Org 8           0.04
+L1 Org 2   L3 Org 9           0.04
+L1 Org 3   L3 Org 5           0.74
+
+24 rows selected.
+
+
+PL/SQL procedure successfully completed.
+
+Recursive subquery factor
+
+ROOT_ORG   LEAF_ORG   FACT_PRODUCT
+---------- ---------- ------------
+L1 Org 1   L3 Org 1           0.40
+L1 Org 1   L3 Org 10          0.34
+L1 Org 1   L3 Org 11          0.33
+L1 Org 1   L3 Org 2           0.30
+L1 Org 1   L3 Org 2           0.00
+L1 Org 1   L3 Org 3           0.44
+L1 Org 1   L3 Org 4           0.33
+L1 Org 1   L3 Org 6           0.24
+L1 Org 1   L3 Org 9           0.15
+L1 Org 2   L3 Org 1           0.11
+L1 Org 2   L3 Org 10          0.14
+L1 Org 2   L3 Org 11          0.10
+L1 Org 2   L3 Org 12          0.44
+L1 Org 2   L3 Org 12          0.15
+L1 Org 2   L3 Org 3           0.11
+L1 Org 2   L3 Org 4           0.11
+L1 Org 2   L3 Org 5           0.19
+L1 Org 2   L3 Org 6           0.10
+L1 Org 2   L3 Org 7           0.14
+L1 Org 2   L3 Org 7           0.59
+L1 Org 2   L3 Org 8           0.02
+L1 Org 2   L3 Org 8           0.04
+L1 Org 2   L3 Org 9           0.04
+L1 Org 3   L3 Org 5           0.74
+
+24 rows selected.
+
+
+PL/SQL procedure successfully completed.
+
+Pipelined function main
+
+ROOT_ORG   LEAF_ORG   FACT_PRODUCT
+---------- ---------- ------------
+L1 Org 1   L3 Org 1           0.40
+L1 Org 1   L3 Org 10          0.34
+L1 Org 1   L3 Org 11          0.33
+L1 Org 1   L3 Org 2           0.00
+L1 Org 1   L3 Org 2           0.30
+L1 Org 1   L3 Org 3           0.44
+L1 Org 1   L3 Org 4           0.33
+L1 Org 1   L3 Org 6           0.24
+L1 Org 1   L3 Org 9           0.15
+L1 Org 2   L3 Org 1           0.11
+L1 Org 2   L3 Org 10          0.14
+L1 Org 2   L3 Org 11          0.10
+L1 Org 2   L3 Org 12          0.44
+L1 Org 2   L3 Org 12          0.15
+L1 Org 2   L3 Org 3           0.11
+L1 Org 2   L3 Org 4           0.11
+L1 Org 2   L3 Org 5           0.19
+L1 Org 2   L3 Org 6           0.10
+L1 Org 2   L3 Org 7           0.14
+L1 Org 2   L3 Org 7           0.59
+L1 Org 2   L3 Org 8           0.04
+L1 Org 2   L3 Org 8           0.02
+L1 Org 2   L3 Org 9           0.04
+L1 Org 3   L3 Org 5           0.74
+
+24 rows selected.
+
+
+PL/SQL procedure successfully completed.
+
+Pipelined function internal query
+
+CHILD_ORG_ID FACT_PRODUCT STRUCT_LEVEL
+------------ ------------ ------------
+           4         0.51            1
+           5         0.49            1
+
+
+PL/SQL procedure successfully completed.
+
+
+PL/SQL procedure successfully completed.
+
 
 PL/SQL procedure successfully completed.
 
@@ -829,7 +1063,7 @@ Plan hash value: 3044652663
 -------------------------------------------------------------------------------------------------------------------
 |   0 | SELECT STATEMENT     |       |      1 |        |     22 |00:00:00.01 |       7 |       |       |          |
 |   1 |  SORT ORDER BY       |       |      1 |     22 |     22 |00:00:00.01 |       7 |  2048 |  2048 | 2048  (0)|
-|   2 |   SQL MODEL CYCLIC   |       |      1 |     22 |     22 |00:00:00.01 |       7 |   838K|   838K|  713K (0)|
+|   2 |   SQL MODEL CYCLIC   |       |      1 |     22 |     22 |00:00:00.01 |       7 |   838K|   838K|  702K (0)|
 |   3 |    WINDOW SORT       |       |      1 |     22 |     22 |00:00:00.01 |       7 |  2048 |  2048 | 2048  (0)|
 |   4 |     TABLE ACCESS FULL| ITEMS |      1 |     22 |     22 |00:00:00.01 |       7 |       |       |          |
 -------------------------------------------------------------------------------------------------------------------
@@ -867,7 +1101,7 @@ Plan hash value: 1065044816
 |*  5 |      VIEW                                   |       |      1 |      1 |      3 |00:00:00.01 |       7 |       |       |          |
 |*  6 |       WINDOW SORT PUSHED RANK               |       |      1 |     22 |      3 |00:00:00.01 |       7 |  2048 |  2048 | 2048  (0)|
 |   7 |        TABLE ACCESS FULL                    | ITEMS |      1 |     22 |     22 |00:00:00.01 |       7 |       |       |          |
-|*  8 |      HASH JOIN                              |       |     10 |      1 |     19 |00:00:00.01 |      70 |  1199K|  1199K|  618K (0)|
+|*  8 |      HASH JOIN                              |       |     10 |      1 |     19 |00:00:00.01 |      70 |  1199K|  1199K|  635K (0)|
 |   9 |       RECURSIVE WITH PUMP                   |       |     10 |        |     22 |00:00:00.01 |       0 |       |       |          |
 |  10 |       VIEW                                  |       |     10 |     22 |    220 |00:00:00.01 |      70 |       |       |          |
 |  11 |        WINDOW SORT                          |       |     10 |     22 |    220 |00:00:00.01 |      70 |  2048 |  2048 | 2048  (0)|
@@ -1057,10 +1291,10 @@ Plan hash value: 2608399241
 ----------------------------------------------------------------------------------------------------------------
 | Id  | Operation                          | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |
 ----------------------------------------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT                   |                 |      1 |        |     13 |00:00:00.01 |      61 |
-|   1 |  NESTED LOOPS                      |                 |      1 |  40840 |     13 |00:00:00.01 |      61 |
+|   0 | SELECT STATEMENT                   |                 |      1 |        |     13 |00:00:00.01 |     215 |
+|   1 |  NESTED LOOPS                      |                 |      1 |  40840 |     13 |00:00:00.01 |     215 |
 |   2 |   TABLE ACCESS FULL                | DELIMITED_LISTS |      1 |      5 |      5 |00:00:00.01 |       8 |
-|   3 |   COLLECTION ITERATOR PICKLER FETCH| SPLIT           |      5 |   8168 |     13 |00:00:00.01 |      53 |
+|   3 |   COLLECTION ITERATOR PICKLER FETCH| SPLIT           |      5 |   8168 |     13 |00:00:00.01 |     207 |
 ----------------------------------------------------------------------------------------------------------------
 
 Note
@@ -1115,7 +1349,7 @@ Plan hash value: 1656081500
 | Id  | Operation              | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
 -------------------------------------------------------------------------------------------------------------------------------
 |   0 | SELECT STATEMENT       |                 |      1 |        |     13 |00:00:00.01 |       7 |       |       |          |
-|   1 |  SQL MODEL ORDERED FAST|                 |      1 |      5 |     13 |00:00:00.01 |       7 |   679K|   679K|  830K (0)|
+|   1 |  SQL MODEL ORDERED FAST|                 |      1 |      5 |     13 |00:00:00.01 |       7 |   679K|   679K|  849K (0)|
 |   2 |   TABLE ACCESS FULL    | DELIMITED_LISTS |      1 |      5 |      5 |00:00:00.01 |       7 |       |       |          |
 -------------------------------------------------------------------------------------------------------------------------------
 
@@ -1202,12 +1436,12 @@ Plan hash value: 3367347570
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Id  | Operation                            | Name            | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
 ---------------------------------------------------------------------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT                     |                 |      1 |        |     21 |00:00:00.02 |     497 |       |       |          |
-|   1 |  SORT ORDER BY                       |                 |      1 |  32672 |     21 |00:00:00.02 |     497 |  2048 |  2048 | 2048  (0)|
-|   2 |   NESTED LOOPS OUTER                 |                 |      1 |  32672 |     21 |00:00:00.02 |     497 |       |       |          |
+|   0 | SELECT STATEMENT                     |                 |      1 |        |     21 |00:00:00.02 |     498 |       |       |          |
+|   1 |  SORT ORDER BY                       |                 |      1 |  32672 |     21 |00:00:00.02 |     498 |  2048 |  2048 | 2048  (0)|
+|   2 |   NESTED LOOPS OUTER                 |                 |      1 |  32672 |     21 |00:00:00.02 |     498 |       |       |          |
 |   3 |    TABLE ACCESS FULL                 | BRACKET_STRINGS |      1 |      4 |      4 |00:00:00.01 |       7 |       |       |          |
-|   4 |    VIEW                              | VW_LAT_D4FD8C38 |      4 |   8168 |     21 |00:00:00.02 |     490 |       |       |          |
-|   5 |     COLLECTION ITERATOR PICKLER FETCH| PARSE_BRACKETS  |      4 |   8168 |     21 |00:00:00.02 |     490 |       |       |          |
+|   4 |    VIEW                              | VW_LAT_D4FD8C38 |      4 |   8168 |     21 |00:00:00.02 |     491 |       |       |          |
+|   5 |     COLLECTION ITERATOR PICKLER FETCH| PARSE_BRACKETS  |      4 |   8168 |     21 |00:00:00.02 |     491 |       |       |          |
 ---------------------------------------------------------------------------------------------------------------------------------------------
 
 Note
@@ -1239,7 +1473,7 @@ Plan hash value: 2736674058
 --------------------------------------------------------------------------------------------------------------------------------------------
 |   0 | SELECT STATEMENT                    |                 |      1 |        |     21 |00:00:00.01 |       7 |       |       |          |
 |   1 |  SORT ORDER BY                      |                 |      1 |      4 |     21 |00:00:00.01 |       7 |  2048 |  2048 | 2048  (0)|
-|   2 |   HASH GROUP BY                     |                 |      1 |      4 |     21 |00:00:00.01 |       7 |   821K|   821K| 1338K (0)|
+|   2 |   HASH GROUP BY                     |                 |      1 |      4 |     21 |00:00:00.01 |       7 |   821K|   821K| 1343K (0)|
 |   3 |    VIEW                             |                 |      1 |      4 |     42 |00:00:00.01 |       7 |       |       |          |
 |   4 |     WINDOW SORT                     |                 |      1 |      4 |     42 |00:00:00.01 |       7 |  4096 |  4096 | 4096  (0)|
 |   5 |      VIEW                           |                 |      1 |      4 |     42 |00:00:00.01 |       7 |       |       |          |
@@ -1294,8 +1528,160 @@ Note
    - dynamic statistics used: dynamic sampling (level=2)
 
 Oracle major version: 12 - making 12c-only query WFB_QRY inactive for 8, 9, 10, 11...
+SQL_ID  burvhduabcxam, child number 0
+-------------------------------------
+SELECT  /*+ JNS_QRY gather_plan_statistics */        o1.org_name
+root_org,        o3.org_name leaf_org,        s1.fact * s2.fact
+fact_product   FROM org_structure s1   JOIN org_structure s2     ON
+s2.org_id = s1.child_org_id   JOIN orgs o1     ON o1.id = s1.org_id
+JOIN orgs o2     ON o2.id = s2.org_id   JOIN orgs o3     ON o3.id =
+s2.child_org_id  WHERE s1.struct_level = 1  ORDER BY 1, 2, 3
 
-485 rows selected.
+Plan hash value: 2064336316
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-----------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                         |               |      1 |        |     24 |00:00:00.01 |      26 |       |       |          |
+|   1 |  SORT ORDER BY                           |               |      1 |     20 |     24 |00:00:00.01 |      26 |  4096 |  4096 | 4096  (0)|
+|*  2 |   HASH JOIN                              |               |      1 |     20 |     24 |00:00:00.01 |      26 |   977K|   977K|  877K (0)|
+|   3 |    NESTED LOOPS                          |               |      1 |     20 |     24 |00:00:00.01 |      19 |       |       |          |
+|   4 |     NESTED LOOPS                         |               |      1 |     20 |     24 |00:00:00.01 |      15 |       |       |          |
+|   5 |      NESTED LOOPS                        |               |      1 |      6 |      6 |00:00:00.01 |      11 |       |       |          |
+|   6 |       TABLE ACCESS FULL                  | ORGS          |      1 |     21 |     21 |00:00:00.01 |       7 |       |       |          |
+|*  7 |       TABLE ACCESS BY INDEX ROWID BATCHED| ORG_STRUCTURE |     21 |      1 |      6 |00:00:00.01 |       4 |       |       |          |
+|*  8 |        INDEX RANGE SCAN                  | OST_N1        |     21 |      3 |     30 |00:00:00.01 |       3 |       |       |          |
+|   9 |      TABLE ACCESS BY INDEX ROWID BATCHED | ORG_STRUCTURE |      6 |      3 |     24 |00:00:00.01 |       4 |       |       |          |
+|* 10 |       INDEX RANGE SCAN                   | OST_N1        |      6 |      3 |     24 |00:00:00.01 |       3 |       |       |          |
+|* 11 |     INDEX UNIQUE SCAN                    | ORG_PK        |     24 |      1 |     24 |00:00:00.01 |       4 |       |       |          |
+|  12 |    TABLE ACCESS FULL                     | ORGS          |      1 |     21 |     21 |00:00:00.01 |       7 |       |       |          |
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("O3"."ID"="S2"."CHILD_ORG_ID")
+   7 - filter("S1"."STRUCT_LEVEL"=1)
+   8 - access("O1"."ID"="S1"."ORG_ID")
+  10 - access("S2"."ORG_ID"="S1"."CHILD_ORG_ID")
+  11 - access("O2"."ID"="S2"."ORG_ID")
+
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
+
+SQL_ID  4d52y6ks0y9ps, child number 0
+-------------------------------------
+WITH rsf (root_org_id, child_org_id, fact_product, lev) AS ( SELECT
+org_id, child_org_id, fact, 1   FROM org_structure  WHERE struct_level
+= 1 UNION ALL SELECT r.root_org_id,        s.child_org_id,
+r.fact_product * s.fact,        r.lev + 1   FROM rsf r   JOIN
+org_structure s     ON s.org_id = r.child_org_id ) SELECT /*+ RSF_QRY
+gather_plan_statistics */        o1.org_name root_org,
+o3.org_name leaf_org,        fact_product   FROM rsf r   JOIN orgs o1
+  ON o1.id = r.root_org_id   JOIN orgs o3     ON o3.id = r.child_org_id
+ WHERE r.lev = 2  ORDER BY 1, 2
+
+Plan hash value: 3866676933
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                    | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+---------------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                             |               |      1 |        |     24 |00:00:00.01 |      26 |       |       |          |
+|   1 |  SORT ORDER BY                               |               |      1 |     26 |     24 |00:00:00.01 |      26 |  4096 |  4096 | 4096  (0)|
+|*  2 |   HASH JOIN                                  |               |      1 |     26 |     24 |00:00:00.01 |      26 |  1087K|  1087K|  910K (0)|
+|*  3 |    HASH JOIN                                 |               |      1 |     26 |     24 |00:00:00.01 |      19 |  1599K|  1599K| 1146K (0)|
+|   4 |     TABLE ACCESS FULL                        | ORGS          |      1 |     21 |     21 |00:00:00.01 |       7 |       |       |          |
+|*  5 |     VIEW                                     |               |      1 |     26 |     24 |00:00:00.01 |      12 |       |       |          |
+|   6 |      UNION ALL (RECURSIVE WITH) BREADTH FIRST|               |      1 |        |     30 |00:00:00.01 |      12 |  2048 |  2048 | 2048  (0)|
+|*  7 |       TABLE ACCESS FULL                      | ORG_STRUCTURE |      1 |      6 |      6 |00:00:00.01 |       7 |       |       |          |
+|   8 |       NESTED LOOPS                           |               |      2 |     20 |     24 |00:00:00.01 |       5 |       |       |          |
+|   9 |        NESTED LOOPS                          |               |      2 |     20 |     24 |00:00:00.01 |       4 |       |       |          |
+|  10 |         RECURSIVE WITH PUMP                  |               |      2 |        |     30 |00:00:00.01 |       0 |       |       |          |
+|* 11 |         INDEX RANGE SCAN                     | OST_N1        |     30 |      3 |     24 |00:00:00.01 |       4 |       |       |          |
+|  12 |        TABLE ACCESS BY INDEX ROWID           | ORG_STRUCTURE |     24 |      3 |     24 |00:00:00.01 |       1 |       |       |          |
+|  13 |    TABLE ACCESS FULL                         | ORGS          |      1 |     21 |     21 |00:00:00.01 |       7 |       |       |          |
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("O3"."ID"="R"."CHILD_ORG_ID")
+   3 - access("O1"."ID"="R"."ROOT_ORG_ID")
+   5 - filter("R"."LEV"=2)
+   7 - filter("STRUCT_LEVEL"=1)
+  11 - access("S"."ORG_ID"="R"."CHILD_ORG_ID")
+
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
+   - this is an adaptive plan
+
+SQL_ID  8hfbvdqbqgnhh, child number 0
+-------------------------------------
+SELECT /*+ PLF_QRY gather_plan_statistics */        o1.org_name
+root_org,        o3.org_name leaf_org,        t.fact_product   FROM
+org_structure s   CROSS APPLY TABLE (Org_Products (s.child_org_id,
+s.fact)) t   JOIN orgs o1     ON o1.id = s.org_id   JOIN orgs o3     ON
+o3.id = t.org_id  WHERE s.struct_level = 1    AND t.struct_level = 2
+ORDER BY 1, 2
+
+Plan hash value: 1208620699
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                               | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+----------------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                        |               |      1 |        |     24 |00:00:00.01 |     196 |       |       |          |
+|   1 |  SORT ORDER BY                          |               |      1 |    490 |     24 |00:00:00.01 |     196 |  4096 |  4096 | 4096  (0)|
+|*  2 |   HASH JOIN                             |               |      1 |    490 |     24 |00:00:00.05 |     196 |  1557K|  1557K| 1122K (0)|
+|   3 |    TABLE ACCESS FULL                    | ORGS          |      1 |     21 |     21 |00:00:00.01 |       7 |       |       |          |
+|   4 |    NESTED LOOPS                         |               |      1 |    490 |     24 |00:00:00.05 |     189 |       |       |          |
+|   5 |     NESTED LOOPS                        |               |      1 |      6 |      6 |00:00:00.01 |      11 |       |       |          |
+|   6 |      TABLE ACCESS FULL                  | ORGS          |      1 |     21 |     21 |00:00:00.01 |       7 |       |       |          |
+|*  7 |      TABLE ACCESS BY INDEX ROWID BATCHED| ORG_STRUCTURE |     21 |      1 |      6 |00:00:00.01 |       4 |       |       |          |
+|*  8 |       INDEX RANGE SCAN                  | OST_N1        |     21 |      3 |     30 |00:00:00.01 |       3 |       |       |          |
+|*  9 |     COLLECTION ITERATOR PICKLER FETCH   | ORG_PRODUCTS  |      6 |     82 |     24 |00:00:00.01 |     178 |       |       |          |
+----------------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("O3"."ID"=VALUE(KOKBF$))
+   7 - filter("S"."STRUCT_LEVEL"=1)
+   8 - access("O1"."ID"="S"."ORG_ID")
+   9 - filter(VALUE(KOKBF$)=2)
+
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
+
+SQL_ID  3600a65j6yvj5, child number 0
+-------------------------------------
+SELECT /*+ PLF_INT_QRY gather_plan_statistics */        child_org_id,
+     fact fact_product,        struct_level   FROM org_structure
+WHERE org_id = 1
+
+Plan hash value: 210018889
+
+---------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |
+---------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |               |      1 |        |      2 |00:00:00.01 |       4 |
+|   1 |  TABLE ACCESS BY INDEX ROWID BATCHED| ORG_STRUCTURE |      1 |      2 |      2 |00:00:00.01 |       4 |
+|*  2 |   INDEX RANGE SCAN                  | OST_N1        |      1 |      2 |      2 |00:00:00.01 |       2 |
+---------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("ORG_ID"=1)
+
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
+
+
+637 rows selected.
 
 SQL> 
 SQL> SPOOL OFF

@@ -23,6 +23,7 @@ Who                  When        Which What
 -------------------- ----------- ----- -------------------------------------------------------------
 Brendan Furey        01-Dec-2016 1.0   Created
 Brendan Furey        05-Feb-2017 1.1   Added string splitting and bracket parsing examples
+Brendan Furey        05-Mar-2017 1.2   Added Fixed-level hierarchy example
 
 ***************************************************************************************************/
 SET SERVEROUTPUT ON
@@ -52,6 +53,10 @@ PROMPT ========================
 PROMPT Bracket parsing example
 PROMPT =======================
 @..\sql\Setup_Bra
+
+PROMPT Fixed-level hierarchy example
+PROMPT =============================
+@..\sql\Setup_Org
 
 PROMPT Bench_Datasets package body creation
 PROMPT ====================================
