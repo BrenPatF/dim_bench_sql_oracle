@@ -1,1 +1,1 @@
-sqlplus bench/bench@pdborcl
+sqlplus bench/bench@orclpdb

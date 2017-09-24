@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE BODY Bench_Datasets IS
 /***************************************************************************************************
-Description: Bench_SQL SQL benchmarking framework - test queries across a 2-d dataset space
+Description: SQL benchmarking framework - test queries, DML and DDL across a 2-d dataset space
 
              Bench_Datasets package has a fixed spec and for each query group to be benchmarked the
              body procedure must generate test data for the data point passed in.
@@ -16,6 +16,7 @@ Brendan Furey        19-Nov-2016 1.1   Added 'WEIGHTS'
 Brendan Furey        27-Nov-2016 1.2   Added 'STR_SPLIT'
 Brendan Furey        05-Feb-2017 1.3   Added 'BRACKET'
 Brendan Furey        05-Mar-2017 1.4   Added 'ORG_STRUCT', 'ORG_HINTS'
+Brendan Furey        24-Sep-2017 1.5   Added '%SALES'
 
 ***************************************************************************************************/
   c_query_group_wts        CONSTANT VARCHAR2(30) := 'WEIGHTS';
@@ -24,6 +25,9 @@ Brendan Furey        05-Mar-2017 1.4   Added 'ORG_STRUCT', 'ORG_HINTS'
   c_query_group_bra        CONSTANT VARCHAR2(30) := 'BRACKET';
   c_query_group_org        CONSTANT VARCHAR2(30) := 'ORG_STRUCT';
   c_query_group_orh        CONSTANT VARCHAR2(30) := 'ORG_HINTS';
+  c_query_group_dml        CONSTANT VARCHAR2(30) := 'DMLSALES';
+  c_query_group_upd        CONSTANT VARCHAR2(30) := 'UPDSALES';
+  c_query_group_ddl        CONSTANT VARCHAR2(30) := 'DDLSALES';
 
 /***************************************************************************************************
 
@@ -491,6 +495,95 @@ END Setup_Data_Org;
 
 /***************************************************************************************************
 
+Setup_Data_Bur: Local procedure called by Setup_Data to set up the test data for the bracket parsing
+                problem
+
+***************************************************************************************************/
+PROCEDURE Setup_Data_Dml (p_point_wide                PLS_INTEGER, -- wide data point
+                          p_point_deep                PLS_INTEGER, -- deep data point
+                          x_num_records           OUT PLS_INTEGER, -- number of records created
+                          x_num_records_per_part  OUT NUMBER,      -- number of records created per partition key
+                          x_group_size            OUT NUMBER,      -- group size, where applicable
+                          x_text                  OUT VARCHAR2) IS -- descriptive text about the data set
+
+  c_n_days_in_century     CONSTANT PLS_INTEGER := 36524;
+  c_start_date            CONSTANT DATE := To_Date ('01-JAN-1900', 'DD-MON-YYYY');
+  l_timer                          PLS_INTEGER;
+
+  c_max_rowgen            CONSTANT PLS_INTEGER := 1000000;
+  l_num_wide_batches      CONSTANT PLS_INTEGER := Floor (p_point_wide / c_max_rowgen);
+  l_last_wide_batch_size  CONSTANT PLS_INTEGER := Mod (p_point_wide, c_max_rowgen);
+  l_wide_batch_sizes               L1_num_arr := L1_num_arr();
+
+BEGIN
+
+  l_timer := Timer_Set.Construct ('Setup');
+
+  Utils.g_group_text := 'Setup data : ' || p_point_wide || '-' || p_point_deep;
+  EXECUTE IMMEDIATE 'TRUNCATE TABLE product_sales';
+  Utils.Write_Log ('product_sales truncated');
+
+  l_wide_batch_sizes.EXTEND (l_num_wide_batches);
+  FOR i IN 1..l_num_wide_batches LOOP
+    l_wide_batch_sizes(i) := c_max_rowgen;
+  END LOOP;
+
+  IF l_last_wide_batch_size > 0 THEN
+
+    l_wide_batch_sizes.EXTEND;
+    l_wide_batch_sizes (l_wide_batch_sizes.COUNT) := l_last_wide_batch_size;
+
+  END IF;
+  DBMS_Random.Seed(0);
+  FOR i IN 1..l_wide_batch_sizes.COUNT LOOP
+
+    INSERT INTO product_sales
+    WITH prod_gen AS (
+      SELECT LEVEL + (i - 1)*c_max_rowgen product_id
+        FROM DUAL
+        CONNECT BY LEVEL <= l_wide_batch_sizes(i)
+    ), day_gen AS (
+      SELECT LEVEL rn
+        FROM DUAL
+        CONNECT BY LEVEL <= p_point_deep
+    )
+    SELECT p.product_id, c_start_date + Mod (Abs (DBMS_Random.Random), c_n_days_in_century)
+      FROM prod_gen p
+     CROSS JOIN day_gen d;
+    Utils.Write_Log ('Inserted ' || SQL%ROWCOUNT || ' records');
+
+  END LOOP;
+
+  COMMIT;
+  Timer_Set.Increment_Time (l_timer, 'Insert product_sales');
+
+  SELECT Avg(n_recs) avg_per_prod INTO x_num_records_per_part
+    FROM (
+  SELECT product_id, Count(*) n_recs
+    FROM product_sales
+   GROUP BY product_id
+  );
+  SELECT Avg(n_recs) avg_per_date, Sum(n_recs) avg_per_date INTO x_group_size, x_num_records
+    FROM (
+  SELECT sales_date, Count(*) n_recs
+    FROM product_sales
+   GROUP BY sales_date
+  );
+  Timer_Set.Increment_Time (l_timer, 'Get aggregates');
+
+  DBMS_Stats.Gather_Table_Stats (
+		ownname			=> 'BENCH',
+		tabname			=> 'product_sales');
+  Timer_Set.Increment_Time (l_timer, 'Gather_Table_Stats');
+
+  Timer_Set.Write_Times (l_timer);
+
+  x_text := 'product_sales test set';
+
+END Setup_Data_Dml;
+
+/***************************************************************************************************
+
 Setup_Data: Set up the test data for a given query group and data point, returning summary info;
             - the spec is fixed, while the body is problem-dependent
             - stats are gathered after the data are created
@@ -539,6 +632,15 @@ BEGIN
   ELSIF p_query_group = c_query_group_bra THEN
 
     Setup_Data_Bra (p_point_wide           => p_point_wide,
+                    p_point_deep           => p_point_deep,
+                    x_num_records          => x_num_records,
+                    x_num_records_per_part => x_num_records_per_part,
+                    x_group_size           => x_group_size,
+                    x_text                 => x_text);
+
+  ELSIF p_query_group IN (c_query_group_dml, c_query_group_upd, c_query_group_ddl) THEN
+
+    Setup_Data_Dml (p_point_wide           => p_point_wide,
                     p_point_deep           => p_point_deep,
                     x_num_records          => x_num_records,
                     x_num_records_per_part => x_num_records_per_part,

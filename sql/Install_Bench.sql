@@ -13,7 +13,7 @@ General bench Objects:
              Tables                          Sequence                Comment
              ======                          =========               =======
              query_groups                                            Query group
-             queries                         queries_s               Query and pre-query SQL text
+             queries                         queries_s               Query and pre/post-query SQL text
              bench_runs                      bench_runs_s            Bench run header
              bench_run_data_points           bench_run_data_points_s Bench run data points
              bench_run_statistics            bench_run_statistics_s
@@ -89,12 +89,13 @@ CREATE TABLE queries (
     active_yn                    VARCHAR2(1) DEFAULT 'Y',
     text                         CLOB NOT NULL,
     pre_query_sql                CLOB,
+    post_query_sql               CLOB,
     CONSTRAINT qry_pk            PRIMARY KEY (id),
     CONSTRAINT qry_uk            UNIQUE (query_group, name),
     CONSTRAINT qry_qgp_fk        FOREIGN KEY (query_group) REFERENCES query_groups (name)
 )
 /
-COMMENT ON TABLE queries IS 'Query and pre-query SQL text'
+COMMENT ON TABLE queries IS 'Query and pre-query, post-query SQL text'
 /
 PROMPT queries_s
 DROP SEQUENCE queries_s
@@ -161,6 +162,7 @@ CREATE TABLE bench_run_statistics (
     cpu_time                        NUMBER,
     elapsed_time                    NUMBER,
     num_records_out                 NUMBER,
+    num_records_pqs                 NUMBER,
     plan_hash_value                 NUMBER,
     plan_tab                        L1_chr_db_arr,
     creation_date                   DATE NOT NULL,
@@ -334,6 +336,7 @@ SELECT  qry.name query_name,
         dee.siz size_deep,
         rdp.num_records num_records_total,
         brs.num_records_out,
+        brs.num_records_pqs,
         brs.cpu_time,
         brs.elapsed_time,
         brs.plan_hash_value,
@@ -382,6 +385,7 @@ SELECT  rps.bench_run_statistic_id,
         dee.siz size_deep,
         rdp.num_records num_records_total,
         brs.num_records_out,
+        brs.num_records_pqs,
         brs.cpu_time,
         brs.elapsed_time,
         To_Char (brs.creation_date, 'dd-Mon-yy hh24:mi:ss') created,
@@ -425,6 +429,7 @@ SELECT  rps.bench_run_statistic_id,
         dee.siz,
         rdp.num_records,
         brs.num_records_out,
+        brs.num_records_pqs,
         brs.cpu_time,
         brs.elapsed_time,
         To_Char (brs.creation_date, 'dd-Mon-yy hh24:mi:ss')
@@ -512,6 +517,7 @@ CREATE OR REPLACE VIEW bench_run_dp_statistics_v (
     rst_cpu_time,
     rst_elapsed_time,
     num_records_out,
+    num_records_pqs,
     rst_creation_date,
     status,
     message
@@ -551,6 +557,7 @@ SELECT
     rst.cpu_time,
     rst.elapsed_time,
     rst.num_records_out,
+    rst.num_records_pqs,
     rst.creation_date,
     rst.status,
     rst.message
@@ -570,7 +577,7 @@ SELECT
 /
 DROP TYPE query_list_type
 /
-CREATE OR REPLACE TYPE query_type AS OBJECT (id INTEGER, name VARCHAR2(30), text CLOB, pre_query_sql CLOB)
+CREATE OR REPLACE TYPE query_type AS OBJECT (id INTEGER, name VARCHAR2(30), text CLOB, pre_query_sql CLOB, post_query_sql CLOB)
 /
 CREATE OR REPLACE TYPE query_list_type AS VARRAY(100) OF query_type
 /

@@ -8,7 +8,7 @@ Description: Bench_SQL SQL benchmarking framework - test queries across a 2-d da
                 Create_Run:         procedure to set up the data points and query group for a run
                 Execute_Run:        procedures to do the benchmarking for the last run created, or for
                                     an id passed in
-                Execute_Run_Batch:  procedure to do benchmarking for a batch of data sets 
+                Execute_Run_Batch:  procedures to do benchmarking for a batch of data sets 
                 Plan_Lines:         function to return the SQL execution plan lines for a marker passed
 
 Further details: A Framework for Dimensional Benchmarking of SQL Performance
@@ -29,6 +29,7 @@ PROCEDURE Add_Query (p_query_name            VARCHAR2,
                      p_active_yn             VARCHAR2 DEFAULT 'Y',
                      p_text                  CLOB,
                      p_pre_query_sql         CLOB DEFAULT NULL,
+                     p_post_query_sql        CLOB DEFAULT NULL,
                      p_v12_active_only       BOOLEAN DEFAULT FALSE);
 PROCEDURE Create_Run (p_run_desc              VARCHAR2,
                       p_points_wide_list      L1_num_arr,

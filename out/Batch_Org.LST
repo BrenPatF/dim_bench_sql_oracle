@@ -15,7 +15,7 @@ SQL> SELECT 'Start: ' || dbs.name "Database", To_Char (SYSDATE,'DD-MON-YYYY HH24
 
 Database             Time                 Version
 -------------------- -------------------- ------------------------------
-Start: ORCL          06-MAR-2017 07:25:57 Oracle Database 12c 12.1.0.2.0
+Start: ORCL          24-SEP-2017 15:18:51 Oracle Database 12c 12.2.0.1.0
 
 SQL> 
 SQL> DEFINE RUNDESC='Org-One'
@@ -27,7 +27,7 @@ SQL> ALTER SESSION SET NLS_DATE_FORMAT = 'DD-MON-YYYY';
 
 Session altered.
 
-Elapsed: 00:00:00.01
+Elapsed: 00:00:00.00
 SQL> BEGIN
   2  
   3    Utils.Clear_Log;
@@ -45,7 +45,7 @@ new   5:                         p_run_desc              => 'Org-One',
 
 PL/SQL procedure successfully completed.
 
-Elapsed: 00:05:23.38
+Elapsed: 00:06:28.18
 SQL> PROMPT Default log
 Default log
 SQL> @../sql/L_Log_Default
@@ -53,7 +53,7 @@ SQL> @../sql/L_Log_Default
 TEXT
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Executing batch of 1 runs...
-Bench run 1 created
+Bench run 2 created
 
 Elapsed: 00:00:00.00
 SQL> PROMPT Execute_Run logs
@@ -62,7 +62,7 @@ SQL> @../sql/L_Log_Gp 0
 
 TEXT
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Bench run id = 1
+Bench run id = 2
 
 Wide Points
 ===========
@@ -121,31 +121,31 @@ org_structure level 2, 390 records
 org_structure level 3, 3052 records
 org_structure level 4, 23790 records
 
-Timer Set: Setup, Constructed at 06 Mar 2017 07:25:57, written at 07:26:00
+Timer Set: Setup, Constructed at 24 Sep 2017 15:18:51, written at 15:18:54
 ==========================================================================
-[Timer timed: Elapsed (per call): 0.02 (0.000016), CPU (per call): 0.01 (0.000010), calls: 1000, '***' denotes corrected line below]
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
 
 Timer                  Elapsed         CPU         Calls       Ela/Call       CPU/Call
 ------------------  ----------  ----------  ------------  -------------  -------------
-Insert data               1.68        1.40             1        1.68100        1.40000
-Gather_Table_Stats        0.91        0.88             1        0.90800        0.88000
-(Other)                   0.00        0.00             1        0.00000        0.00000
+Insert data               1.59        1.39             1        1.59100        1.39000
+Gather_Table_Stats        1.34        0.66             1        1.33500        0.66000
+(Other)                   0.00        0.01             1        0.00400        0.01000
 ------------------  ----------  ----------  ------------  -------------  -------------
-Total                     2.59        2.28             3        0.86300        0.76000
+Total                     2.93        2.06             3        0.97667        0.68667
 ------------------  ----------  ----------  ------------  -------------  -------------
-/* JNS_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || o1.org_name || '","' || o5.org_name || '","' || s1.fact * s2.fact * s3.fact * s4.fact || '","9837"' FROM org_structure s1 JOIN org_structure s
-2 ON s2.org_id = s1.child_org_id JOIN org_structure s3 ON s3.org_id = s2.child_org_id JOIN org_structure s4 ON s4.org_id = s3.child_org_id JOIN orgs o1 ON o1.id = s1.org_id JOIN orgs o5 ON o5.id = s4.
-child_org_id WHERE s1.struct_level = 1 ORDER BY o1.org_name, o5.org_name, s1.fact * s2.fact * s3.fact * s4.fact
+/* JNS_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || o1.org_name || '","' || o5.org_name || '","' || s1.fact * s2.fact * s3.fact * s4.fact || '","170924151854333"' FROM org_structure s1 JOIN org_
+structure s2 ON s2.org_id = s1.child_org_id JOIN org_structure s3 ON s3.org_id = s2.child_org_id JOIN org_structure s4 ON s4.org_id = s3.child_org_id JOIN orgs o1 ON o1.id = s1.org_id JOIN orgs o5 ON
+o5.id = s4.child_org_id WHERE s1.struct_level = 1 ORDER BY o1.org_name, o5.org_name, s1.fact * s2.fact * s3.fact * s4.fact
 
-SQL_ID  2ky6p0713sysr, child number 0
+SQL_ID  a9z6x5ysajunr, child number 0
 -------------------------------------
 /* JNS_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || o1.org_name
 || '","' || o5.org_name || '","' || s1.fact * s2.fact * s3.fact *
-s4.fact || '","9837"' FROM org_structure s1 JOIN org_structure s2 ON
-s2.org_id = s1.child_org_id JOIN org_structure s3 ON s3.org_id =
-s2.child_org_id JOIN org_structure s4 ON s4.org_id = s3.child_org_id
-JOIN orgs o1 ON o1.id = s1.org_id JOIN orgs o5 ON o5.id =
-s4.child_org_id WHERE s1.struct_level = 1 ORDER BY o1.org_name,
+s4.fact || '","170924151854333"' FROM org_structure s1 JOIN
+org_structure s2 ON s2.org_id = s1.child_org_id JOIN org_structure s3
+ON s3.org_id = s2.child_org_id JOIN org_structure s4 ON s4.org_id =
+s3.child_org_id JOIN orgs o1 ON o1.id = s1.org_id JOIN orgs o5 ON o5.id
+= s4.child_org_id WHERE s1.struct_level = 1 ORDER BY o1.org_name,
 o5.org_name, s1.fact * s2.fact * s3.fact * s4.fact
 
 Plan hash value: 914261573
@@ -153,19 +153,19 @@ Plan hash value: 914261573
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
 | Id  | Operation               | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT        |               |      1 |        |   3330K|00:00:11.39 |     782 |  51247 |  51247 |       |       |          |         |
-|   1 |  SORT ORDER BY          |               |      1 |   3905K|   3330K|00:00:11.39 |     782 |  51247 |  51247 |   454M|  7034K|  163M (1)|     401K|
-|*  2 |   HASH JOIN             |               |      1 |   3905K|   3330K|00:00:01.59 |     778 |      0 |      0 |  1483K|  1483K| 1602K (0)|         |
+|   0 | SELECT STATEMENT        |               |      1 |        |   3330K|00:00:25.89 |     835 |  55973 |  55973 |       |       |          |         |
+|   1 |  SORT ORDER BY          |               |      1 |   3905K|   3330K|00:00:25.89 |     835 |  55973 |  55973 |   498M|  7353K|  163M (1)|     438K|
+|*  2 |   HASH JOIN             |               |      1 |   3905K|   3330K|00:00:01.45 |     830 |      0 |      0 |  1572K|  1572K| 1664K (0)|         |
 |   3 |    TABLE ACCESS FULL    | ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|*  4 |    HASH JOIN            |               |      1 |   3905K|   3330K|00:00:00.39 |     771 |      0 |      0 |  2733K|  1562K| 4103K (0)|         |
-|   5 |     TABLE ACCESS FULL   | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
-|*  6 |     HASH JOIN           |               |      1 |    133K|  30520 |00:00:00.02 |     580 |      0 |      0 |   917K|   917K| 3857K (0)|         |
-|*  7 |      HASH JOIN          |               |      1 |   4575 |    780 |00:00:00.01 |     389 |      0 |      0 |  1062K|  1062K| 1288K (0)|         |
-|*  8 |       HASH JOIN         |               |      1 |     56 |     56 |00:00:00.01 |     198 |      0 |      0 |  1185K|  1185K| 1179K (0)|         |
-|*  9 |        TABLE ACCESS FULL| ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
+|*  4 |    HASH JOIN            |               |      1 |   3905K|   3330K|00:00:00.43 |     823 |      0 |      0 |  2983K|  1647K| 4162K (0)|         |
+|   5 |     TABLE ACCESS FULL   | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
+|*  6 |     HASH JOIN           |               |      1 |    133K|  30520 |00:00:00.04 |     619 |      0 |      0 |   974K|   974K| 3880K (0)|         |
+|*  7 |      HASH JOIN          |               |      1 |   4575 |    780 |00:00:00.01 |     415 |      0 |      0 |  1114K|  1114K| 1326K (0)|         |
+|*  8 |       HASH JOIN         |               |      1 |     56 |     56 |00:00:00.01 |     211 |      0 |      0 |  1236K|  1236K|  965K (0)|         |
+|*  9 |        TABLE ACCESS FULL| ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
 |  10 |        TABLE ACCESS FULL| ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|  11 |       TABLE ACCESS FULL | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
-|  12 |      TABLE ACCESS FULL  | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
+|  11 |       TABLE ACCESS FULL | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
+|  12 |      TABLE ACCESS FULL  | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Predicate Information (identified by operation id):
@@ -183,53 +183,55 @@ Note
    - this is an adaptive plan
 
 
-Timer Set: Cursor, Constructed at 06 Mar 2017 07:26:00, written at 07:26:22
+Timer Set: Cursor, Constructed at 24 Sep 2017 15:18:54, written at 15:19:38
 ===========================================================================
-[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
 
 Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
 -----------------  ----------  ----------  ------------  -------------  -------------
 Pre SQL                  0.00        0.00             1        0.00000        0.00000
-Open cursor              0.00        0.00             1        0.00400        0.00000
-First fetch              7.57        5.58             1        7.56800        5.58000
-Write to file            8.19        8.20         3,332        0.00246        0.00246
-Remaining fetches        6.16        1.19         3,331        0.00185        0.00036
-Write plan               0.58        0.58             1        0.58200        0.58000
-(Other)                  0.03        0.03             1        0.02900        0.03000
+Open cursor              0.01        0.00             1        0.00600        0.00000
+First fetch             22.25        5.33             1       22.25000        5.33000
+Write to file           11.56       11.35         3,332        0.00347        0.00341
+Remaining fetches        9.39        1.43         3,331        0.00282        0.00043
+Rollback                 0.00        0.00             1        0.00000        0.00000
+Post SQL                 0.00        0.00             1        0.00000        0.00000
+Write plan               0.78        0.44             1        0.77700        0.44000
+(Other)                  0.02        0.03             1        0.01800        0.03000
 -----------------  ----------  ----------  ------------  -------------  -------------
-Total                   22.53       15.58         6,668        0.00338        0.00234
+Total                   44.00       18.58         6,670        0.00660        0.00279
 -----------------  ----------  ----------  ------------  -------------  -------------
 
-Timer Set: File Writer, Constructed at 06 Mar 2017 07:26:00, written at 07:26:22
+Timer Set: File Writer, Constructed at 24 Sep 2017 15:18:54, written at 15:19:38
 ================================================================================
-[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.01 (0.000010), calls: 1000, '***' denotes corrected line below]
 
 Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
 -------  ----------  ----------  ------------  -------------  -------------
-Lines          6.75        6.75         7,511        0.00090        0.00090
-(Other)       15.79        8.84             1       15.79200        8.84000
+Lines          8.36        7.96         8,628        0.00097        0.00092
+(Other)       35.65       10.64             1       35.65200       10.64000
 -------  ----------  ----------  ------------  -------------  -------------
-Total         22.55       15.59         7,512        0.00300        0.00208
+Total         44.01       18.60         8,629        0.00510        0.00216
 -------  ----------  ----------  ------------  -------------  -------------
 3330601 rows written to JNS_QRY.csv
-Summary for W/D = 180/180 , bench_run_statistics_id = 1
+Summary for W/D = 180/180 , bench_run_statistics_id = 7
 
-Timer Set: Run_One, Constructed at 06 Mar 2017 07:26:00, written at 07:26:22
+Timer Set: Run_One, Constructed at 24 Sep 2017 15:18:54, written at 15:19:38
 ============================================================================
-[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
 
 Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
 -------  ----------  ----------  ------------  -------------  -------------
-Run           22.57       15.63             1       22.56900       15.63000
+Run           44.02       18.61             1       44.02100       18.61000
 (Other)        0.00        0.00             1        0.00000        0.00000
 -------  ----------  ----------  ------------  -------------  -------------
-Total         22.57       15.63             2       11.28450        7.81500
+Total         44.02       18.61             2       22.01050        9.30500
 -------  ----------  ----------  ------------  -------------  -------------
 /* RSF_QRY */ WITH rsf (root_org_id, child_org_id, fact_product, lev) AS ( SELECT org_id, child_org_id, fact, 1 FROM org_structure WHERE struct_level = 1 UNION ALL SELECT r.root_org_id, s.child_org_id
 , r.fact_product * s.fact, r.lev + 1 FROM rsf r JOIN org_structure s ON s.org_id = r.child_org_id ) SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || o1.org_name || '","' || o5.org_name || '","' || r.fact_p
-roduct || '","5388"' FROM rsf r JOIN orgs o1 ON o1.id = r.root_org_id JOIN orgs o5 ON o5.id = r.child_org_id WHERE r.lev = 4 ORDER BY o1.org_name, o5.org_name, r.fact_product
+roduct || '","170924151938361"' FROM rsf r JOIN orgs o1 ON o1.id = r.root_org_id JOIN orgs o5 ON o5.id = r.child_org_id WHERE r.lev = 4 ORDER BY o1.org_name, o5.org_name, r.fact_product
 
-SQL_ID  au6g11911tf56, child number 0
+SQL_ID  bxc235f75xvdb, child number 0
 -------------------------------------
 /* RSF_QRY */ WITH rsf (root_org_id, child_org_id, fact_product, lev)
 AS ( SELECT org_id, child_org_id, fact, 1 FROM org_structure WHERE
@@ -237,27 +239,28 @@ struct_level = 1 UNION ALL SELECT r.root_org_id, s.child_org_id,
 r.fact_product * s.fact, r.lev + 1 FROM rsf r JOIN org_structure s ON
 s.org_id = r.child_org_id ) SELECT /*+ GATHER_PLAN_STATISTICS */ '"' ||
 o1.org_name || '","' || o5.org_name || '","' || r.fact_product ||
-'","5388"' FROM rsf r JOIN orgs o1 ON o1.id = r.root_org_id JOIN orgs
-o5 ON o5.id = r.child_org_id WHERE r.lev = 4 ORDER BY o1.org_name,
-o5.org_name, r.fact_product
+'","170924151938361"' FROM rsf r JOIN orgs o1 ON o1.id = r.root_org_id
+JOIN orgs o5 ON o5.id = r.child_org_id WHERE r.lev = 4 ORDER BY
+o1.org_name, o5.org_name, r.fact_product
 
-Plan hash value: 248371385
+Plan hash value: 83684345
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Id  | Operation                                    | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT                             |               |      1 |        |   3330K|00:01:08.26 |      39M|  73934 |  93899 |       |       |          |         |
-|   1 |  SORT ORDER BY                               |               |      1 |   4631 |   3330K|00:01:08.26 |      39M|  73934 |  93899 |   454M|  7029K|  162M (1)|     401K|
-|*  2 |   HASH JOIN                                  |               |      1 |   4631 |   3330K|00:00:42.77 |      39M|  22678 |  42643 |  1519K|  1519K| 1426K (0)|         |
+|   0 | SELECT STATEMENT                             |               |      1 |        |   3330K|00:00:55.23 |      39M|  75680 |  75680 |       |       |          |         |
+|   1 |  SORT ORDER BY                               |               |      1 |   1360T|   3330K|00:00:55.23 |      39M|  75680 |  75680 |   496M|  7340K|  162M (1)|     438K|
+|*  2 |   HASH JOIN                                  |               |      1 |   1360T|   3330K|00:00:38.72 |      39M|  19708 |  19708 |  1610K|  1610K| 1573K (0)|         |
 |   3 |    TABLE ACCESS FULL                         | ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|*  4 |    HASH JOIN                                 |               |      1 |   4631 |   3330K|00:00:40.94 |      39M|  22678 |  42643 |  1519K|  1519K| 1546K (0)|         |
+|*  4 |    HASH JOIN                                 |               |      1 |   1360T|   3330K|00:00:37.82 |      39M|  19708 |  19708 |  1610K|  1610K| 1679K (0)|         |
 |   5 |     TABLE ACCESS FULL                        | ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|*  6 |     VIEW                                     |               |      1 |   4631 |   3330K|00:00:39.38 |      39M|  22678 |  42643 |       |       |          |         |
-|   7 |      UNION ALL (RECURSIVE WITH) BREADTH FIRST|               |      1 |        |   3361K|00:00:37.64 |      39M|  22678 |  42643 |   173M|  4426K|   97M (0)|         |
-|*  8 |       TABLE ACCESS FULL                      | ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
-|*  9 |       HASH JOIN                              |               |      4 |   4575 |   3361K|00:00:06.95 |     765 |  22678 |  22935 |   282M|    10M|   56M (1)|     191K|
-|  10 |        RECURSIVE WITH PUMP                   |               |      4 |        |   3361K|00:00:00.54 |       1 |  19708 |      0 |       |       |          |         |
-|  11 |        TABLE ACCESS FULL                     | ORG_STRUCTURE |      4 |  27288 |    109K|00:00:00.01 |     764 |      0 |      0 |       |       |          |         |
+|*  6 |     VIEW                                     |               |      1 |   1360T|   3330K|00:00:37.01 |      39M|  19708 |  19708 |       |       |          |         |
+|   7 |      UNION ALL (RECURSIVE WITH) BREADTH FIRST|               |      1 |        |   3361K|00:00:35.48 |      39M|  19708 |  19708 |   173M|  4426K|   97M (0)|         |
+|*  8 |       TABLE ACCESS FULL                      | ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
+|*  9 |       HASH JOIN                              |               |      4 |   1360T|   3361K|00:00:02.39 |     205 |  19708 |      0 |  2914K|  1666K| 4172K (0)|         |
+|  10 |        BUFFER SORT (REUSE)                   |               |      4 |        |    109K|00:00:00.06 |     204 |      0 |      0 |  1683K|   633K| 1495K (0)|         |
+|  11 |         TABLE ACCESS FULL                    | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
+|  12 |        RECURSIVE WITH PUMP                   |               |      4 |        |   3361K|00:00:00.45 |       1 |  19708 |      0 |       |       |          |         |
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Predicate Information (identified by operation id):
@@ -269,79 +272,77 @@ Predicate Information (identified by operation id):
    8 - filter("STRUCT_LEVEL"=1)
    9 - access("S"."ORG_ID"="R"."CHILD_ORG_ID")
 
-Note
------
-   - this is an adaptive plan
 
-
-Timer Set: Cursor, Constructed at 06 Mar 2017 07:26:22, written at 07:27:32
+Timer Set: Cursor, Constructed at 24 Sep 2017 15:19:38, written at 15:20:49
 ===========================================================================
-[Timer timed: Elapsed (per call): 0.02 (0.000019), CPU (per call): 0.03 (0.000030), calls: 1000, '***' denotes corrected line below]
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
 
 Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
 -----------------  ----------  ----------  ------------  -------------  -------------
 Pre SQL                  0.00        0.00             1        0.00000        0.00000
 Open cursor              0.00        0.00             1        0.00300        0.00000
-First fetch             52.49       44.54             1       52.49000       44.54000
-Write to file            8.09        8.12         3,332        0.00243        0.00244
-Remaining fetches        8.40        0.89         3,331        0.00252        0.00027
-Write plan               0.51        0.50             1        0.50700        0.50000
-(Other)                  0.01        0.01             1        0.01100        0.01000
+First fetch             54.26       40.51             1       54.25700       40.51000
+Write to file           10.94       10.97         3,332        0.00328        0.00329
+Remaining fetches        5.41        1.35         3,331        0.00162        0.00041
+Rollback                 0.00        0.00             1        0.00000        0.00000
+Post SQL                 0.00        0.00             1        0.00000        0.00000
+Write plan               0.27        0.23             1        0.27300        0.23000
+(Other)                  0.04        0.02             1        0.03600        0.02000
 -----------------  ----------  ----------  ------------  -------------  -------------
-Total                   69.50       54.06         6,668        0.01042        0.00811
+Total                   70.91       53.08         6,670        0.01063        0.00796
 -----------------  ----------  ----------  ------------  -------------  -------------
 
-Timer Set: File Writer, Constructed at 06 Mar 2017 07:26:22, written at 07:27:32
+Timer Set: File Writer, Constructed at 24 Sep 2017 15:19:38, written at 15:20:49
 ================================================================================
-[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
 
 Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
 -------  ----------  ----------  ------------  -------------  -------------
-Lines          6.95        7.01         7,511        0.00093        0.00093
-(Other)       62.58       47.08             1       62.57500       47.08000
+Lines          7.97        8.29         8,628        0.00092        0.00096
+(Other)       62.96       44.79             1       62.96100       44.79000
 -------  ----------  ----------  ------------  -------------  -------------
-Total         69.53       54.09         7,512        0.00926        0.00720
+Total         70.93       53.08         8,629        0.00822        0.00615
 -------  ----------  ----------  ------------  -------------  -------------
 3330601 rows written to RSF_QRY.csv
-Summary for W/D = 180/180 , bench_run_statistics_id = 2
+Summary for W/D = 180/180 , bench_run_statistics_id = 8
 
-Timer Set: Run_One, Constructed at 06 Mar 2017 07:26:22, written at 07:27:32
+Timer Set: Run_One, Constructed at 24 Sep 2017 15:19:38, written at 15:20:49
 ============================================================================
-[Timer timed: Elapsed (per call): 0.00 (0.000000), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
 
 Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
 -------  ----------  ----------  ------------  -------------  -------------
-Run           69.53       54.09             1       69.53400       54.09000
+Run           70.93       53.08             1       70.93400       53.08000
 (Other)        0.00        0.00             1        0.00000        0.00000
 -------  ----------  ----------  ------------  -------------  -------------
-Total         69.53       54.09             2       34.76700       27.04500
+Total         70.93       53.08             2       35.46700       26.54000
 -------  ----------  ----------  ------------  -------------  -------------
-/* PLF_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || o1.org_name || '","' || o5.org_name || '","' || t.fact_product || '","207"' FROM org_structure s CROSS APPLY TABLE (Org_Products (s.child_org_
-id, s.fact)) t JOIN orgs o1 ON o1.id = s.org_id JOIN orgs o5 ON o5.id = t.org_id WHERE s.struct_level = 1 AND t.struct_level = 4 ORDER BY o1.org_name, o5.org_name, t.fact_product
+/* PLF_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || o1.org_name || '","' || o5.org_name || '","' || t.fact_product || '","170924152049303"' FROM org_structure s CROSS APPLY TABLE (Org_Products (
+s.child_org_id, s.fact)) t JOIN orgs o1 ON o1.id = s.org_id JOIN orgs o5 ON o5.id = t.org_id WHERE s.struct_level = 1 AND t.struct_level = 4 ORDER BY o1.org_name, o5.org_name, t.fact_product
 
-SQL_ID  6hjcfrgdgy9yp, child number 0
+SQL_ID  9mpvp4k8q2qdv, child number 0
 -------------------------------------
 /* PLF_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || o1.org_name
-|| '","' || o5.org_name || '","' || t.fact_product || '","207"' FROM
-org_structure s CROSS APPLY TABLE (Org_Products (s.child_org_id,
-s.fact)) t JOIN orgs o1 ON o1.id = s.org_id JOIN orgs o5 ON o5.id =
-t.org_id WHERE s.struct_level = 1 AND t.struct_level = 4 ORDER BY
-o1.org_name, o5.org_name, t.fact_product
+|| '","' || o5.org_name || '","' || t.fact_product ||
+'","170924152049303"' FROM org_structure s CROSS APPLY TABLE
+(Org_Products (s.child_org_id, s.fact)) t JOIN orgs o1 ON o1.id =
+s.org_id JOIN orgs o5 ON o5.id = t.org_id WHERE s.struct_level = 1 AND
+t.struct_level = 4 ORDER BY o1.org_name, o5.org_name, t.fact_product
 
 Plan hash value: 1216100769
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Id  | Operation                            | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT                     |               |      1 |        |   3330K|00:03:29.72 |    9081K|  51190 |  51190 |       |       |          |         |
-|   1 |  SORT ORDER BY                       |               |      1 |   4574 |   3330K|00:03:29.72 |    9081K|  51190 |  51190 |   454M|  7028K|  163M (1)|     400K|
-|*  2 |   HASH JOIN                          |               |      1 |   4574 |   3330K|00:03:43.89 |    9081K|      0 |      0 |  1483K|  1483K| 1485K (0)|         |
+|   0 | SELECT STATEMENT                     |               |      1 |        |   3330K|00:04:05.29 |    9074K|  55973 |  55973 |       |       |          |         |
+|   1 |  SORT ORDER BY                       |               |      1 |   4574 |   3330K|00:04:05.29 |    9074K|  55973 |  55973 |   496M|  7335K|  163M (1)|     438K|
+|*  2 |   HASH JOIN                          |               |      1 |   4574 |   3330K|00:03:20.77 |    9074K|      0 |      0 |  1610K|  1610K| 1633K (0)|         |
 |   3 |    TABLE ACCESS FULL                 | ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|   4 |    NESTED LOOPS                      |               |      1 |   4574 |   3330K|00:03:42.13 |    9081K|      0 |      0 |       |       |          |         |
-|*  5 |     HASH JOIN                        |               |      1 |     56 |     56 |00:00:00.01 |     198 |      0 |      0 |  1160K|  1160K| 1135K (0)|         |
-|*  6 |      TABLE ACCESS FULL               | ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
+|   4 |    NESTED LOOPS                      |               |      1 |   4574 |   3330K|00:03:19.66 |    9074K|      0 |      0 |       |       |          |         |
+|*  5 |     HASH JOIN                        |               |      1 |     56 |     56 |00:00:00.03 |     211 |      0 |      0 |  1265K|  1265K|  970K (0)|         |
+|*  6 |      TABLE ACCESS FULL               | ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
 |   7 |      TABLE ACCESS FULL               | ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|*  8 |     COLLECTION ITERATOR PICKLER FETCH| ORG_PRODUCTS  |     56 |     82 |   3330K|00:03:38.78 |    9081K|      0 |      0 |       |       |          |         |
+|*  8 |     COLLECTION ITERATOR PICKLER FETCH| ORG_PRODUCTS  |     56 |     82 |   3330K|00:03:19.34 |    9073K|      0 |      0 |       |       |          |         |
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Predicate Information (identified by operation id):
@@ -353,61 +354,63 @@ Predicate Information (identified by operation id):
    8 - filter(VALUE(KOKBF$)=4)
 
 
-Timer Set: Cursor, Constructed at 06 Mar 2017 07:27:32, written at 07:31:16
+Timer Set: Cursor, Constructed at 24 Sep 2017 15:20:49, written at 15:25:07
 ===========================================================================
 [Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
 
 Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
 -----------------  ----------  ----------  ------------  -------------  -------------
-Pre SQL                  0.00        0.00             1        0.00000        0.00000
-Open cursor              0.02        0.01             1        0.01600        0.01000
-First fetch            205.03      202.61             1      205.02500      202.61000
-Write to file            7.97        7.77         3,332        0.00239        0.00233
-Remaining fetches       10.96        1.01         3,331        0.00329        0.00030
-Write plan               0.50        0.50             1        0.50400        0.50000
-(Other)                  0.02        0.02             1        0.01500        0.02000
+Pre SQL                  0.00        0.00             1        0.00100        0.00000
+Open cursor              0.01        0.02             1        0.00900        0.02000
+First fetch            238.32      227.79             1      238.31500      227.79000
+Write to file           11.67       11.70         3,332        0.00350        0.00351
+Remaining fetches        8.11        1.24         3,331        0.00244        0.00037
+Rollback                 0.00        0.00             1        0.00000        0.00000
+Post SQL                 0.00        0.00             1        0.00000        0.00000
+Write plan               0.25        0.21             1        0.25000        0.21000
+(Other)                  0.06        0.01             1        0.05500        0.01000
 -----------------  ----------  ----------  ------------  -------------  -------------
-Total                  224.49      211.92         6,668        0.03367        0.03178
+Total                  258.41      240.97         6,670        0.03874        0.03613
 -----------------  ----------  ----------  ------------  -------------  -------------
 
-Timer Set: File Writer, Constructed at 06 Mar 2017 07:27:32, written at 07:31:16
+Timer Set: File Writer, Constructed at 24 Sep 2017 15:20:49, written at 15:25:07
 ================================================================================
 [Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
 
 Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
 -------  ----------  ----------  ------------  -------------  -------------
-Lines          6.77        6.68         7,410        0.00091        0.00090
-(Other)      217.73      205.24             1      217.72900      205.24000
+Lines          8.58        8.56         8,628        0.00099        0.00099
+(Other)      249.84      232.42             1      249.84400      232.42000
 -------  ----------  ----------  ------------  -------------  -------------
-Total        224.50      211.92         7,411        0.03029        0.02860
+Total        258.42      240.98         8,629        0.02995        0.02793
 -------  ----------  ----------  ------------  -------------  -------------
 3330601 rows written to PLF_QRY.csv
-Summary for W/D = 180/180 , bench_run_statistics_id = 3
+Summary for W/D = 180/180 , bench_run_statistics_id = 9
 
-Timer Set: Run_One, Constructed at 06 Mar 2017 07:27:32, written at 07:31:16
+Timer Set: Run_One, Constructed at 24 Sep 2017 15:20:49, written at 15:25:07
 ============================================================================
 [Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
 
 Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
 -------  ----------  ----------  ------------  -------------  -------------
-Run          224.51      211.92             1      224.51000      211.92000
+Run          258.43      240.98             1      258.43300      240.98000
 (Other)        0.00        0.00             1        0.00000        0.00000
 -------  ----------  ----------  ------------  -------------  -------------
-Total        224.51      211.92             2      112.25500      105.96000
+Total        258.43      240.98             2      129.21650      120.49000
 -------  ----------  ----------  ------------  -------------  -------------
 
 Distinct Plans
 ==============
 JNS_QRY: 1/1 (1 of 1)
-SQL_ID  2ky6p0713sysr, child number 0
+SQL_ID  a9z6x5ysajunr, child number 0
 -------------------------------------
 /* JNS_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || o1.org_name
 || '","' || o5.org_name || '","' || s1.fact * s2.fact * s3.fact *
-s4.fact || '","9837"' FROM org_structure s1 JOIN org_structure s2 ON
-s2.org_id = s1.child_org_id JOIN org_structure s3 ON s3.org_id =
-s2.child_org_id JOIN org_structure s4 ON s4.org_id = s3.child_org_id
-JOIN orgs o1 ON o1.id = s1.org_id JOIN orgs o5 ON o5.id =
-s4.child_org_id WHERE s1.struct_level = 1 ORDER BY o1.org_name,
+s4.fact || '","170924151854333"' FROM org_structure s1 JOIN
+org_structure s2 ON s2.org_id = s1.child_org_id JOIN org_structure s3
+ON s3.org_id = s2.child_org_id JOIN org_structure s4 ON s4.org_id =
+s3.child_org_id JOIN orgs o1 ON o1.id = s1.org_id JOIN orgs o5 ON o5.id
+= s4.child_org_id WHERE s1.struct_level = 1 ORDER BY o1.org_name,
 o5.org_name, s1.fact * s2.fact * s3.fact * s4.fact
 
 Plan hash value: 914261573
@@ -415,19 +418,19 @@ Plan hash value: 914261573
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
 | Id  | Operation               | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT        |               |      1 |        |   3330K|00:00:11.39 |     782 |  51247 |  51247 |       |       |          |         |
-|   1 |  SORT ORDER BY          |               |      1 |   3905K|   3330K|00:00:11.39 |     782 |  51247 |  51247 |   454M|  7034K|  163M (1)|     401K|
-|*  2 |   HASH JOIN             |               |      1 |   3905K|   3330K|00:00:01.59 |     778 |      0 |      0 |  1483K|  1483K| 1602K (0)|         |
+|   0 | SELECT STATEMENT        |               |      1 |        |   3330K|00:00:25.89 |     835 |  55973 |  55973 |       |       |          |         |
+|   1 |  SORT ORDER BY          |               |      1 |   3905K|   3330K|00:00:25.89 |     835 |  55973 |  55973 |   498M|  7353K|  163M (1)|     438K|
+|*  2 |   HASH JOIN             |               |      1 |   3905K|   3330K|00:00:01.45 |     830 |      0 |      0 |  1572K|  1572K| 1664K (0)|         |
 |   3 |    TABLE ACCESS FULL    | ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|*  4 |    HASH JOIN            |               |      1 |   3905K|   3330K|00:00:00.39 |     771 |      0 |      0 |  2733K|  1562K| 4103K (0)|         |
-|   5 |     TABLE ACCESS FULL   | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
-|*  6 |     HASH JOIN           |               |      1 |    133K|  30520 |00:00:00.02 |     580 |      0 |      0 |   917K|   917K| 3857K (0)|         |
-|*  7 |      HASH JOIN          |               |      1 |   4575 |    780 |00:00:00.01 |     389 |      0 |      0 |  1062K|  1062K| 1288K (0)|         |
-|*  8 |       HASH JOIN         |               |      1 |     56 |     56 |00:00:00.01 |     198 |      0 |      0 |  1185K|  1185K| 1179K (0)|         |
-|*  9 |        TABLE ACCESS FULL| ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
+|*  4 |    HASH JOIN            |               |      1 |   3905K|   3330K|00:00:00.43 |     823 |      0 |      0 |  2983K|  1647K| 4162K (0)|         |
+|   5 |     TABLE ACCESS FULL   | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
+|*  6 |     HASH JOIN           |               |      1 |    133K|  30520 |00:00:00.04 |     619 |      0 |      0 |   974K|   974K| 3880K (0)|         |
+|*  7 |      HASH JOIN          |               |      1 |   4575 |    780 |00:00:00.01 |     415 |      0 |      0 |  1114K|  1114K| 1326K (0)|         |
+|*  8 |       HASH JOIN         |               |      1 |     56 |     56 |00:00:00.01 |     211 |      0 |      0 |  1236K|  1236K|  965K (0)|         |
+|*  9 |        TABLE ACCESS FULL| ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
 |  10 |        TABLE ACCESS FULL| ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|  11 |       TABLE ACCESS FULL | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
-|  12 |      TABLE ACCESS FULL  | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
+|  11 |       TABLE ACCESS FULL | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
+|  12 |      TABLE ACCESS FULL  | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Predicate Information (identified by operation id):
@@ -445,29 +448,29 @@ Note
    - this is an adaptive plan
 
 PLF_QRY: 1/1 (1 of 1)
-SQL_ID  6hjcfrgdgy9yp, child number 0
+SQL_ID  9mpvp4k8q2qdv, child number 0
 -------------------------------------
 /* PLF_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || o1.org_name
-|| '","' || o5.org_name || '","' || t.fact_product || '","207"' FROM
-org_structure s CROSS APPLY TABLE (Org_Products (s.child_org_id,
-s.fact)) t JOIN orgs o1 ON o1.id = s.org_id JOIN orgs o5 ON o5.id =
-t.org_id WHERE s.struct_level = 1 AND t.struct_level = 4 ORDER BY
-o1.org_name, o5.org_name, t.fact_product
+|| '","' || o5.org_name || '","' || t.fact_product ||
+'","170924152049303"' FROM org_structure s CROSS APPLY TABLE
+(Org_Products (s.child_org_id, s.fact)) t JOIN orgs o1 ON o1.id =
+s.org_id JOIN orgs o5 ON o5.id = t.org_id WHERE s.struct_level = 1 AND
+t.struct_level = 4 ORDER BY o1.org_name, o5.org_name, t.fact_product
 
 Plan hash value: 1216100769
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Id  | Operation                            | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT                     |               |      1 |        |   3330K|00:03:29.72 |    9081K|  51190 |  51190 |       |       |          |         |
-|   1 |  SORT ORDER BY                       |               |      1 |   4574 |   3330K|00:03:29.72 |    9081K|  51190 |  51190 |   454M|  7028K|  163M (1)|     400K|
-|*  2 |   HASH JOIN                          |               |      1 |   4574 |   3330K|00:03:43.89 |    9081K|      0 |      0 |  1483K|  1483K| 1485K (0)|         |
+|   0 | SELECT STATEMENT                     |               |      1 |        |   3330K|00:04:05.29 |    9074K|  55973 |  55973 |       |       |          |         |
+|   1 |  SORT ORDER BY                       |               |      1 |   4574 |   3330K|00:04:05.29 |    9074K|  55973 |  55973 |   496M|  7335K|  163M (1)|     438K|
+|*  2 |   HASH JOIN                          |               |      1 |   4574 |   3330K|00:03:20.77 |    9074K|      0 |      0 |  1610K|  1610K| 1633K (0)|         |
 |   3 |    TABLE ACCESS FULL                 | ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|   4 |    NESTED LOOPS                      |               |      1 |   4574 |   3330K|00:03:42.13 |    9081K|      0 |      0 |       |       |          |         |
-|*  5 |     HASH JOIN                        |               |      1 |     56 |     56 |00:00:00.01 |     198 |      0 |      0 |  1160K|  1160K| 1135K (0)|         |
-|*  6 |      TABLE ACCESS FULL               | ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
+|   4 |    NESTED LOOPS                      |               |      1 |   4574 |   3330K|00:03:19.66 |    9074K|      0 |      0 |       |       |          |         |
+|*  5 |     HASH JOIN                        |               |      1 |     56 |     56 |00:00:00.03 |     211 |      0 |      0 |  1265K|  1265K|  970K (0)|         |
+|*  6 |      TABLE ACCESS FULL               | ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
 |   7 |      TABLE ACCESS FULL               | ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|*  8 |     COLLECTION ITERATOR PICKLER FETCH| ORG_PRODUCTS  |     56 |     82 |   3330K|00:03:38.78 |    9081K|      0 |      0 |       |       |          |         |
+|*  8 |     COLLECTION ITERATOR PICKLER FETCH| ORG_PRODUCTS  |     56 |     82 |   3330K|00:03:19.34 |    9073K|      0 |      0 |       |       |          |         |
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Predicate Information (identified by operation id):
@@ -479,7 +482,7 @@ Predicate Information (identified by operation id):
    8 - filter(VALUE(KOKBF$)=4)
 
 RSF_QRY: 1/1 (1 of 1)
-SQL_ID  au6g11911tf56, child number 0
+SQL_ID  bxc235f75xvdb, child number 0
 -------------------------------------
 /* RSF_QRY */ WITH rsf (root_org_id, child_org_id, fact_product, lev)
 AS ( SELECT org_id, child_org_id, fact, 1 FROM org_structure WHERE
@@ -487,27 +490,28 @@ struct_level = 1 UNION ALL SELECT r.root_org_id, s.child_org_id,
 r.fact_product * s.fact, r.lev + 1 FROM rsf r JOIN org_structure s ON
 s.org_id = r.child_org_id ) SELECT /*+ GATHER_PLAN_STATISTICS */ '"' ||
 o1.org_name || '","' || o5.org_name || '","' || r.fact_product ||
-'","5388"' FROM rsf r JOIN orgs o1 ON o1.id = r.root_org_id JOIN orgs
-o5 ON o5.id = r.child_org_id WHERE r.lev = 4 ORDER BY o1.org_name,
-o5.org_name, r.fact_product
+'","170924151938361"' FROM rsf r JOIN orgs o1 ON o1.id = r.root_org_id
+JOIN orgs o5 ON o5.id = r.child_org_id WHERE r.lev = 4 ORDER BY
+o1.org_name, o5.org_name, r.fact_product
 
-Plan hash value: 248371385
+Plan hash value: 83684345
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Id  | Operation                                    | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT                             |               |      1 |        |   3330K|00:01:08.26 |      39M|  73934 |  93899 |       |       |          |         |
-|   1 |  SORT ORDER BY                               |               |      1 |   4631 |   3330K|00:01:08.26 |      39M|  73934 |  93899 |   454M|  7029K|  162M (1)|     401K|
-|*  2 |   HASH JOIN                                  |               |      1 |   4631 |   3330K|00:00:42.77 |      39M|  22678 |  42643 |  1519K|  1519K| 1426K (0)|         |
+|   0 | SELECT STATEMENT                             |               |      1 |        |   3330K|00:00:55.23 |      39M|  75680 |  75680 |       |       |          |         |
+|   1 |  SORT ORDER BY                               |               |      1 |   1360T|   3330K|00:00:55.23 |      39M|  75680 |  75680 |   496M|  7340K|  162M (1)|     438K|
+|*  2 |   HASH JOIN                                  |               |      1 |   1360T|   3330K|00:00:38.72 |      39M|  19708 |  19708 |  1610K|  1610K| 1573K (0)|         |
 |   3 |    TABLE ACCESS FULL                         | ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|*  4 |    HASH JOIN                                 |               |      1 |   4631 |   3330K|00:00:40.94 |      39M|  22678 |  42643 |  1519K|  1519K| 1546K (0)|         |
+|*  4 |    HASH JOIN                                 |               |      1 |   1360T|   3330K|00:00:37.82 |      39M|  19708 |  19708 |  1610K|  1610K| 1679K (0)|         |
 |   5 |     TABLE ACCESS FULL                        | ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|*  6 |     VIEW                                     |               |      1 |   4631 |   3330K|00:00:39.38 |      39M|  22678 |  42643 |       |       |          |         |
-|   7 |      UNION ALL (RECURSIVE WITH) BREADTH FIRST|               |      1 |        |   3361K|00:00:37.64 |      39M|  22678 |  42643 |   173M|  4426K|   97M (0)|         |
-|*  8 |       TABLE ACCESS FULL                      | ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
-|*  9 |       HASH JOIN                              |               |      4 |   4575 |   3361K|00:00:06.95 |     765 |  22678 |  22935 |   282M|    10M|   56M (1)|     191K|
-|  10 |        RECURSIVE WITH PUMP                   |               |      4 |        |   3361K|00:00:00.54 |       1 |  19708 |      0 |       |       |          |         |
-|  11 |        TABLE ACCESS FULL                     | ORG_STRUCTURE |      4 |  27288 |    109K|00:00:00.01 |     764 |      0 |      0 |       |       |          |         |
+|*  6 |     VIEW                                     |               |      1 |   1360T|   3330K|00:00:37.01 |      39M|  19708 |  19708 |       |       |          |         |
+|   7 |      UNION ALL (RECURSIVE WITH) BREADTH FIRST|               |      1 |        |   3361K|00:00:35.48 |      39M|  19708 |  19708 |   173M|  4426K|   97M (0)|         |
+|*  8 |       TABLE ACCESS FULL                      | ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
+|*  9 |       HASH JOIN                              |               |      4 |   1360T|   3361K|00:00:02.39 |     205 |  19708 |      0 |  2914K|  1666K| 4172K (0)|         |
+|  10 |        BUFFER SORT (REUSE)                   |               |      4 |        |    109K|00:00:00.06 |     204 |      0 |      0 |  1683K|   633K| 1495K (0)|         |
+|  11 |         TABLE ACCESS FULL                    | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
+|  12 |        RECURSIVE WITH PUMP                   |               |      4 |        |   3361K|00:00:00.45 |       1 |  19708 |      0 |       |       |          |         |
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Predicate Information (identified by operation id):
@@ -519,15 +523,11 @@ Predicate Information (identified by operation id):
    8 - filter("STRUCT_LEVEL"=1)
    9 - access("S"."ORG_ID"="R"."CHILD_ORG_ID")
 
-Note
------
-   - this is an adaptive plan
-
 
 Data Points
 ===========
 Data Point:               size_wide      size_deep       cpu_time        elapsed       num_recs       per_part     group_size
-Data Point                      180            180           2.29          2.605          27288           2729             10
+Data Point                      180            180           2.06          2.941          27288           2729             10
 
 num_records_out
 ===============
@@ -557,75 +557,103 @@ JNS_QRY                           1
 PLF_QRY                           1
 RSF_QRY                           1
 
+num_records_pqs
+===============
+Run Type                      Width           D180
+JNS_QRY                        W180              0
+PLF_QRY                        W180              0
+RSF_QRY                        W180              0
+
+num_records_pqs_SLICE
+=====================
+Run Type                       D180
+JNS_QRY                           0
+PLF_QRY                           0
+RSF_QRY                           0
+
+num_records_pqs_RATIO
+=====================
+Run Type                      Width           D180
+JNS_QRY                        W180              0
+PLF_QRY                        W180              0
+RSF_QRY                        W180              0
+
+num_records_pqs_SLICE_RATIO
+===========================
+Run Type                       D180
+JNS_QRY                           0
+PLF_QRY                           0
+RSF_QRY                           0
+
 cpu_time
 ========
 Run Type                      Width           D180
-JNS_QRY                        W180           6.77
-PLF_QRY                        W180         203.63
-RSF_QRY                        W180          45.43
+JNS_QRY                        W180           6.76
+PLF_QRY                        W180         229.05
+RSF_QRY                        W180          41.86
 
 cpu_time_SLICE
 ==============
 Run Type                       D180
-JNS_QRY                        6.77
-PLF_QRY                      203.63
-RSF_QRY                       45.43
+JNS_QRY                        6.76
+PLF_QRY                      229.05
+RSF_QRY                       41.86
 
 cpu_time_RATIO
 ==============
 Run Type                      Width           D180
 JNS_QRY                        W180              1
-PLF_QRY                        W180          30.08
-RSF_QRY                        W180           6.71
+PLF_QRY                        W180          33.88
+RSF_QRY                        W180           6.19
 
 cpu_time_SLICE_RATIO
 ====================
 Run Type                       D180
 JNS_QRY                           1
-PLF_QRY                       30.08
-RSF_QRY                        6.71
+PLF_QRY                       33.88
+RSF_QRY                        6.19
 
 elapsed_time
 ============
 Run Type                      Width           D180
-JNS_QRY                        W180         13.735
-PLF_QRY                        W180        216.004
-RSF_QRY                        W180         60.893
+JNS_QRY                        W180         31.649
+PLF_QRY                        W180        246.437
+RSF_QRY                        W180         59.665
 
 elapsed_time_SLICE
 ==================
 Run Type                       D180
-JNS_QRY                      13.735
-PLF_QRY                     216.004
-RSF_QRY                      60.893
+JNS_QRY                      31.649
+PLF_QRY                     246.437
+RSF_QRY                      59.665
 
 elapsed_time_RATIO
 ==================
 Run Type                      Width           D180
 JNS_QRY                        W180              1
-PLF_QRY                        W180          15.73
-RSF_QRY                        W180           4.43
+PLF_QRY                        W180           7.79
+RSF_QRY                        W180           1.89
 
 elapsed_time_SLICE_RATIO
 ========================
 Run Type                       D180
 JNS_QRY                           1
-PLF_QRY                       15.73
-RSF_QRY                        4.43
+PLF_QRY                        7.79
+RSF_QRY                        1.89
 
 memory_used
 ===========
 Run Type                      Width           D180
 JNS_QRY                        W180      171261952
 PLF_QRY                        W180      171261952
-RSF_QRY                        W180      170738688
+RSF_QRY                        W180      170867712
 
 memory_used_SLICE
 =================
 Run Type                       D180
 JNS_QRY                   171261952
 PLF_QRY                   171261952
-RSF_QRY                   170738688
+RSF_QRY                   170867712
 
 memory_used_RATIO
 =================
@@ -644,100 +672,100 @@ RSF_QRY                           1
 buffers
 =======
 Run Type                      Width           D180
-JNS_QRY                        W180            782
-PLF_QRY                        W180        9081661
-RSF_QRY                        W180       39160144
+JNS_QRY                        W180            835
+PLF_QRY                        W180        9074147
+RSF_QRY                        W180       39347255
 
 buffers_SLICE
 =============
 Run Type                       D180
-JNS_QRY                         782
-PLF_QRY                     9081661
-RSF_QRY                    39160144
+JNS_QRY                         835
+PLF_QRY                     9074147
+RSF_QRY                    39347255
 
 buffers_RATIO
 =============
 Run Type                      Width           D180
 JNS_QRY                        W180              1
-PLF_QRY                        W180       11613.38
-RSF_QRY                        W180       50076.91
+PLF_QRY                        W180       10867.24
+RSF_QRY                        W180       47122.46
 
 buffers_SLICE_RATIO
 ===================
 Run Type                       D180
 JNS_QRY                           1
-PLF_QRY                    11613.38
-RSF_QRY                    50076.91
+PLF_QRY                    10867.24
+RSF_QRY                    47122.46
 
 disk_reads
 ==========
 Run Type                      Width           D180
-JNS_QRY                        W180          51247
-PLF_QRY                        W180          51190
-RSF_QRY                        W180          73934
+JNS_QRY                        W180          55973
+PLF_QRY                        W180          55973
+RSF_QRY                        W180          75680
 
 disk_reads_SLICE
 ================
 Run Type                       D180
-JNS_QRY                       51247
-PLF_QRY                       51190
-RSF_QRY                       73934
+JNS_QRY                       55973
+PLF_QRY                       55973
+RSF_QRY                       75680
 
 disk_reads_RATIO
 ================
 Run Type                      Width           D180
 JNS_QRY                        W180              1
 PLF_QRY                        W180              1
-RSF_QRY                        W180           1.44
+RSF_QRY                        W180           1.35
 
 disk_reads_SLICE_RATIO
 ======================
 Run Type                       D180
 JNS_QRY                           1
 PLF_QRY                           1
-RSF_QRY                        1.44
+RSF_QRY                        1.35
 
 disk_writes
 ===========
 Run Type                      Width           D180
-JNS_QRY                        W180          51247
-PLF_QRY                        W180          51190
-RSF_QRY                        W180          93899
+JNS_QRY                        W180          55973
+PLF_QRY                        W180          55973
+RSF_QRY                        W180          75680
 
 disk_writes_SLICE
 =================
 Run Type                       D180
-JNS_QRY                       51247
-PLF_QRY                       51190
-RSF_QRY                       93899
+JNS_QRY                       55973
+PLF_QRY                       55973
+RSF_QRY                       75680
 
 disk_writes_RATIO
 =================
 Run Type                      Width           D180
 JNS_QRY                        W180              1
 PLF_QRY                        W180              1
-RSF_QRY                        W180           1.83
+RSF_QRY                        W180           1.35
 
 disk_writes_SLICE_RATIO
 =======================
 Run Type                       D180
 JNS_QRY                           1
 PLF_QRY                           1
-RSF_QRY                        1.83
+RSF_QRY                        1.35
 
 tempseg_size
 ============
 Run Type                      Width           D180
-JNS_QRY                        W180         410624
-PLF_QRY                        W180         409600
-RSF_QRY                        W180         410624
+JNS_QRY                        W180         448512
+PLF_QRY                        W180         448512
+RSF_QRY                        W180         448512
 
 tempseg_size_SLICE
 ==================
 Run Type                       D180
-JNS_QRY                      410624
-PLF_QRY                      409600
-RSF_QRY                      410624
+JNS_QRY                      448512
+PLF_QRY                      448512
+RSF_QRY                      448512
 
 tempseg_size_RATIO
 ==================
@@ -758,28 +786,28 @@ cardinality
 Run Type                      Width           D180
 JNS_QRY                        W180        3905377
 PLF_QRY                        W180           4574
-RSF_QRY                        W180          27288
+RSF_QRY                        W180136063694837515
 
 cardinality_SLICE
 =================
 Run Type                       D180
 JNS_QRY                     3905377
 PLF_QRY                        4574
-RSF_QRY                       27288
+RSF_QRY             136063694837515
 
 cardinality_RATIO
 =================
 Run Type                      Width           D180
 JNS_QRY                        W180         853.82
 PLF_QRY                        W180              1
-RSF_QRY                        W180           5.97
+RSF_QRY                        W180297472004454.56
 
 cardinality_SLICE_RATIO
 =======================
 Run Type                       D180
 JNS_QRY                      853.82
 PLF_QRY                           1
-RSF_QRY                        5.97
+RSF_QRY             297472004454.56
 
 output_rows
 ===========
@@ -814,28 +842,28 @@ cardinality_error
 Run Type                      Width           D180
 JNS_QRY                        W180         574777
 PLF_QRY                        W180        3326026
-RSF_QRY                        W180        3343656
+RSF_QRY                        W180544254779013848
 
 cardinality_error_SLICE
 =======================
 Run Type                       D180
 JNS_QRY                      574777
 PLF_QRY                     3326026
-RSF_QRY                     3343656
+RSF_QRY             544254779013848
 
 cardinality_error_RATIO
 =======================
 Run Type                      Width           D180
 JNS_QRY                        W180              1
 PLF_QRY                        W180           5.79
-RSF_QRY                        W180           5.82
+RSF_QRY                        W180  9468972819.26
 
 cardinality_error_SLICE_RATIO
 =============================
 Run Type                       D180
 JNS_QRY                           1
 PLF_QRY                        5.79
-RSF_QRY                        5.82
+RSF_QRY               9468972819.26
 WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
 nch_run_v$stats_v WHERE stat_name = 'sorts (rows)' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE point_deep WH
 EN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
@@ -844,33 +872,129 @@ EN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size
 sorts (rows)
 ============
 Run Type                      Width           D180
-JNS_QRY                        W180        3334522
+JNS_QRY                        W180        3338904
 PLF_QRY                        W180        3330600
-RSF_QRY                        W180        6692556
+RSF_QRY                        W180        6719844
 
 sorts (rows)_SLICE
 ==================
 Run Type                       D180
-JNS_QRY                     3334522
+JNS_QRY                     3338904
 PLF_QRY                     3330600
-RSF_QRY                     6692556
+RSF_QRY                     6719844
 
 sorts (rows)_RATIO
 ==================
 Run Type                      Width           D180
 JNS_QRY                        W180              1
 PLF_QRY                        W180              1
-RSF_QRY                        W180           2.01
+RSF_QRY                        W180           2.02
 
 sorts (rows)_SLICE_RATIO
 ========================
 Run Type                       D180
 JNS_QRY                           1
 PLF_QRY                           1
-RSF_QRY                        2.01
+RSF_QRY                        2.02
 
 Top Stats
 =========
+WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'session uga memory max' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE poi
+nt_deep WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+
+
+session uga memory max
+======================
+Run Type                      Width           D180
+JNS_QRY                        W180      179287248
+PLF_QRY                        W180              0
+RSF_QRY                        W180       34261864
+
+session uga memory max_SLICE
+============================
+Run Type                       D180
+JNS_QRY                   179287248
+PLF_QRY                           0
+RSF_QRY                    34261864
+
+session uga memory max_RATIO
+============================
+Run Type                      Width           D180
+JNS_QRY                        W180179287248000000
+PLF_QRY                        W180              0
+RSF_QRY                        W180 34261864000000
+
+session uga memory max_SLICE_RATIO
+==================================
+Run Type                       D180
+JNS_QRY             179287248000000
+PLF_QRY                           0
+RSF_QRY              34261864000000
+WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'session pga memory max' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE poi
+nt_deep WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+
+
+session pga memory max
+======================
+Run Type                      Width           D180
+JNS_QRY                        W180      172670304
+PLF_QRY                        W180              0
+RSF_QRY                        W180       40042496
+
+session pga memory max_SLICE
+============================
+Run Type                       D180
+JNS_QRY                   172670304
+PLF_QRY                           0
+RSF_QRY                    40042496
+
+session pga memory max_RATIO
+============================
+Run Type                      Width           D180
+JNS_QRY                        W180172670304000000
+PLF_QRY                        W180              0
+RSF_QRY                        W180 40042496000000
+
+session pga memory max_SLICE_RATIO
+==================================
+Run Type                       D180
+JNS_QRY             172670304000000
+PLF_QRY                           0
+RSF_QRY              40042496000000
+WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'buffer is pinned count' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE poi
+nt_deep WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+
+
+buffer is pinned count
+======================
+Run Type                      Width           D180
+JNS_QRY                        W180             13
+PLF_QRY                        W180        4352449
+RSF_QRY                        W180              2
+
+buffer is pinned count_SLICE
+============================
+Run Type                       D180
+JNS_QRY                          13
+PLF_QRY                     4352449
+RSF_QRY                           2
+
+buffer is pinned count_RATIO
+============================
+Run Type                      Width           D180
+JNS_QRY                        W180            6.5
+PLF_QRY                        W180      2176224.5
+RSF_QRY                        W180              1
+
+buffer is pinned count_SLICE_RATIO
+==================================
+Run Type                       D180
+JNS_QRY                         6.5
+PLF_QRY                   2176224.5
+RSF_QRY                           1
 WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
 nch_run_v$stats_v WHERE stat_name = 'logical read bytes from cache' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (C
 ASE point_deep WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
@@ -879,30 +1003,30 @@ ASE point_deep WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name,
 logical read bytes from cache
 =============================
 Run Type                      Width           D180
-JNS_QRY                        W180       11698176
-PLF_QRY                        W180    74403315712
-RSF_QRY                        W180   320803528704
+JNS_QRY                        W180       15613952
+PLF_QRY                        W180    74343702528
+RSF_QRY                        W180   322337325056
 
 logical read bytes from cache_SLICE
 ===================================
 Run Type                       D180
-JNS_QRY                    11698176
-PLF_QRY                 74403315712
-RSF_QRY                320803528704
+JNS_QRY                    15613952
+PLF_QRY                 74343702528
+RSF_QRY                322337325056
 
 logical read bytes from cache_RATIO
 ===================================
 Run Type                      Width           D180
 JNS_QRY                        W180              1
-PLF_QRY                        W180        6360.25
-RSF_QRY                        W180       27423.38
+PLF_QRY                        W180        4761.36
+RSF_QRY                        W180       20644.19
 
 logical read bytes from cache_SLICE_RATIO
 =========================================
 Run Type                       D180
 JNS_QRY                           1
-PLF_QRY                     6360.25
-RSF_QRY                    27423.38
+PLF_QRY                     4761.36
+RSF_QRY                    20644.19
 WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
 nch_run_v$stats_v WHERE stat_name = 'file io wait time' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE point_de
 ep WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
@@ -911,62 +1035,30 @@ ep WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide,
 file io wait time
 =================
 Run Type                      Width           D180
-JNS_QRY                        W180       56555000
-PLF_QRY                        W180      444885000
-RSF_QRY                        W180      180022000
+JNS_QRY                        W180       63755000
+PLF_QRY                        W180      429886000
+RSF_QRY                        W180      147245000
 
 file io wait time_SLICE
 =======================
 Run Type                       D180
-JNS_QRY                    56555000
-PLF_QRY                   444885000
-RSF_QRY                   180022000
+JNS_QRY                    63755000
+PLF_QRY                   429886000
+RSF_QRY                   147245000
 
 file io wait time_RATIO
 =======================
 Run Type                      Width           D180
 JNS_QRY                        W180              1
-PLF_QRY                        W180           7.87
-RSF_QRY                        W180           3.18
+PLF_QRY                        W180           6.74
+RSF_QRY                        W180           2.31
 
 file io wait time_SLICE_RATIO
 =============================
 Run Type                       D180
 JNS_QRY                           1
-PLF_QRY                        7.87
-RSF_QRY                        3.18
-WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
-nch_run_v$stats_v WHERE stat_name = 'physical write bytes' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE point
-_deep WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
-
-
-physical write bytes
-====================
-Run Type                      Width           D180
-JNS_QRY                        W180      419815424
-PLF_QRY                        W180      419348480
-RSF_QRY                        W180      769220608
-
-physical write bytes_SLICE
-==========================
-Run Type                       D180
-JNS_QRY                   419815424
-PLF_QRY                   419348480
-RSF_QRY                   769220608
-
-physical write bytes_RATIO
-==========================
-Run Type                      Width           D180
-JNS_QRY                        W180              1
-PLF_QRY                        W180              1
-RSF_QRY                        W180           1.83
-
-physical write bytes_SLICE_RATIO
-================================
-Run Type                       D180
-JNS_QRY                           1
-PLF_QRY                           1
-RSF_QRY                        1.83
+PLF_QRY                        6.74
+RSF_QRY                        2.31
 WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
 nch_run_v$stats_v WHERE stat_name = 'cell physical IO interconnect bytes' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' ||
 Max (CASE point_deep WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
@@ -975,73 +1067,41 @@ Max (CASE point_deep WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query
 cell physical IO interconnect bytes
 ===================================
 Run Type                      Width           D180
-JNS_QRY                        W180      839630848
-PLF_QRY                        W180      838696960
-RSF_QRY                        W180     1374887936
+JNS_QRY                        W180      917061632
+PLF_QRY                        W180      917061632
+RSF_QRY                        W180     1239941120
 
 cell physical IO interconnect bytes_SLICE
 =========================================
 Run Type                       D180
-JNS_QRY                   839630848
-PLF_QRY                   838696960
-RSF_QRY                  1374887936
+JNS_QRY                   917061632
+PLF_QRY                   917061632
+RSF_QRY                  1239941120
 
 cell physical IO interconnect bytes_RATIO
 =========================================
 Run Type                      Width           D180
 JNS_QRY                        W180              1
 PLF_QRY                        W180              1
-RSF_QRY                        W180           1.64
+RSF_QRY                        W180           1.35
 
 cell physical IO interconnect bytes_SLICE_RATIO
 ===============================================
 Run Type                       D180
 JNS_QRY                           1
 PLF_QRY                           1
-RSF_QRY                        1.64
-WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
-nch_run_v$stats_v WHERE stat_name = 'physical read bytes' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE point_
-deep WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+RSF_QRY                        1.35
 
-
-physical read bytes
-===================
-Run Type                      Width           D180
-JNS_QRY                        W180      419815424
-PLF_QRY                        W180      419348480
-RSF_QRY                        W180      605667328
-
-physical read bytes_SLICE
-=========================
-Run Type                       D180
-JNS_QRY                   419815424
-PLF_QRY                   419348480
-RSF_QRY                   605667328
-
-physical read bytes_RATIO
-=========================
-Run Type                      Width           D180
-JNS_QRY                        W180              1
-PLF_QRY                        W180              1
-RSF_QRY                        W180           1.44
-
-physical read bytes_SLICE_RATIO
-===============================
-Run Type                       D180
-JNS_QRY                           1
-PLF_QRY                           1
-RSF_QRY                        1.44
-
-Timer Set: File Writer, Constructed at 06 Mar 2017 07:31:16, written at 07:31:19
+Timer Set: File Writer, Constructed at 24 Sep 2017 15:25:07, written at 15:25:13
 ================================================================================
-[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.01 (0.000010), calls: 1000, '***' denotes corrected line below]
+[Timer timed: Elapsed (per call): 0.01 (0.000008), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
 
 Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
 -------  ----------  ----------  ------------  -------------  -------------
 Lines          0.00        0.00             1        0.00000        0.00000
-(Other)        2.60        1.55             1        2.60300        1.55000
+(Other)        5.89        1.93             1        5.89100        1.93000
 -------  ----------  ----------  ------------  -------------  -------------
-Total          2.60        1.55             2        1.30150        0.77500
+Total          5.89        1.93             2        2.94550        0.96500
 -------  ----------  ----------  ------------  -------------  -------------
 WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, FACT f_real, Round (FACT / Greatest (Min (FACT) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM bench_v$sql_pl
 an_stats_all_v) SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE point_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_n
@@ -1051,15 +1111,15 @@ ame, point_deep, size_deep) ORDER BY query_name, point_deep
 Distinct Plans
 ==============
 JNS_QRY: 1/1 (1 of 1)
-SQL_ID  2ky6p0713sysr, child number 0
+SQL_ID  a9z6x5ysajunr, child number 0
 -------------------------------------
 /* JNS_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || o1.org_name
 || '","' || o5.org_name || '","' || s1.fact * s2.fact * s3.fact *
-s4.fact || '","9837"' FROM org_structure s1 JOIN org_structure s2 ON
-s2.org_id = s1.child_org_id JOIN org_structure s3 ON s3.org_id =
-s2.child_org_id JOIN org_structure s4 ON s4.org_id = s3.child_org_id
-JOIN orgs o1 ON o1.id = s1.org_id JOIN orgs o5 ON o5.id =
-s4.child_org_id WHERE s1.struct_level = 1 ORDER BY o1.org_name,
+s4.fact || '","170924151854333"' FROM org_structure s1 JOIN
+org_structure s2 ON s2.org_id = s1.child_org_id JOIN org_structure s3
+ON s3.org_id = s2.child_org_id JOIN org_structure s4 ON s4.org_id =
+s3.child_org_id JOIN orgs o1 ON o1.id = s1.org_id JOIN orgs o5 ON o5.id
+= s4.child_org_id WHERE s1.struct_level = 1 ORDER BY o1.org_name,
 o5.org_name, s1.fact * s2.fact * s3.fact * s4.fact
 
 Plan hash value: 914261573
@@ -1067,19 +1127,19 @@ Plan hash value: 914261573
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
 | Id  | Operation               | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT        |               |      1 |        |   3330K|00:00:11.39 |     782 |  51247 |  51247 |       |       |          |         |
-|   1 |  SORT ORDER BY          |               |      1 |   3905K|   3330K|00:00:11.39 |     782 |  51247 |  51247 |   454M|  7034K|  163M (1)|     401K|
-|*  2 |   HASH JOIN             |               |      1 |   3905K|   3330K|00:00:01.59 |     778 |      0 |      0 |  1483K|  1483K| 1602K (0)|         |
+|   0 | SELECT STATEMENT        |               |      1 |        |   3330K|00:00:25.89 |     835 |  55973 |  55973 |       |       |          |         |
+|   1 |  SORT ORDER BY          |               |      1 |   3905K|   3330K|00:00:25.89 |     835 |  55973 |  55973 |   498M|  7353K|  163M (1)|     438K|
+|*  2 |   HASH JOIN             |               |      1 |   3905K|   3330K|00:00:01.45 |     830 |      0 |      0 |  1572K|  1572K| 1664K (0)|         |
 |   3 |    TABLE ACCESS FULL    | ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|*  4 |    HASH JOIN            |               |      1 |   3905K|   3330K|00:00:00.39 |     771 |      0 |      0 |  2733K|  1562K| 4103K (0)|         |
-|   5 |     TABLE ACCESS FULL   | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
-|*  6 |     HASH JOIN           |               |      1 |    133K|  30520 |00:00:00.02 |     580 |      0 |      0 |   917K|   917K| 3857K (0)|         |
-|*  7 |      HASH JOIN          |               |      1 |   4575 |    780 |00:00:00.01 |     389 |      0 |      0 |  1062K|  1062K| 1288K (0)|         |
-|*  8 |       HASH JOIN         |               |      1 |     56 |     56 |00:00:00.01 |     198 |      0 |      0 |  1185K|  1185K| 1179K (0)|         |
-|*  9 |        TABLE ACCESS FULL| ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
+|*  4 |    HASH JOIN            |               |      1 |   3905K|   3330K|00:00:00.43 |     823 |      0 |      0 |  2983K|  1647K| 4162K (0)|         |
+|   5 |     TABLE ACCESS FULL   | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
+|*  6 |     HASH JOIN           |               |      1 |    133K|  30520 |00:00:00.04 |     619 |      0 |      0 |   974K|   974K| 3880K (0)|         |
+|*  7 |      HASH JOIN          |               |      1 |   4575 |    780 |00:00:00.01 |     415 |      0 |      0 |  1114K|  1114K| 1326K (0)|         |
+|*  8 |       HASH JOIN         |               |      1 |     56 |     56 |00:00:00.01 |     211 |      0 |      0 |  1236K|  1236K|  965K (0)|         |
+|*  9 |        TABLE ACCESS FULL| ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
 |  10 |        TABLE ACCESS FULL| ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|  11 |       TABLE ACCESS FULL | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
-|  12 |      TABLE ACCESS FULL  | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
+|  11 |       TABLE ACCESS FULL | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
+|  12 |      TABLE ACCESS FULL  | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Predicate Information (identified by operation id):
@@ -1097,29 +1157,29 @@ Note
    - this is an adaptive plan
 
 PLF_QRY: 1/1 (1 of 1)
-SQL_ID  6hjcfrgdgy9yp, child number 0
+SQL_ID  9mpvp4k8q2qdv, child number 0
 -------------------------------------
 /* PLF_QRY */ SELECT /*+ GATHER_PLAN_STATISTICS */ '"' || o1.org_name
-|| '","' || o5.org_name || '","' || t.fact_product || '","207"' FROM
-org_structure s CROSS APPLY TABLE (Org_Products (s.child_org_id,
-s.fact)) t JOIN orgs o1 ON o1.id = s.org_id JOIN orgs o5 ON o5.id =
-t.org_id WHERE s.struct_level = 1 AND t.struct_level = 4 ORDER BY
-o1.org_name, o5.org_name, t.fact_product
+|| '","' || o5.org_name || '","' || t.fact_product ||
+'","170924152049303"' FROM org_structure s CROSS APPLY TABLE
+(Org_Products (s.child_org_id, s.fact)) t JOIN orgs o1 ON o1.id =
+s.org_id JOIN orgs o5 ON o5.id = t.org_id WHERE s.struct_level = 1 AND
+t.struct_level = 4 ORDER BY o1.org_name, o5.org_name, t.fact_product
 
 Plan hash value: 1216100769
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Id  | Operation                            | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT                     |               |      1 |        |   3330K|00:03:29.72 |    9081K|  51190 |  51190 |       |       |          |         |
-|   1 |  SORT ORDER BY                       |               |      1 |   4574 |   3330K|00:03:29.72 |    9081K|  51190 |  51190 |   454M|  7028K|  163M (1)|     400K|
-|*  2 |   HASH JOIN                          |               |      1 |   4574 |   3330K|00:03:43.89 |    9081K|      0 |      0 |  1483K|  1483K| 1485K (0)|         |
+|   0 | SELECT STATEMENT                     |               |      1 |        |   3330K|00:04:05.29 |    9074K|  55973 |  55973 |       |       |          |         |
+|   1 |  SORT ORDER BY                       |               |      1 |   4574 |   3330K|00:04:05.29 |    9074K|  55973 |  55973 |   496M|  7335K|  163M (1)|     438K|
+|*  2 |   HASH JOIN                          |               |      1 |   4574 |   3330K|00:03:20.77 |    9074K|      0 |      0 |  1610K|  1610K| 1633K (0)|         |
 |   3 |    TABLE ACCESS FULL                 | ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|   4 |    NESTED LOOPS                      |               |      1 |   4574 |   3330K|00:03:42.13 |    9081K|      0 |      0 |       |       |          |         |
-|*  5 |     HASH JOIN                        |               |      1 |     56 |     56 |00:00:00.01 |     198 |      0 |      0 |  1160K|  1160K| 1135K (0)|         |
-|*  6 |      TABLE ACCESS FULL               | ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
+|   4 |    NESTED LOOPS                      |               |      1 |   4574 |   3330K|00:03:19.66 |    9074K|      0 |      0 |       |       |          |         |
+|*  5 |     HASH JOIN                        |               |      1 |     56 |     56 |00:00:00.03 |     211 |      0 |      0 |  1265K|  1265K|  970K (0)|         |
+|*  6 |      TABLE ACCESS FULL               | ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
 |   7 |      TABLE ACCESS FULL               | ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|*  8 |     COLLECTION ITERATOR PICKLER FETCH| ORG_PRODUCTS  |     56 |     82 |   3330K|00:03:38.78 |    9081K|      0 |      0 |       |       |          |         |
+|*  8 |     COLLECTION ITERATOR PICKLER FETCH| ORG_PRODUCTS  |     56 |     82 |   3330K|00:03:19.34 |    9073K|      0 |      0 |       |       |          |         |
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Predicate Information (identified by operation id):
@@ -1131,7 +1191,7 @@ Predicate Information (identified by operation id):
    8 - filter(VALUE(KOKBF$)=4)
 
 RSF_QRY: 1/1 (1 of 1)
-SQL_ID  au6g11911tf56, child number 0
+SQL_ID  bxc235f75xvdb, child number 0
 -------------------------------------
 /* RSF_QRY */ WITH rsf (root_org_id, child_org_id, fact_product, lev)
 AS ( SELECT org_id, child_org_id, fact, 1 FROM org_structure WHERE
@@ -1139,27 +1199,28 @@ struct_level = 1 UNION ALL SELECT r.root_org_id, s.child_org_id,
 r.fact_product * s.fact, r.lev + 1 FROM rsf r JOIN org_structure s ON
 s.org_id = r.child_org_id ) SELECT /*+ GATHER_PLAN_STATISTICS */ '"' ||
 o1.org_name || '","' || o5.org_name || '","' || r.fact_product ||
-'","5388"' FROM rsf r JOIN orgs o1 ON o1.id = r.root_org_id JOIN orgs
-o5 ON o5.id = r.child_org_id WHERE r.lev = 4 ORDER BY o1.org_name,
-o5.org_name, r.fact_product
+'","170924151938361"' FROM rsf r JOIN orgs o1 ON o1.id = r.root_org_id
+JOIN orgs o5 ON o5.id = r.child_org_id WHERE r.lev = 4 ORDER BY
+o1.org_name, o5.org_name, r.fact_product
 
-Plan hash value: 248371385
+Plan hash value: 83684345
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Id  | Operation                                    | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers | Reads  | Writes |  OMem |  1Mem | Used-Mem | Used-Tmp|
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT                             |               |      1 |        |   3330K|00:01:08.26 |      39M|  73934 |  93899 |       |       |          |         |
-|   1 |  SORT ORDER BY                               |               |      1 |   4631 |   3330K|00:01:08.26 |      39M|  73934 |  93899 |   454M|  7029K|  162M (1)|     401K|
-|*  2 |   HASH JOIN                                  |               |      1 |   4631 |   3330K|00:00:42.77 |      39M|  22678 |  42643 |  1519K|  1519K| 1426K (0)|         |
+|   0 | SELECT STATEMENT                             |               |      1 |        |   3330K|00:00:55.23 |      39M|  75680 |  75680 |       |       |          |         |
+|   1 |  SORT ORDER BY                               |               |      1 |   1360T|   3330K|00:00:55.23 |      39M|  75680 |  75680 |   496M|  7340K|  162M (1)|     438K|
+|*  2 |   HASH JOIN                                  |               |      1 |   1360T|   3330K|00:00:38.72 |      39M|  19708 |  19708 |  1610K|  1610K| 1573K (0)|         |
 |   3 |    TABLE ACCESS FULL                         | ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|*  4 |    HASH JOIN                                 |               |      1 |   4631 |   3330K|00:00:40.94 |      39M|  22678 |  42643 |  1519K|  1519K| 1546K (0)|         |
+|*  4 |    HASH JOIN                                 |               |      1 |   1360T|   3330K|00:00:37.82 |      39M|  19708 |  19708 |  1610K|  1610K| 1679K (0)|         |
 |   5 |     TABLE ACCESS FULL                        | ORGS          |      1 |    944 |    944 |00:00:00.01 |       7 |      0 |      0 |       |       |          |         |
-|*  6 |     VIEW                                     |               |      1 |   4631 |   3330K|00:00:39.38 |      39M|  22678 |  42643 |       |       |          |         |
-|   7 |      UNION ALL (RECURSIVE WITH) BREADTH FIRST|               |      1 |        |   3361K|00:00:37.64 |      39M|  22678 |  42643 |   173M|  4426K|   97M (0)|         |
-|*  8 |       TABLE ACCESS FULL                      | ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     191 |      0 |      0 |       |       |          |         |
-|*  9 |       HASH JOIN                              |               |      4 |   4575 |   3361K|00:00:06.95 |     765 |  22678 |  22935 |   282M|    10M|   56M (1)|     191K|
-|  10 |        RECURSIVE WITH PUMP                   |               |      4 |        |   3361K|00:00:00.54 |       1 |  19708 |      0 |       |       |          |         |
-|  11 |        TABLE ACCESS FULL                     | ORG_STRUCTURE |      4 |  27288 |    109K|00:00:00.01 |     764 |      0 |      0 |       |       |          |         |
+|*  6 |     VIEW                                     |               |      1 |   1360T|   3330K|00:00:37.01 |      39M|  19708 |  19708 |       |       |          |         |
+|   7 |      UNION ALL (RECURSIVE WITH) BREADTH FIRST|               |      1 |        |   3361K|00:00:35.48 |      39M|  19708 |  19708 |   173M|  4426K|   97M (0)|         |
+|*  8 |       TABLE ACCESS FULL                      | ORG_STRUCTURE |      1 |     56 |     56 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
+|*  9 |       HASH JOIN                              |               |      4 |   1360T|   3361K|00:00:02.39 |     205 |  19708 |      0 |  2914K|  1666K| 4172K (0)|         |
+|  10 |        BUFFER SORT (REUSE)                   |               |      4 |        |    109K|00:00:00.06 |     204 |      0 |      0 |  1683K|   633K| 1495K (0)|         |
+|  11 |         TABLE ACCESS FULL                    | ORG_STRUCTURE |      1 |  27288 |  27288 |00:00:00.01 |     204 |      0 |      0 |       |       |          |         |
+|  12 |        RECURSIVE WITH PUMP                   |               |      4 |        |   3361K|00:00:00.45 |       1 |  19708 |      0 |       |       |          |         |
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Predicate Information (identified by operation id):
@@ -1171,15 +1232,11 @@ Predicate Information (identified by operation id):
    8 - filter("STRUCT_LEVEL"=1)
    9 - access("S"."ORG_ID"="R"."CHILD_ORG_ID")
 
-Note
------
-   - this is an adaptive plan
-
 
 Data Points
 ===========
 Data Point:               size_wide      size_deep       cpu_time        elapsed       num_recs       per_part     group_size
-Data Point                      180            180           2.29          2.605          27288           2729             10
+Data Point                      180            180           2.06          2.941          27288           2729             10
 
 num_records_out
 ===============
@@ -1209,75 +1266,103 @@ JNS_QRY                           1
 PLF_QRY                           1
 RSF_QRY                           1
 
+num_records_pqs
+===============
+Run Type                      Depth           W180
+JNS_QRY                        D180              0
+PLF_QRY                        D180              0
+RSF_QRY                        D180              0
+
+num_records_pqs_SLICE
+=====================
+Run Type                       W180
+JNS_QRY                           0
+PLF_QRY                           0
+RSF_QRY                           0
+
+num_records_pqs_RATIO
+=====================
+Run Type                      Depth           W180
+JNS_QRY                        D180              0
+PLF_QRY                        D180              0
+RSF_QRY                        D180              0
+
+num_records_pqs_SLICE_RATIO
+===========================
+Run Type                       W180
+JNS_QRY                           0
+PLF_QRY                           0
+RSF_QRY                           0
+
 cpu_time
 ========
 Run Type                      Depth           W180
-JNS_QRY                        D180           6.77
-PLF_QRY                        D180         203.63
-RSF_QRY                        D180          45.43
+JNS_QRY                        D180           6.76
+PLF_QRY                        D180         229.05
+RSF_QRY                        D180          41.86
 
 cpu_time_SLICE
 ==============
 Run Type                       W180
-JNS_QRY                        6.77
-PLF_QRY                      203.63
-RSF_QRY                       45.43
+JNS_QRY                        6.76
+PLF_QRY                      229.05
+RSF_QRY                       41.86
 
 cpu_time_RATIO
 ==============
 Run Type                      Depth           W180
 JNS_QRY                        D180              1
-PLF_QRY                        D180          30.08
-RSF_QRY                        D180           6.71
+PLF_QRY                        D180          33.88
+RSF_QRY                        D180           6.19
 
 cpu_time_SLICE_RATIO
 ====================
 Run Type                       W180
 JNS_QRY                           1
-PLF_QRY                       30.08
-RSF_QRY                        6.71
+PLF_QRY                       33.88
+RSF_QRY                        6.19
 
 elapsed_time
 ============
 Run Type                      Depth           W180
-JNS_QRY                        D180         13.735
-PLF_QRY                        D180        216.004
-RSF_QRY                        D180         60.893
+JNS_QRY                        D180         31.649
+PLF_QRY                        D180        246.437
+RSF_QRY                        D180         59.665
 
 elapsed_time_SLICE
 ==================
 Run Type                       W180
-JNS_QRY                      13.735
-PLF_QRY                     216.004
-RSF_QRY                      60.893
+JNS_QRY                      31.649
+PLF_QRY                     246.437
+RSF_QRY                      59.665
 
 elapsed_time_RATIO
 ==================
 Run Type                      Depth           W180
 JNS_QRY                        D180              1
-PLF_QRY                        D180          15.73
-RSF_QRY                        D180           4.43
+PLF_QRY                        D180           7.79
+RSF_QRY                        D180           1.89
 
 elapsed_time_SLICE_RATIO
 ========================
 Run Type                       W180
 JNS_QRY                           1
-PLF_QRY                       15.73
-RSF_QRY                        4.43
+PLF_QRY                        7.79
+RSF_QRY                        1.89
 
 memory_used
 ===========
 Run Type                      Depth           W180
 JNS_QRY                        D180      171261952
 PLF_QRY                        D180      171261952
-RSF_QRY                        D180      170738688
+RSF_QRY                        D180      170867712
 
 memory_used_SLICE
 =================
 Run Type                       W180
 JNS_QRY                   171261952
 PLF_QRY                   171261952
-RSF_QRY                   170738688
+RSF_QRY                   170867712
 
 memory_used_RATIO
 =================
@@ -1296,100 +1381,100 @@ RSF_QRY                           1
 buffers
 =======
 Run Type                      Depth           W180
-JNS_QRY                        D180            782
-PLF_QRY                        D180        9081661
-RSF_QRY                        D180       39160144
+JNS_QRY                        D180            835
+PLF_QRY                        D180        9074147
+RSF_QRY                        D180       39347255
 
 buffers_SLICE
 =============
 Run Type                       W180
-JNS_QRY                         782
-PLF_QRY                     9081661
-RSF_QRY                    39160144
+JNS_QRY                         835
+PLF_QRY                     9074147
+RSF_QRY                    39347255
 
 buffers_RATIO
 =============
 Run Type                      Depth           W180
 JNS_QRY                        D180              1
-PLF_QRY                        D180       11613.38
-RSF_QRY                        D180       50076.91
+PLF_QRY                        D180       10867.24
+RSF_QRY                        D180       47122.46
 
 buffers_SLICE_RATIO
 ===================
 Run Type                       W180
 JNS_QRY                           1
-PLF_QRY                    11613.38
-RSF_QRY                    50076.91
+PLF_QRY                    10867.24
+RSF_QRY                    47122.46
 
 disk_reads
 ==========
 Run Type                      Depth           W180
-JNS_QRY                        D180          51247
-PLF_QRY                        D180          51190
-RSF_QRY                        D180          73934
+JNS_QRY                        D180          55973
+PLF_QRY                        D180          55973
+RSF_QRY                        D180          75680
 
 disk_reads_SLICE
 ================
 Run Type                       W180
-JNS_QRY                       51247
-PLF_QRY                       51190
-RSF_QRY                       73934
+JNS_QRY                       55973
+PLF_QRY                       55973
+RSF_QRY                       75680
 
 disk_reads_RATIO
 ================
 Run Type                      Depth           W180
 JNS_QRY                        D180              1
 PLF_QRY                        D180              1
-RSF_QRY                        D180           1.44
+RSF_QRY                        D180           1.35
 
 disk_reads_SLICE_RATIO
 ======================
 Run Type                       W180
 JNS_QRY                           1
 PLF_QRY                           1
-RSF_QRY                        1.44
+RSF_QRY                        1.35
 
 disk_writes
 ===========
 Run Type                      Depth           W180
-JNS_QRY                        D180          51247
-PLF_QRY                        D180          51190
-RSF_QRY                        D180          93899
+JNS_QRY                        D180          55973
+PLF_QRY                        D180          55973
+RSF_QRY                        D180          75680
 
 disk_writes_SLICE
 =================
 Run Type                       W180
-JNS_QRY                       51247
-PLF_QRY                       51190
-RSF_QRY                       93899
+JNS_QRY                       55973
+PLF_QRY                       55973
+RSF_QRY                       75680
 
 disk_writes_RATIO
 =================
 Run Type                      Depth           W180
 JNS_QRY                        D180              1
 PLF_QRY                        D180              1
-RSF_QRY                        D180           1.83
+RSF_QRY                        D180           1.35
 
 disk_writes_SLICE_RATIO
 =======================
 Run Type                       W180
 JNS_QRY                           1
 PLF_QRY                           1
-RSF_QRY                        1.83
+RSF_QRY                        1.35
 
 tempseg_size
 ============
 Run Type                      Depth           W180
-JNS_QRY                        D180         410624
-PLF_QRY                        D180         409600
-RSF_QRY                        D180         410624
+JNS_QRY                        D180         448512
+PLF_QRY                        D180         448512
+RSF_QRY                        D180         448512
 
 tempseg_size_SLICE
 ==================
 Run Type                       W180
-JNS_QRY                      410624
-PLF_QRY                      409600
-RSF_QRY                      410624
+JNS_QRY                      448512
+PLF_QRY                      448512
+RSF_QRY                      448512
 
 tempseg_size_RATIO
 ==================
@@ -1410,28 +1495,28 @@ cardinality
 Run Type                      Depth           W180
 JNS_QRY                        D180        3905377
 PLF_QRY                        D180           4574
-RSF_QRY                        D180          27288
+RSF_QRY                        D180136063694837515
 
 cardinality_SLICE
 =================
 Run Type                       W180
 JNS_QRY                     3905377
 PLF_QRY                        4574
-RSF_QRY                       27288
+RSF_QRY             136063694837515
 
 cardinality_RATIO
 =================
 Run Type                      Depth           W180
 JNS_QRY                        D180         853.82
 PLF_QRY                        D180              1
-RSF_QRY                        D180           5.97
+RSF_QRY                        D180297472004454.56
 
 cardinality_SLICE_RATIO
 =======================
 Run Type                       W180
 JNS_QRY                      853.82
 PLF_QRY                           1
-RSF_QRY                        5.97
+RSF_QRY             297472004454.56
 
 output_rows
 ===========
@@ -1466,28 +1551,28 @@ cardinality_error
 Run Type                      Depth           W180
 JNS_QRY                        D180         574777
 PLF_QRY                        D180        3326026
-RSF_QRY                        D180        3343656
+RSF_QRY                        D180544254779013848
 
 cardinality_error_SLICE
 =======================
 Run Type                       W180
 JNS_QRY                      574777
 PLF_QRY                     3326026
-RSF_QRY                     3343656
+RSF_QRY             544254779013848
 
 cardinality_error_RATIO
 =======================
 Run Type                      Depth           W180
 JNS_QRY                        D180              1
 PLF_QRY                        D180           5.79
-RSF_QRY                        D180           5.82
+RSF_QRY                        D180  9468972819.26
 
 cardinality_error_SLICE_RATIO
 =============================
 Run Type                       W180
 JNS_QRY                           1
 PLF_QRY                        5.79
-RSF_QRY                        5.82
+RSF_QRY               9468972819.26
 WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
 nch_run_v$stats_v WHERE stat_name = 'sorts (rows)' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE point_wide WH
 EN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
@@ -1496,33 +1581,129 @@ EN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size
 sorts (rows)
 ============
 Run Type                      Depth           W180
-JNS_QRY                        D180        3334522
+JNS_QRY                        D180        3338904
 PLF_QRY                        D180        3330600
-RSF_QRY                        D180        6692556
+RSF_QRY                        D180        6719844
 
 sorts (rows)_SLICE
 ==================
 Run Type                       W180
-JNS_QRY                     3334522
+JNS_QRY                     3338904
 PLF_QRY                     3330600
-RSF_QRY                     6692556
+RSF_QRY                     6719844
 
 sorts (rows)_RATIO
 ==================
 Run Type                      Depth           W180
 JNS_QRY                        D180              1
 PLF_QRY                        D180              1
-RSF_QRY                        D180           2.01
+RSF_QRY                        D180           2.02
 
 sorts (rows)_SLICE_RATIO
 ========================
 Run Type                       W180
 JNS_QRY                           1
 PLF_QRY                           1
-RSF_QRY                        2.01
+RSF_QRY                        2.02
 
 Top Stats
 =========
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'session uga memory max' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE poi
+nt_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+session uga memory max
+======================
+Run Type                      Depth           W180
+JNS_QRY                        D180      179287248
+PLF_QRY                        D180              0
+RSF_QRY                        D180       34261864
+
+session uga memory max_SLICE
+============================
+Run Type                       W180
+JNS_QRY                   179287248
+PLF_QRY                           0
+RSF_QRY                    34261864
+
+session uga memory max_RATIO
+============================
+Run Type                      Depth           W180
+JNS_QRY                        D180179287248000000
+PLF_QRY                        D180              0
+RSF_QRY                        D180 34261864000000
+
+session uga memory max_SLICE_RATIO
+==================================
+Run Type                       W180
+JNS_QRY             179287248000000
+PLF_QRY                           0
+RSF_QRY              34261864000000
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'session pga memory max' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE poi
+nt_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+session pga memory max
+======================
+Run Type                      Depth           W180
+JNS_QRY                        D180      172670304
+PLF_QRY                        D180              0
+RSF_QRY                        D180       40042496
+
+session pga memory max_SLICE
+============================
+Run Type                       W180
+JNS_QRY                   172670304
+PLF_QRY                           0
+RSF_QRY                    40042496
+
+session pga memory max_RATIO
+============================
+Run Type                      Depth           W180
+JNS_QRY                        D180172670304000000
+PLF_QRY                        D180              0
+RSF_QRY                        D180 40042496000000
+
+session pga memory max_SLICE_RATIO
+==================================
+Run Type                       W180
+JNS_QRY             172670304000000
+PLF_QRY                           0
+RSF_QRY              40042496000000
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'buffer is pinned count' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE poi
+nt_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+buffer is pinned count
+======================
+Run Type                      Depth           W180
+JNS_QRY                        D180             13
+PLF_QRY                        D180        4352449
+RSF_QRY                        D180              2
+
+buffer is pinned count_SLICE
+============================
+Run Type                       W180
+JNS_QRY                          13
+PLF_QRY                     4352449
+RSF_QRY                           2
+
+buffer is pinned count_RATIO
+============================
+Run Type                      Depth           W180
+JNS_QRY                        D180            6.5
+PLF_QRY                        D180      2176224.5
+RSF_QRY                        D180              1
+
+buffer is pinned count_SLICE_RATIO
+==================================
+Run Type                       W180
+JNS_QRY                         6.5
+PLF_QRY                   2176224.5
+RSF_QRY                           1
 WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
 nch_run_v$stats_v WHERE stat_name = 'logical read bytes from cache' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (C
 ASE point_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
@@ -1531,30 +1712,30 @@ ASE point_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name,
 logical read bytes from cache
 =============================
 Run Type                      Depth           W180
-JNS_QRY                        D180       11698176
-PLF_QRY                        D180    74403315712
-RSF_QRY                        D180   320803528704
+JNS_QRY                        D180       15613952
+PLF_QRY                        D180    74343702528
+RSF_QRY                        D180   322337325056
 
 logical read bytes from cache_SLICE
 ===================================
 Run Type                       W180
-JNS_QRY                    11698176
-PLF_QRY                 74403315712
-RSF_QRY                320803528704
+JNS_QRY                    15613952
+PLF_QRY                 74343702528
+RSF_QRY                322337325056
 
 logical read bytes from cache_RATIO
 ===================================
 Run Type                      Depth           W180
 JNS_QRY                        D180              1
-PLF_QRY                        D180        6360.25
-RSF_QRY                        D180       27423.38
+PLF_QRY                        D180        4761.36
+RSF_QRY                        D180       20644.19
 
 logical read bytes from cache_SLICE_RATIO
 =========================================
 Run Type                       W180
 JNS_QRY                           1
-PLF_QRY                     6360.25
-RSF_QRY                    27423.38
+PLF_QRY                     4761.36
+RSF_QRY                    20644.19
 WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
 nch_run_v$stats_v WHERE stat_name = 'file io wait time' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE point_wi
 de WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
@@ -1563,62 +1744,30 @@ de WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep,
 file io wait time
 =================
 Run Type                      Depth           W180
-JNS_QRY                        D180       56555000
-PLF_QRY                        D180      444885000
-RSF_QRY                        D180      180022000
+JNS_QRY                        D180       63755000
+PLF_QRY                        D180      429886000
+RSF_QRY                        D180      147245000
 
 file io wait time_SLICE
 =======================
 Run Type                       W180
-JNS_QRY                    56555000
-PLF_QRY                   444885000
-RSF_QRY                   180022000
+JNS_QRY                    63755000
+PLF_QRY                   429886000
+RSF_QRY                   147245000
 
 file io wait time_RATIO
 =======================
 Run Type                      Depth           W180
 JNS_QRY                        D180              1
-PLF_QRY                        D180           7.87
-RSF_QRY                        D180           3.18
+PLF_QRY                        D180           6.74
+RSF_QRY                        D180           2.31
 
 file io wait time_SLICE_RATIO
 =============================
 Run Type                       W180
 JNS_QRY                           1
-PLF_QRY                        7.87
-RSF_QRY                        3.18
-WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
-nch_run_v$stats_v WHERE stat_name = 'physical write bytes' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE point
-_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
-
-
-physical write bytes
-====================
-Run Type                      Depth           W180
-JNS_QRY                        D180      419815424
-PLF_QRY                        D180      419348480
-RSF_QRY                        D180      769220608
-
-physical write bytes_SLICE
-==========================
-Run Type                       W180
-JNS_QRY                   419815424
-PLF_QRY                   419348480
-RSF_QRY                   769220608
-
-physical write bytes_RATIO
-==========================
-Run Type                      Depth           W180
-JNS_QRY                        D180              1
-PLF_QRY                        D180              1
-RSF_QRY                        D180           1.83
-
-physical write bytes_SLICE_RATIO
-================================
-Run Type                       W180
-JNS_QRY                           1
-PLF_QRY                           1
-RSF_QRY                        1.83
+PLF_QRY                        6.74
+RSF_QRY                        2.31
 WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
 nch_run_v$stats_v WHERE stat_name = 'cell physical IO interconnect bytes' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' ||
 Max (CASE point_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
@@ -1627,99 +1776,67 @@ Max (CASE point_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query
 cell physical IO interconnect bytes
 ===================================
 Run Type                      Depth           W180
-JNS_QRY                        D180      839630848
-PLF_QRY                        D180      838696960
-RSF_QRY                        D180     1374887936
+JNS_QRY                        D180      917061632
+PLF_QRY                        D180      917061632
+RSF_QRY                        D180     1239941120
 
 cell physical IO interconnect bytes_SLICE
 =========================================
 Run Type                       W180
-JNS_QRY                   839630848
-PLF_QRY                   838696960
-RSF_QRY                  1374887936
+JNS_QRY                   917061632
+PLF_QRY                   917061632
+RSF_QRY                  1239941120
 
 cell physical IO interconnect bytes_RATIO
 =========================================
 Run Type                      Depth           W180
 JNS_QRY                        D180              1
 PLF_QRY                        D180              1
-RSF_QRY                        D180           1.64
+RSF_QRY                        D180           1.35
 
 cell physical IO interconnect bytes_SLICE_RATIO
 ===============================================
 Run Type                       W180
 JNS_QRY                           1
 PLF_QRY                           1
-RSF_QRY                        1.64
-WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
-nch_run_v$stats_v WHERE stat_name = 'physical read bytes' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE point_
-wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+RSF_QRY                        1.35
 
-
-physical read bytes
-===================
-Run Type                      Depth           W180
-JNS_QRY                        D180      419815424
-PLF_QRY                        D180      419348480
-RSF_QRY                        D180      605667328
-
-physical read bytes_SLICE
-=========================
-Run Type                       W180
-JNS_QRY                   419815424
-PLF_QRY                   419348480
-RSF_QRY                   605667328
-
-physical read bytes_RATIO
-=========================
-Run Type                      Depth           W180
-JNS_QRY                        D180              1
-PLF_QRY                        D180              1
-RSF_QRY                        D180           1.44
-
-physical read bytes_SLICE_RATIO
-===============================
-Run Type                       W180
-JNS_QRY                           1
-PLF_QRY                           1
-RSF_QRY                        1.44
-
-Timer Set: File Writer, Constructed at 06 Mar 2017 07:31:19, written at 07:31:21
+Timer Set: File Writer, Constructed at 24 Sep 2017 15:25:13, written at 15:25:19
 ================================================================================
-[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.01 (0.000010), calls: 1000, '***' denotes corrected line below]
+[Timer timed: Elapsed (per call): 0.01 (0.000010), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
 
 Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
 -------  ----------  ----------  ------------  -------------  -------------
 Lines          0.00        0.00             1        0.00000        0.00000
-(Other)        1.48        1.41             1        1.47700        1.41000
+(Other)        5.84        1.73             1        5.84000        1.73000
 -------  ----------  ----------  ------------  -------------  -------------
-Total          1.48        1.41             2        0.73850        0.70500
+Total          5.84        1.73             2        2.92000        0.86500
 -------  ----------  ----------  ------------  -------------  -------------
 
-Timer Set: Top, Constructed at 06 Mar 2017 07:25:57, written at 07:31:21
+Timer Set: Top, Constructed at 24 Sep 2017 15:18:51, written at 15:25:19
 ========================================================================
-[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+[Timer timed: Elapsed (per call): 0.01 (0.000008), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
 
 Timer          Elapsed         CPU         Calls       Ela/Call       CPU/Call
 ----------  ----------  ----------  ------------  -------------  -------------
-Setup Data        2.61        2.29             1        2.60500        2.29000
-Querying        316.63      281.66             1      316.62900      281.66000
-(Other)           4.10        2.98             1        4.09500        2.98000
+Setup Data        2.94        2.06             1        2.94100        2.06000
+Querying        373.41      312.71             1      373.41300      312.71000
+(Other)          11.80        3.70             1       11.79500        3.70000
 ----------  ----------  ----------  ------------  -------------  -------------
-Total           323.33      286.93             3      107.77633       95.64333
+Total           388.15      318.47             3      129.38300      106.15667
 ----------  ----------  ----------  ------------  -------------  -------------
 Successfully completed
 
-1574 rows selected.
+1685 rows selected.
 
-Elapsed: 00:00:00.16
+Elapsed: 00:00:00.67
 SQL> 
 SQL> SELECT 'End: ' || To_Char(SYSDATE,'DD-MON-YYYY HH24:MI:SS') FROM DUAL
   2  /
 
-'END:'||TO_CHAR(SYSDATE,'
--------------------------
-End: 06-MAR-2017 07:31:21
+'END:'||TO_CHAR(SYSDATE,'DD-MON-YY
+----------------------------------
+End: 24-SEP-2017 15:25:20
 
 Elapsed: 00:00:00.00
 SQL> SPOOL OFF

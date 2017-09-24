@@ -1,5 +1,5 @@
 /***************************************************************************************************
-Description: Bench_SQL SQL benchmarking framework - test queries across a 2-d dataset space
+Description: SQL benchmarking framework - test queries, DML and DDL across a 2-d dataset space
 
              Installation script for sys schema to create the bench schema;
              - create directories, pointing to OS directories with read/write access on database 
@@ -16,6 +16,7 @@ Who                  When        Which What
 -------------------- ----------- ----- -------------------------------------------------------------
 Brendan Furey        05-Nov-2016 1.0   Created
 Brendan Furey        18-Feb-2016 1.1   Grants switched from public to bench
+Brendan Furey        24-Sep-2017 1.2   Extra grants
 
 ***************************************************************************************************/
 SET SERVEROUTPUT ON
@@ -41,6 +42,8 @@ GRANT EXECUTE ON UTL_File TO bench
 /
 GRANT SELECT ON v_$sql TO bench
 /
+GRANT SELECT ON v_$session TO bench
+/
 GRANT SELECT ON v_$sql_plan_statistics_all TO bench
 /
 GRANT SELECT ON v_$mystat TO bench
@@ -56,5 +59,7 @@ GRANT SELECT ON v_$database TO bench
 GRANT SELECT ON v_$version TO bench
 /
 GRANT EXECUTE ON dbms_xplan_type_table TO bench
+/
+GRANT SELECT ON v_$sql_plan TO bench -- for xplan outlines
 /
 SPOOL OFF

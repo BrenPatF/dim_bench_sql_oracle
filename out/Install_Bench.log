@@ -83,15 +83,16 @@ SQL> CREATE TABLE queries (
   7      active_yn                    VARCHAR2(1) DEFAULT 'Y',
   8      text                         CLOB NOT NULL,
   9      pre_query_sql                CLOB,
- 10      CONSTRAINT qry_pk            PRIMARY KEY (id),
- 11      CONSTRAINT qry_uk            UNIQUE (query_group, name),
- 12      CONSTRAINT qry_qgp_fk        FOREIGN KEY (query_group) REFERENCES query_groups (name)
- 13  )
- 14  /
+ 10      post_query_sql               CLOB,
+ 11      CONSTRAINT qry_pk            PRIMARY KEY (id),
+ 12      CONSTRAINT qry_uk            UNIQUE (query_group, name),
+ 13      CONSTRAINT qry_qgp_fk        FOREIGN KEY (query_group) REFERENCES query_groups (name)
+ 14  )
+ 15  /
 
 Table created.
 
-SQL> COMMENT ON TABLE queries IS 'Query and pre-query SQL text'
+SQL> COMMENT ON TABLE queries IS 'Query and pre-query, post-query SQL text'
   2  /
 
 Comment created.
@@ -206,17 +207,18 @@ SQL> CREATE TABLE bench_run_statistics (
   5      cpu_time                        NUMBER,
   6      elapsed_time                    NUMBER,
   7      num_records_out                 NUMBER,
-  8      plan_hash_value                 NUMBER,
-  9      plan_tab                        L1_chr_db_arr,
- 10      creation_date                   DATE NOT NULL,
- 11      status                          VARCHAR2(1),
- 12      message                         VARCHAR2(4000),
- 13      CONSTRAINT brs_pk               PRIMARY KEY (id),
- 14      CONSTRAINT brs_uk               UNIQUE (bench_run_data_point_id, query_id),
- 15      CONSTRAINT brs_qry_fk           FOREIGN KEY (query_id) REFERENCES queries (id),
- 16      CONSTRAINT brs_rdp_fk           FOREIGN KEY (bench_run_data_point_id) REFERENCES bench_run_data_points (id)
- 17  )
- 18  /
+  8      num_records_pqs                 NUMBER,
+  9      plan_hash_value                 NUMBER,
+ 10      plan_tab                        L1_chr_db_arr,
+ 11      creation_date                   DATE NOT NULL,
+ 12      status                          VARCHAR2(1),
+ 13      message                         VARCHAR2(4000),
+ 14      CONSTRAINT brs_pk               PRIMARY KEY (id),
+ 15      CONSTRAINT brs_uk               UNIQUE (bench_run_data_point_id, query_id),
+ 16      CONSTRAINT brs_qry_fk           FOREIGN KEY (query_id) REFERENCES queries (id),
+ 17      CONSTRAINT brs_rdp_fk           FOREIGN KEY (bench_run_data_point_id) REFERENCES bench_run_data_points (id)
+ 18  )
+ 19  /
 
 Table created.
 
@@ -416,25 +418,26 @@ SQL> CREATE OR REPLACE VIEW bench_run_statistics_v AS
  21          dee.siz size_deep,
  22          rdp.num_records num_records_total,
  23          brs.num_records_out,
- 24          brs.cpu_time,
- 25          brs.elapsed_time,
- 26          brs.plan_hash_value,
- 27          brs.plan_tab,
- 28          To_Char (brs.creation_date, 'dd-Mon-yy hh24:mi:ss') created
- 29    FROM bench_run_data_points rdp
- 30    JOIN last_run_v lrv
- 31      ON lrv.id = rdp.bench_run_id
- 32    JOIN wide_v wid
- 33      ON wid.id = rdp.bench_run_id
- 34     AND wid.ind = rdp.point_wide
- 35    JOIN deep_v dee
- 36      ON dee.id = rdp.bench_run_id
- 37     AND dee.ind = rdp.point_deep
- 38    JOIN bench_run_statistics brs
- 39      ON brs.bench_run_data_point_id = rdp.id
- 40    JOIN queries qry
- 41      ON qry.id = brs.query_id
- 42  /
+ 24          brs.num_records_pqs,
+ 25          brs.cpu_time,
+ 26          brs.elapsed_time,
+ 27          brs.plan_hash_value,
+ 28          brs.plan_tab,
+ 29          To_Char (brs.creation_date, 'dd-Mon-yy hh24:mi:ss') created
+ 30    FROM bench_run_data_points rdp
+ 31    JOIN last_run_v lrv
+ 32      ON lrv.id = rdp.bench_run_id
+ 33    JOIN wide_v wid
+ 34      ON wid.id = rdp.bench_run_id
+ 35     AND wid.ind = rdp.point_wide
+ 36    JOIN deep_v dee
+ 37      ON dee.id = rdp.bench_run_id
+ 38     AND dee.ind = rdp.point_deep
+ 39    JOIN bench_run_statistics brs
+ 40      ON brs.bench_run_data_point_id = rdp.id
+ 41    JOIN queries qry
+ 42      ON qry.id = brs.query_id
+ 43  /
 
 View created.
 
@@ -468,53 +471,55 @@ SQL> CREATE OR REPLACE VIEW bench_v$sql_plan_stats_all_v AS
  26          dee.siz size_deep,
  27          rdp.num_records num_records_total,
  28          brs.num_records_out,
- 29          brs.cpu_time,
- 30          brs.elapsed_time,
- 31          To_Char (brs.creation_date, 'dd-Mon-yy hh24:mi:ss') created,
- 32          Max (rps.last_tempseg_size)                         tempseg_size,
- 33          Max (rps.last_memory_used)                          memory_used,
- 34          Max (rps.last_cr_buffer_gets + rps.last_cu_buffer_gets) buffers,
- 35          Max (rps.last_disk_reads)                           disk_reads,
- 36          Max (rps.last_disk_writes)                          disk_writes,
- 37          Max (rps.cardinality)                               cardinality,
- 38          Max (rps.last_output_rows)                          output_rows,
- 39          Max (Abs (rps.last_output_rows - rps.last_starts * rps.cardinality))  cardinality_error
- 40    FROM bench_run_v$sql_plan_stats_all rps
- 41    JOIN bench_run_statistics brs
- 42      ON brs.id = rps.bench_run_statistic_id
- 43    JOIN bench_run_data_points rdp
- 44      ON rdp.id = brs.bench_run_data_point_id
- 45    JOIN last_run_v lrv
- 46      ON lrv.id = rdp.bench_run_id
- 47    JOIN wide_v wid
- 48      ON wid.id = rdp.bench_run_id
- 49     AND wid.ind = rdp.point_wide
- 50    JOIN deep_v dee
- 51      ON dee.id = rdp.bench_run_id
- 52     AND dee.ind = rdp.point_deep
- 53    JOIN queries qry
- 54      ON qry.id = brs.query_id
- 55   WHERE rps.bench_run_statistic_id IN (
- 56      SELECT id
- 57        FROM bench_run_statistics
- 58       WHERE bench_run_id = lrv.id
- 59      )
- 60   GROUP BY rps.bench_run_statistic_id,
- 61          rdp.bench_run_id,
- 62          qry.name,
- 63          rps.hash_value,
- 64          rps.sql_id,
- 65          rps.plan_hash_value,
- 66          rdp.point_wide,
- 67          rdp.point_deep,
- 68          wid.siz,
- 69          dee.siz,
- 70          rdp.num_records,
- 71          brs.num_records_out,
- 72          brs.cpu_time,
- 73          brs.elapsed_time,
- 74          To_Char (brs.creation_date, 'dd-Mon-yy hh24:mi:ss')
- 75  /
+ 29          brs.num_records_pqs,
+ 30          brs.cpu_time,
+ 31          brs.elapsed_time,
+ 32          To_Char (brs.creation_date, 'dd-Mon-yy hh24:mi:ss') created,
+ 33          Max (rps.last_tempseg_size)                         tempseg_size,
+ 34          Max (rps.last_memory_used)                          memory_used,
+ 35          Max (rps.last_cr_buffer_gets + rps.last_cu_buffer_gets) buffers,
+ 36          Max (rps.last_disk_reads)                           disk_reads,
+ 37          Max (rps.last_disk_writes)                          disk_writes,
+ 38          Max (rps.cardinality)                               cardinality,
+ 39          Max (rps.last_output_rows)                          output_rows,
+ 40          Max (Abs (rps.last_output_rows - rps.last_starts * rps.cardinality))  cardinality_error
+ 41    FROM bench_run_v$sql_plan_stats_all rps
+ 42    JOIN bench_run_statistics brs
+ 43      ON brs.id = rps.bench_run_statistic_id
+ 44    JOIN bench_run_data_points rdp
+ 45      ON rdp.id = brs.bench_run_data_point_id
+ 46    JOIN last_run_v lrv
+ 47      ON lrv.id = rdp.bench_run_id
+ 48    JOIN wide_v wid
+ 49      ON wid.id = rdp.bench_run_id
+ 50     AND wid.ind = rdp.point_wide
+ 51    JOIN deep_v dee
+ 52      ON dee.id = rdp.bench_run_id
+ 53     AND dee.ind = rdp.point_deep
+ 54    JOIN queries qry
+ 55      ON qry.id = brs.query_id
+ 56   WHERE rps.bench_run_statistic_id IN (
+ 57      SELECT id
+ 58        FROM bench_run_statistics
+ 59       WHERE bench_run_id = lrv.id
+ 60      )
+ 61   GROUP BY rps.bench_run_statistic_id,
+ 62          rdp.bench_run_id,
+ 63          qry.name,
+ 64          rps.hash_value,
+ 65          rps.sql_id,
+ 66          rps.plan_hash_value,
+ 67          rdp.point_wide,
+ 68          rdp.point_deep,
+ 69          wid.siz,
+ 70          dee.siz,
+ 71          rdp.num_records,
+ 72          brs.num_records_out,
+ 73          brs.num_records_pqs,
+ 74          brs.cpu_time,
+ 75          brs.elapsed_time,
+ 76          To_Char (brs.creation_date, 'dd-Mon-yy hh24:mi:ss')
+ 77  /
 
 View created.
 
@@ -605,62 +610,64 @@ SQL> CREATE OR REPLACE VIEW bench_run_dp_statistics_v (
  18      rst_cpu_time,
  19      rst_elapsed_time,
  20      num_records_out,
- 21      rst_creation_date,
- 22      status,
- 23      message
- 24  ) AS
- 25  WITH last_run_v AS (
- 26  SELECT Max (id) id FROM bench_runs
- 27  ), wide_v AS (
- 28  SELECT r.id, ROWNUM ind, s.COLUMN_VALUE siz
- 29    FROM bench_runs r
- 30    JOIN last_run_v l
- 31      ON l.id = r.id
- 32    CROSS JOIN TABLE (r.points_wide_list) s
- 33  ), deep_v AS (
- 34  SELECT r.id, ROWNUM ind, s.COLUMN_VALUE siz
- 35    FROM bench_runs r
- 36    JOIN last_run_v l
- 37      ON l.id = r.id
- 38    CROSS JOIN TABLE (r.points_deep_list) s
- 39  )
- 40  SELECT
- 41      rdp.id,
- 42      rdp.bench_run_id,
- 43      rdp.point_wide,
- 44      rdp.point_deep,
- 45      wid.siz,
- 46      dee.siz,
- 47      rdp.cpu_time,
- 48      rdp.elapsed_time,
- 49      rdp.num_records,
- 50      rdp.num_records_per_part,
- 51      rdp.group_size,
- 52      rdp.creation_date,
- 53      rdp.text,
- 54      rst.id,
- 55      rst.query_id,
- 56      qry.name,
- 57      rst.cpu_time,
- 58      rst.elapsed_time,
- 59      rst.num_records_out,
- 60      rst.creation_date,
- 61      rst.status,
- 62      rst.message
- 63    FROM bench_run_data_points rdp
- 64    JOIN last_run_v lrv
- 65      ON lrv.id = rdp.bench_run_id
- 66    JOIN wide_v wid
- 67      ON wid.id = rdp.bench_run_id
- 68     AND wid.ind = rdp.point_wide
- 69    JOIN deep_v dee
- 70      ON dee.id = rdp.bench_run_id
- 71     AND dee.ind = rdp.point_deep
- 72    LEFT JOIN bench_run_statistics rst
- 73      ON bench_run_data_point_id = rdp.id
- 74    LEFT JOIN queries qry
- 75      ON qry.id = rst.query_id
- 76  /
+ 21      num_records_pqs,
+ 22      rst_creation_date,
+ 23      status,
+ 24      message
+ 25  ) AS
+ 26  WITH last_run_v AS (
+ 27  SELECT Max (id) id FROM bench_runs
+ 28  ), wide_v AS (
+ 29  SELECT r.id, ROWNUM ind, s.COLUMN_VALUE siz
+ 30    FROM bench_runs r
+ 31    JOIN last_run_v l
+ 32      ON l.id = r.id
+ 33    CROSS JOIN TABLE (r.points_wide_list) s
+ 34  ), deep_v AS (
+ 35  SELECT r.id, ROWNUM ind, s.COLUMN_VALUE siz
+ 36    FROM bench_runs r
+ 37    JOIN last_run_v l
+ 38      ON l.id = r.id
+ 39    CROSS JOIN TABLE (r.points_deep_list) s
+ 40  )
+ 41  SELECT
+ 42      rdp.id,
+ 43      rdp.bench_run_id,
+ 44      rdp.point_wide,
+ 45      rdp.point_deep,
+ 46      wid.siz,
+ 47      dee.siz,
+ 48      rdp.cpu_time,
+ 49      rdp.elapsed_time,
+ 50      rdp.num_records,
+ 51      rdp.num_records_per_part,
+ 52      rdp.group_size,
+ 53      rdp.creation_date,
+ 54      rdp.text,
+ 55      rst.id,
+ 56      rst.query_id,
+ 57      qry.name,
+ 58      rst.cpu_time,
+ 59      rst.elapsed_time,
+ 60      rst.num_records_out,
+ 61      rst.num_records_pqs,
+ 62      rst.creation_date,
+ 63      rst.status,
+ 64      rst.message
+ 65    FROM bench_run_data_points rdp
+ 66    JOIN last_run_v lrv
+ 67      ON lrv.id = rdp.bench_run_id
+ 68    JOIN wide_v wid
+ 69      ON wid.id = rdp.bench_run_id
+ 70     AND wid.ind = rdp.point_wide
+ 71    JOIN deep_v dee
+ 72      ON dee.id = rdp.bench_run_id
+ 73     AND dee.ind = rdp.point_deep
+ 74    LEFT JOIN bench_run_statistics rst
+ 75      ON bench_run_data_point_id = rdp.id
+ 76    LEFT JOIN queries qry
+ 77      ON qry.id = rst.query_id
+ 78  /
 
 View created.
 
@@ -672,7 +679,7 @@ ERROR at line 1:
 ORA-04043: object QUERY_LIST_TYPE does not exist
 
 
-SQL> CREATE OR REPLACE TYPE query_type AS OBJECT (id INTEGER, name VARCHAR2(30), text CLOB, pre_query_sql CLOB)
+SQL> CREATE OR REPLACE TYPE query_type AS OBJECT (id INTEGER, name VARCHAR2(30), text CLOB, pre_query_sql CLOB, post_query_sql CLOB)
   2  /
 
 Type created.

@@ -1,5 +1,5 @@
 /***************************************************************************************************
-Description: Bench_SQL SQL benchmarking framework - test queries across a 2-d dataset space
+Description: SQL benchmarking framework - test queries, DML and DDL across a 2-d dataset space
 
              Installation script for the demo examples.
              To be run from bench schema after Install_Lib.sql, and Install_Bench.sql, when bench 
@@ -24,6 +24,7 @@ Who                  When        Which What
 Brendan Furey        01-Dec-2016 1.0   Created
 Brendan Furey        05-Feb-2017 1.1   Added string splitting and bracket parsing examples
 Brendan Furey        05-Mar-2017 1.2   Added Fixed-level hierarchy example
+Brendan Furey        24-Sep-2017 1.3   Added DML product sales example
 
 ***************************************************************************************************/
 SET SERVEROUTPUT ON
@@ -57,6 +58,10 @@ PROMPT =======================
 PROMPT Fixed-level hierarchy example
 PROMPT =============================
 @..\sql\Setup_Org
+
+PROMPT DML product sales example
+PROMPT =========================
+@..\sql\Setup_Dml
 
 PROMPT Bench_Datasets package body creation
 PROMPT ====================================

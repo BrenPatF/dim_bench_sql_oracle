@@ -1,0 +1,2656 @@
+SQL> 
+SQL> COLUMN "Database"       FORMAT A20
+SQL> COLUMN "Time"           FORMAT A20
+SQL> COLUMN "Version"        FORMAT A30
+SQL> COLUMN "Session"        FORMAT 9999990
+SQL> COLUMN "OS User"        FORMAT A10
+SQL> COLUMN "Machine"        FORMAT A20
+SQL> SET LINES 180
+SQL> SET PAGES 1000
+SQL> 
+SQL> SELECT 'Start: ' || dbs.name "Database", To_Char (SYSDATE,'DD-MON-YYYY HH24:MI:SS') "Time",
+  2          Replace (Substr(ver.banner, 1, Instr(ver.banner, '64')-4), 'Enterprise Edition Release ', '') "Version"
+  3    FROM v$database dbs,  v$version ver
+  4   WHERE ver.banner LIKE 'Oracle%';
+
+Database             Time                 Version
+-------------------- -------------------- ------------------------------
+Start: ORCL          24-SEP-2017 15:14:00 Oracle Database 12c 12.2.0.1.0
+
+SQL> 
+SQL> DEFINE RUNDESC='Ups-One'
+SQL> 
+SQL> SET SERVEROUTPUT ON
+SQL> SET TIMING ON
+SQL> 
+SQL> DROP INDEX ps_prd_n1
+  2  /
+
+Index dropped.
+
+Elapsed: 00:00:00.06
+SQL> DROP INDEX ps_date_n1
+  2  /
+
+Index dropped.
+
+Elapsed: 00:00:00.03
+SQL> BEGIN
+  2  
+  3    Utils.Clear_Log;
+  4    Bench_Queries.Execute_Run_Batch (
+  5                          p_run_desc              => '&RUNDESC',
+  6                          p_points_wide_2lis      => L2_num_arr (L1_num_arr (100000)),--(100000, 400000, 700000, 1000000)),
+  7                          p_points_deep_2lis      => L2_num_arr (L1_num_arr (2)),
+  8                          p_query_group           => 'DMLSALES',
+  9                          p_redo_data_yn          => 'Y');
+ 10  
+ 11  END;
+ 12  /
+old   5:                         p_run_desc              => '&RUNDESC',
+new   5:                         p_run_desc              => 'Ups-One',
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:23.14
+SQL> PROMPT Default log
+Default log
+SQL> @../sql/L_Log_Default
+
+TEXT
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Executing batch of 1 runs...
+Bench run 1 created
+
+Elapsed: 00:00:00.00
+SQL> PROMPT Execute_Run logs. First batch run: pass 0, then 1, 2... for additional runs
+Execute_Run logs. First batch run: pass 0, then 1, 2... for additional runs
+SQL> @../sql/L_Log_Gp 0
+
+TEXT
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Bench run id = 1
+
+Wide Points
+===========
+100000
+
+Deep Points
+===========
+2
+pre_query_sql=UPDATE/*+ GATHER_PLAN_STATISTICS UPD_DML */ product_sales sd
+   SET sd.sales_date = DATE '1900-01-01'
+ WHERE 1=1 AND sd.sales_date =
+ ( SELECT min(sd2.sales_date)
+     FROM product_sales sd2
+    WHERE sd.product_id = sd2.product_id
+ )
+   AND sd.sales_date != DATE '1900-01-01'
+
+pre_query_sql=MERGE/*+ GATHER_PLAN_STATISTICS MRG_DML */ INTO product_sales tgt
+USING (SELECT *
+       FROM (
+         SELECT rowid arowid, product_id, DATE '1900-01-01' sales_date,
+                sales_date AS old_sales_date,
+                Rank() OVER (PARTITION BY product_id ORDER BY sales_date) rn
+         FROM   product_sales
+       )
+       WHERE 1=1 AND rn = 1 AND 0 = Decode(sales_date, old_sales_date, 1, 0)) src
+ON (tgt.rowid = src.arowid)
+WHEN MATCHED THEN
+  UPDATE SET
+    tgt.sales_date = src.sales_date
+
+pre_query_sql=MERGE /*+ GATHER_PLAN_STATISTICS MHT_DML  no_swap_join_inputs(@"SEL$F5BB74E1" "TGT"@"SEL$1") */ INTO product_sales tgt
+USING (SELECT *
+       FROM (
+         SELECT rowid arowid, product_id, DATE '1900-01-01' sales_date,
+                sales_date AS old_sales_date,
+                Rank() OVER (PARTITION BY product_id ORDER BY sales_date) rn
+         FROM   product_sales
+       )
+       WHERE 1=1 AND rn = 1 AND 0 = Decode(sales_date, old_sales_date, 1, 0)) src
+ON (tgt.rowid = src.arowid)
+WHEN MATCHED THEN
+  UPDATE SET
+    tgt.sales_date = src.sales_date
+
+pre_query_sql=MERGE /*+ GATHER_PLAN_STATISTICS MH2_DML  leading(@"SEL$F5BB74E1" "from$_subquery$_007"@"SEL$2" "TGT"@"SEL$1") use_nl(@"SEL$F5BB74E1" "TGT"@"SEL$1") */ INTO product_sales tgt
+USING (SELECT *
+       FROM (
+         SELECT rowid arowid, product_id, DATE '1900-01-01' sales_date,
+                sales_date AS old_sales_date,
+                Rank() OVER (PARTITION BY product_id ORDER BY sales_date) rn
+         FROM   product_sales
+       )
+       WHERE 1=1 AND rn = 1 AND 0 = Decode(sales_date, old_sales_date, 1, 0)) src
+ON (tgt.rowid = src.arowid)
+WHEN MATCHED THEN
+  UPDATE SET
+    tgt.sales_date = src.sales_date
+
+pre_query_sql=DELETE/*+ GATHER_PLAN_STATISTICS DEL_DML */ product_sales sd
+  WHERE 1=1 AND (product_id, sales_date) IN (
+    SELECT product_id, Min(sales_date)
+      FROM product_sales
+     WHERE 1=1
+     GROUP BY product_id
+    HAVING Min(sales_date) != DATE '1900-01-01'
+    )
+
+pre_query_sql=INSERT/*+ GATHER_PLAN_STATISTICS INS_DML */ INTO product_sales
+WITH date_mins AS (
+    SELECT product_id
+      FROM product_sales
+     GROUP BY product_id
+     HAVING Min(sales_date) != DATE '1900-01-01'
+)
+SELECT product_id, DATE '1900-01-01'
+  FROM date_mins
+ WHERE 1=1
+
+product_sales truncated
+Inserted 200000 records
+
+Timer Set: Setup, Constructed at 24 Sep 2017 15:14:01, written at 15:14:02
+==========================================================================
+[Timer timed: Elapsed (per call): 0.02 (0.000020), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
+
+Timer                    Elapsed         CPU         Calls       Ela/Call       CPU/Call
+--------------------  ----------  ----------  ------------  -------------  -------------
+Insert product_sales        0.70        0.70             1        0.70100        0.70000
+Get aggregates              0.07        0.07             1        0.06700        0.07000
+Gather_Table_Stats          0.96        0.42             1        0.96100        0.42000
+(Other)                     0.00        0.00             1        0.00000        0.00000
+--------------------  ----------  ----------  ------------  -------------  -------------
+Total                       1.73        1.19             4        0.43225        0.29750
+--------------------  ----------  ----------  ------------  -------------  -------------
+SELECT '"1"' FROM DUAL
+Executing pqs: UPDATE/*+ GATHER_PLAN_STATISTICS UPD_DML */ product_sales sd
+   SET sd.sales_date = DATE '1900-01-01'
+ WHERE 170924151403128=170924151403128 AND sd.sales_date =
+ ( SELECT min(sd2.sales_date)
+     FROM product_sales sd2
+    WHERE sd.product_id = sd2.product_id
+ )
+   AND sd.sales_date != DATE '1900-01-01'
+
+Rows processed: 99997
+SQL_ID  bg5jrdh2vt12s, child number 0
+-------------------------------------
+UPDATE/*+ GATHER_PLAN_STATISTICS UPD_DML */ product_sales sd    SET
+sd.sales_date = DATE '1900-01-01'  WHERE
+170924151403128=170924151403128 AND sd.sales_date =  ( SELECT
+min(sd2.sales_date)      FROM product_sales sd2     WHERE sd.product_id
+= sd2.product_id  )    AND sd.sales_date != DATE '1900-01-01'
+
+Plan hash value: 2042760566
+
+-----------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation              | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-----------------------------------------------------------------------------------------------------------------------------
+|   0 | UPDATE STATEMENT       |               |      1 |        |      0 |00:00:01.34 |     103K|       |       |          |
+|   1 |  UPDATE                | PRODUCT_SALES |      1 |        |      0 |00:00:01.34 |     103K|       |       |          |
+|*  2 |   HASH JOIN            |               |      1 |    100K|  99997 |00:00:00.84 |    1000 |  6912K|  2259K| 7876K (0)|
+|   3 |    VIEW                | VW_SQ_1       |      1 |    100K|  99995 |00:00:00.21 |     500 |       |       |          |
+|*  4 |     FILTER             |               |      1 |        |  99995 |00:00:00.21 |     500 |       |       |          |
+|   5 |      SORT GROUP BY     |               |      1 |    100K|    100K|00:00:00.21 |     500 |  7282K|  1425K| 6472K (0)|
+|   6 |       TABLE ACCESS FULL| PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+|*  7 |    TABLE ACCESS FULL   | PRODUCT_SALES |      1 |    199K|    199K|00:00:00.04 |     500 |       |       |          |
+-----------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("SD"."SALES_DATE"="MIN(SD2.SALES_DATE)" AND "SD"."PRODUCT_ID"="ITEM_1")
+   4 - filter(MIN("SD2"."SALES_DATE")<>TO_DATE(' 1900-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+   7 - filter("SD"."SALES_DATE"<>TO_DATE(' 1900-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+
+
+Timer Set: Cursor, Constructed at 24 Sep 2017 15:14:03, written at 15:14:05
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  1.35        0.59             1        1.34600        0.59000
+Open cursor              0.00        0.00             1        0.00000        0.00000
+First fetch              0.00        0.00             1        0.00000        0.00000
+Write to file            0.14        0.00             2        0.06800        0.00000
+Remaining fetches        0.00        0.00             1        0.00000        0.00000
+Rollback                 0.42        0.36             1        0.41500        0.36000
+Post SQL                 0.00        0.00             1        0.00000        0.00000
+Write plan               0.39        0.28             1        0.39400        0.28000
+(Other)                  0.10        0.08             1        0.10000        0.08000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                    2.39        1.31            10        0.23910        0.13100
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 24 Sep 2017 15:14:03, written at 15:14:05
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.14        0.00             1        0.13600        0.00000
+(Other)        2.27        1.33             1        2.26700        1.33000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          2.40        1.33             2        1.20150        0.66500
+-------  ----------  ----------  ------------  -------------  -------------
+2 rows written to UPD_DML.csv
+Summary for W/D = 100000/2 , bench_run_statistics_id = 1
+
+Timer Set: Run_One, Constructed at 24 Sep 2017 15:14:03, written at 15:14:05
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run            2.43        1.35             1        2.42800        1.35000
+(Other)        0.00        0.00             1        0.00000        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          2.43        1.35             2        1.21400        0.67500
+-------  ----------  ----------  ------------  -------------  -------------
+SELECT '"1"' FROM DUAL
+Executing pqs: MERGE/*+ GATHER_PLAN_STATISTICS MRG_DML */ INTO product_sales tgt
+USING (SELECT *
+       FROM (
+         SELECT rowid arowid, product_id, DATE '1900-01-01' sales_date,
+                sales_date AS old_sales_date,
+                Rank() OVER (PARTITION BY product_id ORDER BY sales_date) rn
+         FROM   product_sales
+       )
+       WHERE 170924151405547=170924151405547 AND rn = 1 AND 0 = Decode(sales_date, old_sales_date, 1, 0)) src
+ON (tgt.rowid = src.arowid)
+WHEN MATCHED THEN
+  UPDATE SET
+    tgt.sales_date = src.sales_date
+
+Rows processed: 99997
+SQL_ID  9acyqjucsy2b5, child number 0
+-------------------------------------
+MERGE/*+ GATHER_PLAN_STATISTICS MRG_DML */ INTO product_sales tgt USING
+(SELECT *        FROM (          SELECT rowid arowid, product_id, DATE
+'1900-01-01' sales_date,                 sales_date AS old_sales_date,
+               Rank() OVER (PARTITION BY product_id ORDER BY
+sales_date) rn          FROM   product_sales        )        WHERE
+170924151405547=170924151405547 AND rn = 1 AND 0 = Decode(sales_date,
+old_sales_date, 1, 0)) src ON (tgt.rowid = src.arowid) WHEN MATCHED
+THEN   UPDATE SET     tgt.sales_date = src.sales_date
+
+Plan hash value: 949972977
+
+----------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                   | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+----------------------------------------------------------------------------------------------------------------------------------
+|   0 | MERGE STATEMENT             |               |      1 |        |      0 |00:00:02.22 |     103K|       |       |          |
+|   1 |  MERGE                      | PRODUCT_SALES |      1 |        |      0 |00:00:02.22 |     103K|       |       |          |
+|   2 |   VIEW                      |               |      1 |        |  99997 |00:00:01.67 |    1000 |       |       |          |
+|*  3 |    HASH JOIN                |               |      1 |    200K|  99997 |00:00:01.66 |    1000 |    15M|  3557K|   15M (0)|
+|   4 |     TABLE ACCESS FULL       | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+|*  5 |     VIEW                    |               |      1 |    200K|  99997 |00:00:01.01 |     500 |       |       |          |
+|*  6 |      WINDOW SORT PUSHED RANK|               |      1 |    200K|    100K|00:00:00.98 |     500 |    16M|  1510K|   14M (0)|
+|   7 |       TABLE ACCESS FULL     | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+----------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - access("TGT".ROWID="from$_subquery$_007"."AROWID")
+   5 - filter(("RN"=1 AND DECODE(INTERNAL_FUNCTION("SALES_DATE"),"OLD_SALES_DATE",1,0)=0))
+   6 - filter(RANK() OVER ( PARTITION BY "PRODUCT_ID" ORDER BY "SALES_DATE")<=1)
+
+
+Timer Set: Cursor, Constructed at 24 Sep 2017 15:14:05, written at 15:14:08
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000008), CPU (per call): 0.01 (0.000010), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  2.23        0.67             1        2.22900        0.67000
+Open cursor              0.00        0.00             1        0.00000        0.00000
+First fetch              0.00        0.00             1        0.00000        0.00000
+Write to file            0.00        0.00             2        0.00000        0.00000
+Remaining fetches        0.00        0.00             1        0.00000        0.00000
+Rollback                 0.34        0.30             1        0.34300        0.30000
+Post SQL                 0.00        0.00             1        0.00000        0.00000
+Write plan               0.23        0.20             1        0.22500        0.20000
+(Other)                  0.02        0.02             1        0.01800        0.02000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                    2.82        1.19            10        0.28150        0.11900
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 24 Sep 2017 15:14:05, written at 15:14:08
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.00        0.00             1        0.00000        0.00000
+(Other)        2.83        1.20             1        2.82600        1.20000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          2.83        1.20             2        1.41300        0.60000
+-------  ----------  ----------  ------------  -------------  -------------
+2 rows written to MRG_DML.csv
+Summary for W/D = 100000/2 , bench_run_statistics_id = 2
+
+Timer Set: Run_One, Constructed at 24 Sep 2017 15:14:05, written at 15:14:08
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run            2.83        1.22             1        2.83400        1.22000
+(Other)        0.00        0.00             1        0.00100        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          2.84        1.22             2        1.41750        0.61000
+-------  ----------  ----------  ------------  -------------  -------------
+SELECT '"1"' FROM DUAL
+Executing pqs: MERGE /*+ GATHER_PLAN_STATISTICS MHT_DML  no_swap_join_inputs(@"SEL$F5BB74E1" "TGT"@"SEL$1") */ INTO product_sales tgt
+USING (SELECT *
+       FROM (
+         SELECT rowid arowid, product_id, DATE '1900-01-01' sales_date,
+                sales_date AS old_sales_date,
+                Rank() OVER (PARTITION BY product_id ORDER BY sales_date) rn
+         FROM   product_sales
+       )
+       WHERE 170924151408389=170924151408389 AND rn = 1 AND 0 = Decode(sales_date, old_sales_date, 1, 0)) src
+ON (tgt.rowid = src.arowid)
+WHEN MATCHED THEN
+  UPDATE SET
+    tgt.sales_date = src.sales_date
+
+Rows processed: 99997
+SQL_ID  cya9adu730x4w, child number 0
+-------------------------------------
+MERGE /*+ GATHER_PLAN_STATISTICS MHT_DML
+no_swap_join_inputs(@"SEL$F5BB74E1" "TGT"@"SEL$1") */ INTO
+product_sales tgt USING (SELECT *        FROM (          SELECT rowid
+arowid, product_id, DATE '1900-01-01' sales_date,
+sales_date AS old_sales_date,                 Rank() OVER (PARTITION BY
+product_id ORDER BY sales_date) rn          FROM   product_sales
+)        WHERE 170924151408389=170924151408389 AND rn = 1 AND 0 =
+Decode(sales_date, old_sales_date, 1, 0)) src ON (tgt.rowid =
+src.arowid) WHEN MATCHED THEN   UPDATE SET     tgt.sales_date =
+src.sales_date
+
+Plan hash value: 2519372665
+
+----------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                   | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+----------------------------------------------------------------------------------------------------------------------------------
+|   0 | MERGE STATEMENT             |               |      1 |        |      0 |00:00:01.19 |     103K|       |       |          |
+|   1 |  MERGE                      | PRODUCT_SALES |      1 |        |      0 |00:00:01.19 |     103K|       |       |          |
+|   2 |   VIEW                      |               |      1 |        |  99997 |00:00:00.55 |    1000 |       |       |          |
+|*  3 |    HASH JOIN                |               |      1 |    200K|  99997 |00:00:00.54 |    1000 |  9791K|  3044K|   11M (0)|
+|*  4 |     VIEW                    |               |      1 |    200K|  99997 |00:00:00.40 |     500 |       |       |          |
+|*  5 |      WINDOW SORT PUSHED RANK|               |      1 |    200K|    100K|00:00:00.37 |     500 |    16M|  1510K|   14M (0)|
+|   6 |       TABLE ACCESS FULL     | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+|   7 |     TABLE ACCESS FULL       | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+----------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - access("TGT".ROWID="from$_subquery$_007"."AROWID")
+   4 - filter(("RN"=1 AND DECODE(INTERNAL_FUNCTION("SALES_DATE"),"OLD_SALES_DATE",1,0)=0))
+   5 - filter(RANK() OVER ( PARTITION BY "PRODUCT_ID" ORDER BY "SALES_DATE")<=1)
+
+
+Timer Set: Cursor, Constructed at 24 Sep 2017 15:14:08, written at 15:14:10
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  1.19        0.51             1        1.19300        0.51000
+Open cursor              0.00        0.00             1        0.00000        0.00000
+First fetch              0.00        0.00             1        0.00000        0.00000
+Write to file            0.00        0.00             2        0.00000        0.00000
+Remaining fetches        0.00        0.00             1        0.00000        0.00000
+Rollback                 0.35        0.31             1        0.35400        0.31000
+Post SQL                 0.00        0.00             1        0.00000        0.00000
+Write plan               0.22        0.22             1        0.22200        0.22000
+(Other)                  0.05        0.02             1        0.04700        0.02000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                    1.82        1.06            10        0.18160        0.10600
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 24 Sep 2017 15:14:08, written at 15:14:10
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.00        0.00             1        0.00000        0.00000
+(Other)        1.83        1.08             1        1.82600        1.08000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          1.83        1.08             2        0.91300        0.54000
+-------  ----------  ----------  ------------  -------------  -------------
+2 rows written to MHT_DML.csv
+Summary for W/D = 100000/2 , bench_run_statistics_id = 3
+
+Timer Set: Run_One, Constructed at 24 Sep 2017 15:14:08, written at 15:14:10
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run            1.84        1.08             1        1.83500        1.08000
+(Other)        0.00        0.00             1        0.00000        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          1.84        1.08             2        0.91750        0.54000
+-------  ----------  ----------  ------------  -------------  -------------
+SELECT '"1"' FROM DUAL
+Executing pqs: MERGE /*+ GATHER_PLAN_STATISTICS MH2_DML  leading(@"SEL$F5BB74E1" "from$_subquery$_007"@"SEL$2" "TGT"@"SEL$1") use_nl(@"SEL$F5BB74E1" "TGT"@"SEL$1") */ INTO product_sales tgt
+USING (SELECT *
+       FROM (
+         SELECT rowid arowid, product_id, DATE '1900-01-01' sales_date,
+                sales_date AS old_sales_date,
+                Rank() OVER (PARTITION BY product_id ORDER BY sales_date) rn
+         FROM   product_sales
+       )
+       WHERE 170924151410232=170924151410232 AND rn = 1 AND 0 = Decode(sales_date, old_sales_date, 1, 0)) src
+ON (tgt.rowid = src.arowid)
+WHEN MATCHED THEN
+  UPDATE SET
+    tgt.sales_date = src.sales_date
+
+Rows processed: 99997
+SQL_ID  g2aw4bb21wb3b, child number 0
+-------------------------------------
+MERGE /*+ GATHER_PLAN_STATISTICS MH2_DML  leading(@"SEL$F5BB74E1"
+"from$_subquery$_007"@"SEL$2" "TGT"@"SEL$1") use_nl(@"SEL$F5BB74E1"
+"TGT"@"SEL$1") */ INTO product_sales tgt USING (SELECT *        FROM (
+        SELECT rowid arowid, product_id, DATE '1900-01-01' sales_date,
+               sales_date AS old_sales_date,                 Rank()
+OVER (PARTITION BY product_id ORDER BY sales_date) rn          FROM
+product_sales        )        WHERE 170924151410232=170924151410232 AND
+rn = 1 AND 0 = Decode(sales_date, old_sales_date, 1, 0)) src ON
+(tgt.rowid = src.arowid) WHEN MATCHED THEN   UPDATE SET
+tgt.sales_date = src.sales_date
+
+Plan hash value: 178833565
+
+------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                     | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+------------------------------------------------------------------------------------------------------------------------------------
+|   0 | MERGE STATEMENT               |               |      1 |        |      0 |00:00:01.50 |     103K|       |       |          |
+|   1 |  MERGE                        | PRODUCT_SALES |      1 |        |      0 |00:00:01.50 |     103K|       |       |          |
+|   2 |   VIEW                        |               |      1 |        |  99997 |00:00:00.63 |     994 |       |       |          |
+|   3 |    NESTED LOOPS               |               |      1 |    200K|  99997 |00:00:00.62 |     994 |       |       |          |
+|*  4 |     VIEW                      |               |      1 |    200K|  99997 |00:00:00.55 |     500 |       |       |          |
+|*  5 |      WINDOW SORT PUSHED RANK  |               |      1 |    200K|    100K|00:00:00.52 |     500 |    16M|  1510K|   14M (0)|
+|   6 |       TABLE ACCESS FULL       | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.02 |     500 |       |       |          |
+|   7 |     TABLE ACCESS BY USER ROWID| PRODUCT_SALES |  99997 |      1 |  99997 |00:00:00.04 |     494 |       |       |          |
+------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   4 - filter(("RN"=1 AND DECODE(INTERNAL_FUNCTION("SALES_DATE"),"OLD_SALES_DATE",1,0)=0))
+   5 - filter(RANK() OVER ( PARTITION BY "PRODUCT_ID" ORDER BY "SALES_DATE")<=1)
+
+
+Timer Set: Cursor, Constructed at 24 Sep 2017 15:14:10, written at 15:14:12
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  1.51        0.69             1        1.51200        0.69000
+Open cursor              0.00        0.00             1        0.00000        0.00000
+First fetch              0.00        0.00             1        0.00000        0.00000
+Write to file            0.00        0.00             2        0.00000        0.00000
+Remaining fetches        0.00        0.00             1        0.00000        0.00000
+Rollback                 0.28        0.27             1        0.27700        0.27000
+Post SQL                 0.00        0.00             1        0.00100        0.00000
+Write plan               0.21        0.22             1        0.21200        0.22000
+(Other)                  0.04        0.03             1        0.04300        0.03000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                    2.05        1.21            10        0.20450        0.12100
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 24 Sep 2017 15:14:10, written at 15:14:12
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000006), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.00        0.00             1        0.00000        0.00000
+(Other)        2.06        1.21             1        2.05500        1.21000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          2.06        1.21             2        1.02750        0.60500
+-------  ----------  ----------  ------------  -------------  -------------
+2 rows written to MH2_DML.csv
+Summary for W/D = 100000/2 , bench_run_statistics_id = 4
+
+Timer Set: Run_One, Constructed at 24 Sep 2017 15:14:10, written at 15:14:12
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.01 (0.000010), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run            2.06        1.21             1        2.06300        1.21000
+(Other)        0.00        0.00             1        0.00000        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          2.06        1.21             2        1.03150        0.60500
+-------  ----------  ----------  ------------  -------------  -------------
+SELECT '"1"' FROM DUAL
+Executing pqs: DELETE/*+ GATHER_PLAN_STATISTICS DEL_DML */ product_sales sd
+  WHERE 170924151412303=170924151412303 AND (product_id, sales_date) IN (
+    SELECT product_id, Min(sales_date)
+      FROM product_sales
+     WHERE 170924151412303=170924151412303
+     GROUP BY product_id
+    HAVING Min(sales_date) != DATE '1900-01-01'
+    )
+
+Rows processed: 99997
+SQL_ID  awtnv15ry0x2s, child number 0
+-------------------------------------
+DELETE/*+ GATHER_PLAN_STATISTICS DEL_DML */ product_sales sd   WHERE
+170924151412303=170924151412303 AND (product_id, sales_date) IN (
+SELECT product_id, Min(sales_date)       FROM product_sales      WHERE
+170924151412303=170924151412303      GROUP BY product_id     HAVING
+Min(sales_date) != DATE '1900-01-01'     )
+
+Plan hash value: 2406831549
+
+-----------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation              | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-----------------------------------------------------------------------------------------------------------------------------
+|   0 | DELETE STATEMENT       |               |      1 |        |      0 |00:00:00.64 |     104K|       |       |          |
+|   1 |  DELETE                | PRODUCT_SALES |      1 |        |      0 |00:00:00.64 |     104K|       |       |          |
+|*  2 |   HASH JOIN RIGHT SEMI |               |      1 |      1 |  99997 |00:00:00.36 |    1000 |  6912K|  2259K| 7679K (0)|
+|   3 |    VIEW                | VW_NSO_1      |      1 |   5042 |  99995 |00:00:00.16 |     500 |       |       |          |
+|*  4 |     FILTER             |               |      1 |        |  99995 |00:00:00.16 |     500 |       |       |          |
+|   5 |      SORT GROUP BY     |               |      1 |   5042 |    100K|00:00:00.16 |     500 |  7282K|  1425K| 6472K (0)|
+|   6 |       TABLE ACCESS FULL| PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+|   7 |    TABLE ACCESS FULL   | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.03 |     500 |       |       |          |
+-----------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("PRODUCT_ID"="PRODUCT_ID" AND "SALES_DATE"="MIN(SALES_DATE)")
+   4 - filter(MIN("SALES_DATE")<>TO_DATE(' 1900-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+
+
+Timer Set: Cursor, Constructed at 24 Sep 2017 15:14:12, written at 15:14:13
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  0.65        0.45             1        0.64700        0.45000
+Open cursor              0.00        0.00             1        0.00000        0.00000
+First fetch              0.00        0.00             1        0.00000        0.00000
+Write to file            0.00        0.00             2        0.00000        0.00000
+Remaining fetches        0.00        0.00             1        0.00000        0.00000
+Rollback                 0.31        0.28             1        0.31400        0.28000
+Post SQL                 0.00        0.00             1        0.00000        0.00000
+Write plan               0.24        0.22             1        0.23800        0.22000
+(Other)                  0.04        0.02             1        0.03700        0.02000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                    1.24        0.97            10        0.12360        0.09700
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 24 Sep 2017 15:14:12, written at 15:14:13
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.00        0.00             1        0.00000        0.00000
+(Other)        1.25        0.97             1        1.24700        0.97000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          1.25        0.97             2        0.62350        0.48500
+-------  ----------  ----------  ------------  -------------  -------------
+2 rows written to DEL_DML.csv
+Summary for W/D = 100000/2 , bench_run_statistics_id = 5
+
+Timer Set: Run_One, Constructed at 24 Sep 2017 15:14:12, written at 15:14:13
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run            1.26        0.99             1        1.25500        0.99000
+(Other)        0.00        0.00             1        0.00100        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          1.26        0.99             2        0.62800        0.49500
+-------  ----------  ----------  ------------  -------------  -------------
+SELECT '"1"' FROM DUAL
+Executing pqs: INSERT/*+ GATHER_PLAN_STATISTICS INS_DML */ INTO product_sales
+WITH date_mins AS (
+    SELECT product_id
+      FROM product_sales
+     GROUP BY product_id
+     HAVING Min(sales_date) != DATE '1900-01-01'
+)
+SELECT product_id, DATE '1900-01-01'
+  FROM date_mins
+ WHERE 170924151413567=170924151413567
+
+Rows processed: 99995
+SQL_ID  bdbgg3fkkqku8, child number 0
+-------------------------------------
+INSERT/*+ GATHER_PLAN_STATISTICS INS_DML */ INTO product_sales WITH
+date_mins AS (     SELECT product_id       FROM product_sales
+GROUP BY product_id      HAVING Min(sales_date) != DATE '1900-01-01' )
+SELECT product_id, DATE '1900-01-01'   FROM date_mins  WHERE
+170924151413567=170924151413567
+
+Plan hash value: 2420629719
+
+-------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-------------------------------------------------------------------------------------------------------------------------------
+|   0 | INSERT STATEMENT         |               |      1 |        |      0 |00:00:00.12 |    3981 |       |       |          |
+|   1 |  LOAD TABLE CONVENTIONAL | PRODUCT_SALES |      1 |        |      0 |00:00:00.12 |    3981 |       |       |          |
+|*  2 |   FILTER                 |               |      1 |        |  99995 |00:00:00.09 |     500 |       |       |          |
+|   3 |    HASH GROUP BY         |               |      1 |   5042 |    100K|00:00:00.08 |     500 |  6423K|  1978K| 6579K (0)|
+|   4 |     TABLE ACCESS FULL    | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+-------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - filter(MIN("SALES_DATE")<>TO_DATE(' 1900-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+
+
+Timer Set: Cursor, Constructed at 24 Sep 2017 15:14:13, written at 15:14:14
+===========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer                 Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-----------------  ----------  ----------  ------------  -------------  -------------
+Pre SQL                  0.12        0.08             1        0.12400        0.08000
+Open cursor              0.00        0.00             1        0.00000        0.00000
+First fetch              0.00        0.00             1        0.00000        0.00000
+Write to file            0.00        0.00             2        0.00000        0.00000
+Remaining fetches        0.00        0.00             1        0.00000        0.00000
+Rollback                 0.00        0.00             1        0.00400        0.00000
+Post SQL                 0.00        0.00             1        0.00000        0.00000
+Write plan               0.25        0.22             1        0.25400        0.22000
+(Other)                  0.06        0.04             1        0.05600        0.04000
+-----------------  ----------  ----------  ------------  -------------  -------------
+Total                    0.44        0.34            10        0.04380        0.03400
+-----------------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: File Writer, Constructed at 24 Sep 2017 15:14:13, written at 15:14:14
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.02 (0.000020), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.00        0.00             1        0.00000        0.00000
+(Other)        0.45        0.34             1        0.44800        0.34000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          0.45        0.34             2        0.22400        0.17000
+-------  ----------  ----------  ------------  -------------  -------------
+2 rows written to INS_DML.csv
+Summary for W/D = 100000/2 , bench_run_statistics_id = 6
+
+Timer Set: Run_One, Constructed at 24 Sep 2017 15:14:13, written at 15:14:14
+============================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Run            0.46        0.36             1        0.45600        0.36000
+(Other)        0.00        0.00             1        0.00100        0.00000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          0.46        0.36             2        0.22850        0.18000
+-------  ----------  ----------  ------------  -------------  -------------
+
+Distinct Plans
+==============
+DEL_DML: 1/1 (1 of 1)
+SQL_ID  awtnv15ry0x2s, child number 0
+-------------------------------------
+DELETE/*+ GATHER_PLAN_STATISTICS DEL_DML */ product_sales sd   WHERE
+170924151412303=170924151412303 AND (product_id, sales_date) IN (
+SELECT product_id, Min(sales_date)       FROM product_sales      WHERE
+170924151412303=170924151412303      GROUP BY product_id     HAVING
+Min(sales_date) != DATE '1900-01-01'     )
+
+Plan hash value: 2406831549
+
+-----------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation              | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-----------------------------------------------------------------------------------------------------------------------------
+|   0 | DELETE STATEMENT       |               |      1 |        |      0 |00:00:00.64 |     104K|       |       |          |
+|   1 |  DELETE                | PRODUCT_SALES |      1 |        |      0 |00:00:00.64 |     104K|       |       |          |
+|*  2 |   HASH JOIN RIGHT SEMI |               |      1 |      1 |  99997 |00:00:00.36 |    1000 |  6912K|  2259K| 7679K (0)|
+|   3 |    VIEW                | VW_NSO_1      |      1 |   5042 |  99995 |00:00:00.16 |     500 |       |       |          |
+|*  4 |     FILTER             |               |      1 |        |  99995 |00:00:00.16 |     500 |       |       |          |
+|   5 |      SORT GROUP BY     |               |      1 |   5042 |    100K|00:00:00.16 |     500 |  7282K|  1425K| 6472K (0)|
+|   6 |       TABLE ACCESS FULL| PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+|   7 |    TABLE ACCESS FULL   | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.03 |     500 |       |       |          |
+-----------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("PRODUCT_ID"="PRODUCT_ID" AND "SALES_DATE"="MIN(SALES_DATE)")
+   4 - filter(MIN("SALES_DATE")<>TO_DATE(' 1900-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+
+INS_DML: 1/1 (1 of 1)
+SQL_ID  bdbgg3fkkqku8, child number 0
+-------------------------------------
+INSERT/*+ GATHER_PLAN_STATISTICS INS_DML */ INTO product_sales WITH
+date_mins AS (     SELECT product_id       FROM product_sales
+GROUP BY product_id      HAVING Min(sales_date) != DATE '1900-01-01' )
+SELECT product_id, DATE '1900-01-01'   FROM date_mins  WHERE
+170924151413567=170924151413567
+
+Plan hash value: 2420629719
+
+-------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-------------------------------------------------------------------------------------------------------------------------------
+|   0 | INSERT STATEMENT         |               |      1 |        |      0 |00:00:00.12 |    3981 |       |       |          |
+|   1 |  LOAD TABLE CONVENTIONAL | PRODUCT_SALES |      1 |        |      0 |00:00:00.12 |    3981 |       |       |          |
+|*  2 |   FILTER                 |               |      1 |        |  99995 |00:00:00.09 |     500 |       |       |          |
+|   3 |    HASH GROUP BY         |               |      1 |   5042 |    100K|00:00:00.08 |     500 |  6423K|  1978K| 6579K (0)|
+|   4 |     TABLE ACCESS FULL    | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+-------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - filter(MIN("SALES_DATE")<>TO_DATE(' 1900-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+
+MH2_DML: 1/1 (1 of 1)
+SQL_ID  g2aw4bb21wb3b, child number 0
+-------------------------------------
+MERGE /*+ GATHER_PLAN_STATISTICS MH2_DML  leading(@"SEL$F5BB74E1"
+"from$_subquery$_007"@"SEL$2" "TGT"@"SEL$1") use_nl(@"SEL$F5BB74E1"
+"TGT"@"SEL$1") */ INTO product_sales tgt USING (SELECT *        FROM (
+        SELECT rowid arowid, product_id, DATE '1900-01-01' sales_date,
+               sales_date AS old_sales_date,                 Rank()
+OVER (PARTITION BY product_id ORDER BY sales_date) rn          FROM
+product_sales        )        WHERE 170924151410232=170924151410232 AND
+rn = 1 AND 0 = Decode(sales_date, old_sales_date, 1, 0)) src ON
+(tgt.rowid = src.arowid) WHEN MATCHED THEN   UPDATE SET
+tgt.sales_date = src.sales_date
+
+Plan hash value: 178833565
+
+------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                     | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+------------------------------------------------------------------------------------------------------------------------------------
+|   0 | MERGE STATEMENT               |               |      1 |        |      0 |00:00:01.50 |     103K|       |       |          |
+|   1 |  MERGE                        | PRODUCT_SALES |      1 |        |      0 |00:00:01.50 |     103K|       |       |          |
+|   2 |   VIEW                        |               |      1 |        |  99997 |00:00:00.63 |     994 |       |       |          |
+|   3 |    NESTED LOOPS               |               |      1 |    200K|  99997 |00:00:00.62 |     994 |       |       |          |
+|*  4 |     VIEW                      |               |      1 |    200K|  99997 |00:00:00.55 |     500 |       |       |          |
+|*  5 |      WINDOW SORT PUSHED RANK  |               |      1 |    200K|    100K|00:00:00.52 |     500 |    16M|  1510K|   14M (0)|
+|   6 |       TABLE ACCESS FULL       | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.02 |     500 |       |       |          |
+|   7 |     TABLE ACCESS BY USER ROWID| PRODUCT_SALES |  99997 |      1 |  99997 |00:00:00.04 |     494 |       |       |          |
+------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   4 - filter(("RN"=1 AND DECODE(INTERNAL_FUNCTION("SALES_DATE"),"OLD_SALES_DATE",1,0)=0))
+   5 - filter(RANK() OVER ( PARTITION BY "PRODUCT_ID" ORDER BY "SALES_DATE")<=1)
+
+MHT_DML: 1/1 (1 of 1)
+SQL_ID  cya9adu730x4w, child number 0
+-------------------------------------
+MERGE /*+ GATHER_PLAN_STATISTICS MHT_DML
+no_swap_join_inputs(@"SEL$F5BB74E1" "TGT"@"SEL$1") */ INTO
+product_sales tgt USING (SELECT *        FROM (          SELECT rowid
+arowid, product_id, DATE '1900-01-01' sales_date,
+sales_date AS old_sales_date,                 Rank() OVER (PARTITION BY
+product_id ORDER BY sales_date) rn          FROM   product_sales
+)        WHERE 170924151408389=170924151408389 AND rn = 1 AND 0 =
+Decode(sales_date, old_sales_date, 1, 0)) src ON (tgt.rowid =
+src.arowid) WHEN MATCHED THEN   UPDATE SET     tgt.sales_date =
+src.sales_date
+
+Plan hash value: 2519372665
+
+----------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                   | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+----------------------------------------------------------------------------------------------------------------------------------
+|   0 | MERGE STATEMENT             |               |      1 |        |      0 |00:00:01.19 |     103K|       |       |          |
+|   1 |  MERGE                      | PRODUCT_SALES |      1 |        |      0 |00:00:01.19 |     103K|       |       |          |
+|   2 |   VIEW                      |               |      1 |        |  99997 |00:00:00.55 |    1000 |       |       |          |
+|*  3 |    HASH JOIN                |               |      1 |    200K|  99997 |00:00:00.54 |    1000 |  9791K|  3044K|   11M (0)|
+|*  4 |     VIEW                    |               |      1 |    200K|  99997 |00:00:00.40 |     500 |       |       |          |
+|*  5 |      WINDOW SORT PUSHED RANK|               |      1 |    200K|    100K|00:00:00.37 |     500 |    16M|  1510K|   14M (0)|
+|   6 |       TABLE ACCESS FULL     | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+|   7 |     TABLE ACCESS FULL       | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+----------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - access("TGT".ROWID="from$_subquery$_007"."AROWID")
+   4 - filter(("RN"=1 AND DECODE(INTERNAL_FUNCTION("SALES_DATE"),"OLD_SALES_DATE",1,0)=0))
+   5 - filter(RANK() OVER ( PARTITION BY "PRODUCT_ID" ORDER BY "SALES_DATE")<=1)
+
+MRG_DML: 1/1 (1 of 1)
+SQL_ID  9acyqjucsy2b5, child number 0
+-------------------------------------
+MERGE/*+ GATHER_PLAN_STATISTICS MRG_DML */ INTO product_sales tgt USING
+(SELECT *        FROM (          SELECT rowid arowid, product_id, DATE
+'1900-01-01' sales_date,                 sales_date AS old_sales_date,
+               Rank() OVER (PARTITION BY product_id ORDER BY
+sales_date) rn          FROM   product_sales        )        WHERE
+170924151405547=170924151405547 AND rn = 1 AND 0 = Decode(sales_date,
+old_sales_date, 1, 0)) src ON (tgt.rowid = src.arowid) WHEN MATCHED
+THEN   UPDATE SET     tgt.sales_date = src.sales_date
+
+Plan hash value: 949972977
+
+----------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                   | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+----------------------------------------------------------------------------------------------------------------------------------
+|   0 | MERGE STATEMENT             |               |      1 |        |      0 |00:00:02.22 |     103K|       |       |          |
+|   1 |  MERGE                      | PRODUCT_SALES |      1 |        |      0 |00:00:02.22 |     103K|       |       |          |
+|   2 |   VIEW                      |               |      1 |        |  99997 |00:00:01.67 |    1000 |       |       |          |
+|*  3 |    HASH JOIN                |               |      1 |    200K|  99997 |00:00:01.66 |    1000 |    15M|  3557K|   15M (0)|
+|   4 |     TABLE ACCESS FULL       | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+|*  5 |     VIEW                    |               |      1 |    200K|  99997 |00:00:01.01 |     500 |       |       |          |
+|*  6 |      WINDOW SORT PUSHED RANK|               |      1 |    200K|    100K|00:00:00.98 |     500 |    16M|  1510K|   14M (0)|
+|   7 |       TABLE ACCESS FULL     | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+----------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - access("TGT".ROWID="from$_subquery$_007"."AROWID")
+   5 - filter(("RN"=1 AND DECODE(INTERNAL_FUNCTION("SALES_DATE"),"OLD_SALES_DATE",1,0)=0))
+   6 - filter(RANK() OVER ( PARTITION BY "PRODUCT_ID" ORDER BY "SALES_DATE")<=1)
+
+UPD_DML: 1/1 (1 of 1)
+SQL_ID  bg5jrdh2vt12s, child number 0
+-------------------------------------
+UPDATE/*+ GATHER_PLAN_STATISTICS UPD_DML */ product_sales sd    SET
+sd.sales_date = DATE '1900-01-01'  WHERE
+170924151403128=170924151403128 AND sd.sales_date =  ( SELECT
+min(sd2.sales_date)      FROM product_sales sd2     WHERE sd.product_id
+= sd2.product_id  )    AND sd.sales_date != DATE '1900-01-01'
+
+Plan hash value: 2042760566
+
+-----------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation              | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-----------------------------------------------------------------------------------------------------------------------------
+|   0 | UPDATE STATEMENT       |               |      1 |        |      0 |00:00:01.34 |     103K|       |       |          |
+|   1 |  UPDATE                | PRODUCT_SALES |      1 |        |      0 |00:00:01.34 |     103K|       |       |          |
+|*  2 |   HASH JOIN            |               |      1 |    100K|  99997 |00:00:00.84 |    1000 |  6912K|  2259K| 7876K (0)|
+|   3 |    VIEW                | VW_SQ_1       |      1 |    100K|  99995 |00:00:00.21 |     500 |       |       |          |
+|*  4 |     FILTER             |               |      1 |        |  99995 |00:00:00.21 |     500 |       |       |          |
+|   5 |      SORT GROUP BY     |               |      1 |    100K|    100K|00:00:00.21 |     500 |  7282K|  1425K| 6472K (0)|
+|   6 |       TABLE ACCESS FULL| PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+|*  7 |    TABLE ACCESS FULL   | PRODUCT_SALES |      1 |    199K|    199K|00:00:00.04 |     500 |       |       |          |
+-----------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("SD"."SALES_DATE"="MIN(SD2.SALES_DATE)" AND "SD"."PRODUCT_ID"="ITEM_1")
+   4 - filter(MIN("SD2"."SALES_DATE")<>TO_DATE(' 1900-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+   7 - filter("SD"."SALES_DATE"<>TO_DATE(' 1900-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+
+
+Data Points
+===========
+Data Point:               size_wide      size_deep       cpu_time        elapsed       num_recs       per_part     group_size
+Data Point                   100000              2           1.25          1.765         200000              2              6
+
+num_records_out
+===============
+Run Type                      Width             D2
+DEL_DML                     W100000              1
+INS_DML                     W100000              1
+MH2_DML                     W100000              1
+MHT_DML                     W100000              1
+MRG_DML                     W100000              1
+UPD_DML                     W100000              1
+
+num_records_out_SLICE
+=====================
+Run Type                         D2
+DEL_DML                           1
+INS_DML                           1
+MH2_DML                           1
+MHT_DML                           1
+MRG_DML                           1
+UPD_DML                           1
+
+num_records_out_RATIO
+=====================
+Run Type                      Width             D2
+DEL_DML                     W100000              1
+INS_DML                     W100000              1
+MH2_DML                     W100000              1
+MHT_DML                     W100000              1
+MRG_DML                     W100000              1
+UPD_DML                     W100000              1
+
+num_records_out_SLICE_RATIO
+===========================
+Run Type                         D2
+DEL_DML                           1
+INS_DML                           1
+MH2_DML                           1
+MHT_DML                           1
+MRG_DML                           1
+UPD_DML                           1
+
+num_records_pqs
+===============
+Run Type                      Width             D2
+DEL_DML                     W100000          99997
+INS_DML                     W100000          99995
+MH2_DML                     W100000          99997
+MHT_DML                     W100000          99997
+MRG_DML                     W100000          99997
+UPD_DML                     W100000          99997
+
+num_records_pqs_SLICE
+=====================
+Run Type                         D2
+DEL_DML                       99997
+INS_DML                       99995
+MH2_DML                       99997
+MHT_DML                       99997
+MRG_DML                       99997
+UPD_DML                       99997
+
+num_records_pqs_RATIO
+=====================
+Run Type                      Width             D2
+DEL_DML                     W100000              1
+INS_DML                     W100000              1
+MH2_DML                     W100000              1
+MHT_DML                     W100000              1
+MRG_DML                     W100000              1
+UPD_DML                     W100000              1
+
+num_records_pqs_SLICE_RATIO
+===========================
+Run Type                         D2
+DEL_DML                           1
+INS_DML                           1
+MH2_DML                           1
+MHT_DML                           1
+MRG_DML                           1
+UPD_DML                           1
+
+cpu_time
+========
+Run Type                      Width             D2
+DEL_DML                     W100000            .45
+INS_DML                     W100000            .08
+MH2_DML                     W100000            .69
+MHT_DML                     W100000            .51
+MRG_DML                     W100000            .67
+UPD_DML                     W100000            .59
+
+cpu_time_SLICE
+==============
+Run Type                         D2
+DEL_DML                         .45
+INS_DML                         .08
+MH2_DML                         .69
+MHT_DML                         .51
+MRG_DML                         .67
+UPD_DML                         .59
+
+cpu_time_RATIO
+==============
+Run Type                      Width             D2
+DEL_DML                     W100000           5.63
+INS_DML                     W100000              1
+MH2_DML                     W100000           8.63
+MHT_DML                     W100000           6.38
+MRG_DML                     W100000           8.38
+UPD_DML                     W100000           7.38
+
+cpu_time_SLICE_RATIO
+====================
+Run Type                         D2
+DEL_DML                        5.63
+INS_DML                           1
+MH2_DML                        8.63
+MHT_DML                        6.38
+MRG_DML                        8.38
+UPD_DML                        7.38
+
+elapsed_time
+============
+Run Type                      Width             D2
+DEL_DML                     W100000           .647
+INS_DML                     W100000           .124
+MH2_DML                     W100000          1.512
+MHT_DML                     W100000          1.193
+MRG_DML                     W100000          2.229
+UPD_DML                     W100000          1.346
+
+elapsed_time_SLICE
+==================
+Run Type                         D2
+DEL_DML                        .647
+INS_DML                        .124
+MH2_DML                       1.512
+MHT_DML                       1.193
+MRG_DML                       2.229
+UPD_DML                       1.346
+
+elapsed_time_RATIO
+==================
+Run Type                      Width             D2
+DEL_DML                     W100000           5.22
+INS_DML                     W100000              1
+MH2_DML                     W100000          12.19
+MHT_DML                     W100000           9.62
+MRG_DML                     W100000          17.98
+UPD_DML                     W100000          10.85
+
+elapsed_time_SLICE_RATIO
+========================
+Run Type                         D2
+DEL_DML                        5.22
+INS_DML                           1
+MH2_DML                       12.19
+MHT_DML                        9.62
+MRG_DML                       17.98
+UPD_DML                       10.85
+
+memory_used
+===========
+Run Type                      Width             D2
+DEL_DML                     W100000        7863296
+INS_DML                     W100000        6736896
+MH2_DML                     W100000       15142912
+MHT_DML                     W100000       15142912
+MRG_DML                     W100000       16588800
+UPD_DML                     W100000        8065024
+
+memory_used_SLICE
+=================
+Run Type                         D2
+DEL_DML                     7863296
+INS_DML                     6736896
+MH2_DML                    15142912
+MHT_DML                    15142912
+MRG_DML                    16588800
+UPD_DML                     8065024
+
+memory_used_RATIO
+=================
+Run Type                      Width             D2
+DEL_DML                     W100000           1.17
+INS_DML                     W100000              1
+MH2_DML                     W100000           2.25
+MHT_DML                     W100000           2.25
+MRG_DML                     W100000           2.46
+UPD_DML                     W100000            1.2
+
+memory_used_SLICE_RATIO
+=======================
+Run Type                         D2
+DEL_DML                        1.17
+INS_DML                           1
+MH2_DML                        2.25
+MHT_DML                        2.25
+MRG_DML                        2.46
+UPD_DML                         1.2
+
+buffers
+=======
+Run Type                      Width             D2
+DEL_DML                     W100000         104322
+INS_DML                     W100000           3981
+MH2_DML                     W100000         103215
+MHT_DML                     W100000         103221
+MRG_DML                     W100000         103221
+UPD_DML                     W100000         103221
+
+buffers_SLICE
+=============
+Run Type                         D2
+DEL_DML                      104322
+INS_DML                        3981
+MH2_DML                      103215
+MHT_DML                      103221
+MRG_DML                      103221
+UPD_DML                      103221
+
+buffers_RATIO
+=============
+Run Type                      Width             D2
+DEL_DML                     W100000           26.2
+INS_DML                     W100000              1
+MH2_DML                     W100000          25.93
+MHT_DML                     W100000          25.93
+MRG_DML                     W100000          25.93
+UPD_DML                     W100000          25.93
+
+buffers_SLICE_RATIO
+===================
+Run Type                         D2
+DEL_DML                        26.2
+INS_DML                           1
+MH2_DML                       25.93
+MHT_DML                       25.93
+MRG_DML                       25.93
+UPD_DML                       25.93
+
+disk_reads
+==========
+Run Type                      Width             D2
+DEL_DML                     W100000              0
+INS_DML                     W100000              0
+MH2_DML                     W100000              0
+MHT_DML                     W100000              0
+MRG_DML                     W100000              0
+UPD_DML                     W100000              0
+
+disk_reads_SLICE
+================
+Run Type                         D2
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML                           0
+UPD_DML                           0
+
+disk_reads_RATIO
+================
+Run Type                      Width             D2
+DEL_DML                     W100000              0
+INS_DML                     W100000              0
+MH2_DML                     W100000              0
+MHT_DML                     W100000              0
+MRG_DML                     W100000              0
+UPD_DML                     W100000              0
+
+disk_reads_SLICE_RATIO
+======================
+Run Type                         D2
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML                           0
+UPD_DML                           0
+
+disk_writes
+===========
+Run Type                      Width             D2
+DEL_DML                     W100000              0
+INS_DML                     W100000              0
+MH2_DML                     W100000              0
+MHT_DML                     W100000              0
+MRG_DML                     W100000              0
+UPD_DML                     W100000              0
+
+disk_writes_SLICE
+=================
+Run Type                         D2
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML                           0
+UPD_DML                           0
+
+disk_writes_RATIO
+=================
+Run Type                      Width             D2
+DEL_DML                     W100000              0
+INS_DML                     W100000              0
+MH2_DML                     W100000              0
+MHT_DML                     W100000              0
+MRG_DML                     W100000              0
+UPD_DML                     W100000              0
+
+disk_writes_SLICE_RATIO
+=======================
+Run Type                         D2
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML                           0
+UPD_DML                           0
+
+tempseg_size
+============
+Run Type                      Width             D2
+DEL_DML                     W100000
+INS_DML                     W100000
+MH2_DML                     W100000
+MHT_DML                     W100000
+MRG_DML                     W100000
+UPD_DML                     W100000
+
+tempseg_size_SLICE
+==================
+Run Type                         D2
+DEL_DML
+INS_DML
+MH2_DML
+MHT_DML
+MRG_DML
+UPD_DML
+
+tempseg_size_RATIO
+==================
+Run Type                      Width             D2
+DEL_DML                     W100000
+INS_DML                     W100000
+MH2_DML                     W100000
+MHT_DML                     W100000
+MRG_DML                     W100000
+UPD_DML                     W100000
+
+tempseg_size_SLICE_RATIO
+========================
+Run Type                         D2
+DEL_DML
+INS_DML
+MH2_DML
+MHT_DML
+MRG_DML
+UPD_DML
+
+cardinality
+===========
+Run Type                      Width             D2
+DEL_DML                     W100000         200000
+INS_DML                     W100000         200000
+MH2_DML                     W100000         200000
+MHT_DML                     W100000         200000
+MRG_DML                     W100000         200000
+UPD_DML                     W100000         200000
+
+cardinality_SLICE
+=================
+Run Type                         D2
+DEL_DML                      200000
+INS_DML                      200000
+MH2_DML                      200000
+MHT_DML                      200000
+MRG_DML                      200000
+UPD_DML                      200000
+
+cardinality_RATIO
+=================
+Run Type                      Width             D2
+DEL_DML                     W100000              1
+INS_DML                     W100000              1
+MH2_DML                     W100000              1
+MHT_DML                     W100000              1
+MRG_DML                     W100000              1
+UPD_DML                     W100000              1
+
+cardinality_SLICE_RATIO
+=======================
+Run Type                         D2
+DEL_DML                           1
+INS_DML                           1
+MH2_DML                           1
+MHT_DML                           1
+MRG_DML                           1
+UPD_DML                           1
+
+output_rows
+===========
+Run Type                      Width             D2
+DEL_DML                     W100000         200000
+INS_DML                     W100000         200000
+MH2_DML                     W100000         200000
+MHT_DML                     W100000         200000
+MRG_DML                     W100000         200000
+UPD_DML                     W100000         200000
+
+output_rows_SLICE
+=================
+Run Type                         D2
+DEL_DML                      200000
+INS_DML                      200000
+MH2_DML                      200000
+MHT_DML                      200000
+MRG_DML                      200000
+UPD_DML                      200000
+
+output_rows_RATIO
+=================
+Run Type                      Width             D2
+DEL_DML                     W100000              1
+INS_DML                     W100000              1
+MH2_DML                     W100000              1
+MHT_DML                     W100000              1
+MRG_DML                     W100000              1
+UPD_DML                     W100000              1
+
+output_rows_SLICE_RATIO
+=======================
+Run Type                         D2
+DEL_DML                           1
+INS_DML                           1
+MH2_DML                           1
+MHT_DML                           1
+MRG_DML                           1
+UPD_DML                           1
+
+cardinality_error
+=================
+Run Type                      Width             D2
+DEL_DML                     W100000          99996
+INS_DML                     W100000          94958
+MH2_DML                     W100000         100003
+MHT_DML                     W100000         100003
+MRG_DML                     W100000         100003
+UPD_DML                     W100000            829
+
+cardinality_error_SLICE
+=======================
+Run Type                         D2
+DEL_DML                       99996
+INS_DML                       94958
+MH2_DML                      100003
+MHT_DML                      100003
+MRG_DML                      100003
+UPD_DML                         829
+
+cardinality_error_RATIO
+=======================
+Run Type                      Width             D2
+DEL_DML                     W100000         120.62
+INS_DML                     W100000         114.55
+MH2_DML                     W100000         120.63
+MHT_DML                     W100000         120.63
+MRG_DML                     W100000         120.63
+UPD_DML                     W100000              1
+
+cardinality_error_SLICE_RATIO
+=============================
+Run Type                         D2
+DEL_DML                      120.62
+INS_DML                      114.55
+MH2_DML                      120.63
+MHT_DML                      120.63
+MRG_DML                      120.63
+UPD_DML                           1
+WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'sorts (rows)' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE point_deep WH
+EN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+
+
+sorts (rows)
+============
+Run Type                      Width             D2
+DEL_DML                     W100000         200000
+INS_DML                     W100000              0
+MH2_DML                     W100000         200000
+MHT_DML                     W100000         200000
+MRG_DML                     W100000         200000
+UPD_DML                     W100000         205430
+
+sorts (rows)_SLICE
+==================
+Run Type                         D2
+DEL_DML                      200000
+INS_DML                           0
+MH2_DML                      200000
+MHT_DML                      200000
+MRG_DML                      200000
+UPD_DML                      205430
+
+sorts (rows)_RATIO
+==================
+Run Type                      Width             D2
+DEL_DML                     W100000   200000000000
+INS_DML                     W100000              0
+MH2_DML                     W100000   200000000000
+MHT_DML                     W100000   200000000000
+MRG_DML                     W100000   200000000000
+UPD_DML                     W100000   205430000000
+
+sorts (rows)_SLICE_RATIO
+========================
+Run Type                         D2
+DEL_DML                200000000000
+INS_DML                           0
+MH2_DML                200000000000
+MHT_DML                200000000000
+MRG_DML                200000000000
+UPD_DML                205430000000
+
+Top Stats
+=========
+WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'session pga memory max' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE poi
+nt_deep WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+
+
+session pga memory max
+======================
+Run Type                      Width             D2
+DEL_DML                     W100000              0
+INS_DML                     W100000              0
+MH2_DML                     W100000              0
+MHT_DML                     W100000              0
+MRG_DML                     W100000       23592960
+UPD_DML                     W100000       10223616
+
+session pga memory max_SLICE
+============================
+Run Type                         D2
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML                    23592960
+UPD_DML                    10223616
+
+session pga memory max_RATIO
+============================
+Run Type                      Width             D2
+DEL_DML                     W100000              0
+INS_DML                     W100000              0
+MH2_DML                     W100000              0
+MHT_DML                     W100000              0
+MRG_DML                     W100000 23592960000000
+UPD_DML                     W100000 10223616000000
+
+session pga memory max_SLICE_RATIO
+==================================
+Run Type                         D2
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML              23592960000000
+UPD_DML              10223616000000
+WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'session uga memory max' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE poi
+nt_deep WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+
+
+session uga memory max
+======================
+Run Type                      Width             D2
+DEL_DML                     W100000              0
+INS_DML                     W100000              0
+MH2_DML                     W100000              0
+MHT_DML                     W100000              0
+MRG_DML                     W100000       18340832
+UPD_DML                     W100000        8250544
+
+session uga memory max_SLICE
+============================
+Run Type                         D2
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML                    18340832
+UPD_DML                     8250544
+
+session uga memory max_RATIO
+============================
+Run Type                      Width             D2
+DEL_DML                     W100000              0
+INS_DML                     W100000              0
+MH2_DML                     W100000              0
+MHT_DML                     W100000              0
+MRG_DML                     W100000 18340832000000
+UPD_DML                     W100000  8250544000000
+
+session uga memory max_SLICE_RATIO
+==================================
+Run Type                         D2
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML              18340832000000
+UPD_DML               8250544000000
+WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'logical read bytes from cache' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (C
+ASE point_deep WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+
+
+logical read bytes from cache
+=============================
+Run Type                      Width             D2
+DEL_DML                     W100000     2522939392
+INS_DML                     W100000       54755328
+MH2_DML                     W100000     2509168640
+MHT_DML                     W100000     2508529664
+MRG_DML                     W100000     2508324864
+UPD_DML                     W100000     2511192064
+
+logical read bytes from cache_SLICE
+===================================
+Run Type                         D2
+DEL_DML                  2522939392
+INS_DML                    54755328
+MH2_DML                  2509168640
+MHT_DML                  2508529664
+MRG_DML                  2508324864
+UPD_DML                  2511192064
+
+logical read bytes from cache_RATIO
+===================================
+Run Type                      Width             D2
+DEL_DML                     W100000          46.08
+INS_DML                     W100000              1
+MH2_DML                     W100000          45.83
+MHT_DML                     W100000          45.81
+MRG_DML                     W100000          45.81
+UPD_DML                     W100000          45.86
+
+logical read bytes from cache_SLICE_RATIO
+=========================================
+Run Type                         D2
+DEL_DML                       46.08
+INS_DML                           1
+MH2_DML                       45.83
+MHT_DML                       45.81
+MRG_DML                       45.81
+UPD_DML                       45.86
+WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'redo size' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE point_deep WHEN
+1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+
+
+redo size
+=========
+Run Type                      Width             D2
+DEL_DML                     W100000       49045024
+INS_DML                     W100000        3307888
+MH2_DML                     W100000       46540800
+MHT_DML                     W100000       46555704
+MRG_DML                     W100000       46541328
+UPD_DML                     W100000       46592248
+
+redo size_SLICE
+===============
+Run Type                         D2
+DEL_DML                    49045024
+INS_DML                     3307888
+MH2_DML                    46540800
+MHT_DML                    46555704
+MRG_DML                    46541328
+UPD_DML                    46592248
+
+redo size_RATIO
+===============
+Run Type                      Width             D2
+DEL_DML                     W100000          14.83
+INS_DML                     W100000              1
+MH2_DML                     W100000          14.07
+MHT_DML                     W100000          14.07
+MRG_DML                     W100000          14.07
+UPD_DML                     W100000          14.09
+
+redo size_SLICE_RATIO
+=====================
+Run Type                         D2
+DEL_DML                       14.83
+INS_DML                           1
+MH2_DML                       14.07
+MHT_DML                       14.07
+MRG_DML                       14.07
+UPD_DML                       14.09
+WITH wit AS (SELECT query_name, point_wide, size_wide, point_deep, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'session pga memory' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_wide, '"' || query_name || '","W' || size_wide || '","' || Max (CASE point_d
+eep WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_wide, size_wide) ORDER BY query_name, point_wide
+
+
+session pga memory
+==================
+Run Type                      Width             D2
+DEL_DML                     W100000         524288
+INS_DML                     W100000              0
+MH2_DML                     W100000        -327680
+MHT_DML                     W100000       14811136
+MRG_DML                     W100000       14811136
+UPD_DML                     W100000        1048576
+
+session pga memory_SLICE
+========================
+Run Type                         D2
+DEL_DML                      524288
+INS_DML                           0
+MH2_DML                     -327680
+MHT_DML                    14811136
+MRG_DML                    14811136
+UPD_DML                     1048576
+
+session pga memory_RATIO
+========================
+Run Type                      Width             D2
+DEL_DML                     W100000   524288000000
+INS_DML                     W100000              0
+MH2_DML                     W100000  -327680000000
+MHT_DML                     W100000 14811136000000
+MRG_DML                     W100000 14811136000000
+UPD_DML                     W100000  1048576000000
+
+session pga memory_SLICE_RATIO
+==============================
+Run Type                         D2
+DEL_DML                524288000000
+INS_DML                           0
+MH2_DML               -327680000000
+MHT_DML              14811136000000
+MRG_DML              14811136000000
+UPD_DML               1048576000000
+
+Timer Set: File Writer, Constructed at 24 Sep 2017 15:14:14, written at 15:14:18
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000009), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.00        0.00             1        0.00100        0.00000
+(Other)        4.37        1.51             1        4.36600        1.51000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          4.37        1.51             2        2.18350        0.75500
+-------  ----------  ----------  ------------  -------------  -------------
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, FACT f_real, Round (FACT / Greatest (Min (FACT) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM bench_v$sql_pl
+an_stats_all_v) SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE point_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_n
+ame, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+Distinct Plans
+==============
+DEL_DML: 1/1 (1 of 1)
+SQL_ID  awtnv15ry0x2s, child number 0
+-------------------------------------
+DELETE/*+ GATHER_PLAN_STATISTICS DEL_DML */ product_sales sd   WHERE
+170924151412303=170924151412303 AND (product_id, sales_date) IN (
+SELECT product_id, Min(sales_date)       FROM product_sales      WHERE
+170924151412303=170924151412303      GROUP BY product_id     HAVING
+Min(sales_date) != DATE '1900-01-01'     )
+
+Plan hash value: 2406831549
+
+-----------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation              | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-----------------------------------------------------------------------------------------------------------------------------
+|   0 | DELETE STATEMENT       |               |      1 |        |      0 |00:00:00.64 |     104K|       |       |          |
+|   1 |  DELETE                | PRODUCT_SALES |      1 |        |      0 |00:00:00.64 |     104K|       |       |          |
+|*  2 |   HASH JOIN RIGHT SEMI |               |      1 |      1 |  99997 |00:00:00.36 |    1000 |  6912K|  2259K| 7679K (0)|
+|   3 |    VIEW                | VW_NSO_1      |      1 |   5042 |  99995 |00:00:00.16 |     500 |       |       |          |
+|*  4 |     FILTER             |               |      1 |        |  99995 |00:00:00.16 |     500 |       |       |          |
+|   5 |      SORT GROUP BY     |               |      1 |   5042 |    100K|00:00:00.16 |     500 |  7282K|  1425K| 6472K (0)|
+|   6 |       TABLE ACCESS FULL| PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+|   7 |    TABLE ACCESS FULL   | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.03 |     500 |       |       |          |
+-----------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("PRODUCT_ID"="PRODUCT_ID" AND "SALES_DATE"="MIN(SALES_DATE)")
+   4 - filter(MIN("SALES_DATE")<>TO_DATE(' 1900-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+
+INS_DML: 1/1 (1 of 1)
+SQL_ID  bdbgg3fkkqku8, child number 0
+-------------------------------------
+INSERT/*+ GATHER_PLAN_STATISTICS INS_DML */ INTO product_sales WITH
+date_mins AS (     SELECT product_id       FROM product_sales
+GROUP BY product_id      HAVING Min(sales_date) != DATE '1900-01-01' )
+SELECT product_id, DATE '1900-01-01'   FROM date_mins  WHERE
+170924151413567=170924151413567
+
+Plan hash value: 2420629719
+
+-------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-------------------------------------------------------------------------------------------------------------------------------
+|   0 | INSERT STATEMENT         |               |      1 |        |      0 |00:00:00.12 |    3981 |       |       |          |
+|   1 |  LOAD TABLE CONVENTIONAL | PRODUCT_SALES |      1 |        |      0 |00:00:00.12 |    3981 |       |       |          |
+|*  2 |   FILTER                 |               |      1 |        |  99995 |00:00:00.09 |     500 |       |       |          |
+|   3 |    HASH GROUP BY         |               |      1 |   5042 |    100K|00:00:00.08 |     500 |  6423K|  1978K| 6579K (0)|
+|   4 |     TABLE ACCESS FULL    | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+-------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - filter(MIN("SALES_DATE")<>TO_DATE(' 1900-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+
+MH2_DML: 1/1 (1 of 1)
+SQL_ID  g2aw4bb21wb3b, child number 0
+-------------------------------------
+MERGE /*+ GATHER_PLAN_STATISTICS MH2_DML  leading(@"SEL$F5BB74E1"
+"from$_subquery$_007"@"SEL$2" "TGT"@"SEL$1") use_nl(@"SEL$F5BB74E1"
+"TGT"@"SEL$1") */ INTO product_sales tgt USING (SELECT *        FROM (
+        SELECT rowid arowid, product_id, DATE '1900-01-01' sales_date,
+               sales_date AS old_sales_date,                 Rank()
+OVER (PARTITION BY product_id ORDER BY sales_date) rn          FROM
+product_sales        )        WHERE 170924151410232=170924151410232 AND
+rn = 1 AND 0 = Decode(sales_date, old_sales_date, 1, 0)) src ON
+(tgt.rowid = src.arowid) WHEN MATCHED THEN   UPDATE SET
+tgt.sales_date = src.sales_date
+
+Plan hash value: 178833565
+
+------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                     | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+------------------------------------------------------------------------------------------------------------------------------------
+|   0 | MERGE STATEMENT               |               |      1 |        |      0 |00:00:01.50 |     103K|       |       |          |
+|   1 |  MERGE                        | PRODUCT_SALES |      1 |        |      0 |00:00:01.50 |     103K|       |       |          |
+|   2 |   VIEW                        |               |      1 |        |  99997 |00:00:00.63 |     994 |       |       |          |
+|   3 |    NESTED LOOPS               |               |      1 |    200K|  99997 |00:00:00.62 |     994 |       |       |          |
+|*  4 |     VIEW                      |               |      1 |    200K|  99997 |00:00:00.55 |     500 |       |       |          |
+|*  5 |      WINDOW SORT PUSHED RANK  |               |      1 |    200K|    100K|00:00:00.52 |     500 |    16M|  1510K|   14M (0)|
+|   6 |       TABLE ACCESS FULL       | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.02 |     500 |       |       |          |
+|   7 |     TABLE ACCESS BY USER ROWID| PRODUCT_SALES |  99997 |      1 |  99997 |00:00:00.04 |     494 |       |       |          |
+------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   4 - filter(("RN"=1 AND DECODE(INTERNAL_FUNCTION("SALES_DATE"),"OLD_SALES_DATE",1,0)=0))
+   5 - filter(RANK() OVER ( PARTITION BY "PRODUCT_ID" ORDER BY "SALES_DATE")<=1)
+
+MHT_DML: 1/1 (1 of 1)
+SQL_ID  cya9adu730x4w, child number 0
+-------------------------------------
+MERGE /*+ GATHER_PLAN_STATISTICS MHT_DML
+no_swap_join_inputs(@"SEL$F5BB74E1" "TGT"@"SEL$1") */ INTO
+product_sales tgt USING (SELECT *        FROM (          SELECT rowid
+arowid, product_id, DATE '1900-01-01' sales_date,
+sales_date AS old_sales_date,                 Rank() OVER (PARTITION BY
+product_id ORDER BY sales_date) rn          FROM   product_sales
+)        WHERE 170924151408389=170924151408389 AND rn = 1 AND 0 =
+Decode(sales_date, old_sales_date, 1, 0)) src ON (tgt.rowid =
+src.arowid) WHEN MATCHED THEN   UPDATE SET     tgt.sales_date =
+src.sales_date
+
+Plan hash value: 2519372665
+
+----------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                   | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+----------------------------------------------------------------------------------------------------------------------------------
+|   0 | MERGE STATEMENT             |               |      1 |        |      0 |00:00:01.19 |     103K|       |       |          |
+|   1 |  MERGE                      | PRODUCT_SALES |      1 |        |      0 |00:00:01.19 |     103K|       |       |          |
+|   2 |   VIEW                      |               |      1 |        |  99997 |00:00:00.55 |    1000 |       |       |          |
+|*  3 |    HASH JOIN                |               |      1 |    200K|  99997 |00:00:00.54 |    1000 |  9791K|  3044K|   11M (0)|
+|*  4 |     VIEW                    |               |      1 |    200K|  99997 |00:00:00.40 |     500 |       |       |          |
+|*  5 |      WINDOW SORT PUSHED RANK|               |      1 |    200K|    100K|00:00:00.37 |     500 |    16M|  1510K|   14M (0)|
+|   6 |       TABLE ACCESS FULL     | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+|   7 |     TABLE ACCESS FULL       | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+----------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - access("TGT".ROWID="from$_subquery$_007"."AROWID")
+   4 - filter(("RN"=1 AND DECODE(INTERNAL_FUNCTION("SALES_DATE"),"OLD_SALES_DATE",1,0)=0))
+   5 - filter(RANK() OVER ( PARTITION BY "PRODUCT_ID" ORDER BY "SALES_DATE")<=1)
+
+MRG_DML: 1/1 (1 of 1)
+SQL_ID  9acyqjucsy2b5, child number 0
+-------------------------------------
+MERGE/*+ GATHER_PLAN_STATISTICS MRG_DML */ INTO product_sales tgt USING
+(SELECT *        FROM (          SELECT rowid arowid, product_id, DATE
+'1900-01-01' sales_date,                 sales_date AS old_sales_date,
+               Rank() OVER (PARTITION BY product_id ORDER BY
+sales_date) rn          FROM   product_sales        )        WHERE
+170924151405547=170924151405547 AND rn = 1 AND 0 = Decode(sales_date,
+old_sales_date, 1, 0)) src ON (tgt.rowid = src.arowid) WHEN MATCHED
+THEN   UPDATE SET     tgt.sales_date = src.sales_date
+
+Plan hash value: 949972977
+
+----------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation                   | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+----------------------------------------------------------------------------------------------------------------------------------
+|   0 | MERGE STATEMENT             |               |      1 |        |      0 |00:00:02.22 |     103K|       |       |          |
+|   1 |  MERGE                      | PRODUCT_SALES |      1 |        |      0 |00:00:02.22 |     103K|       |       |          |
+|   2 |   VIEW                      |               |      1 |        |  99997 |00:00:01.67 |    1000 |       |       |          |
+|*  3 |    HASH JOIN                |               |      1 |    200K|  99997 |00:00:01.66 |    1000 |    15M|  3557K|   15M (0)|
+|   4 |     TABLE ACCESS FULL       | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+|*  5 |     VIEW                    |               |      1 |    200K|  99997 |00:00:01.01 |     500 |       |       |          |
+|*  6 |      WINDOW SORT PUSHED RANK|               |      1 |    200K|    100K|00:00:00.98 |     500 |    16M|  1510K|   14M (0)|
+|   7 |       TABLE ACCESS FULL     | PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+----------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - access("TGT".ROWID="from$_subquery$_007"."AROWID")
+   5 - filter(("RN"=1 AND DECODE(INTERNAL_FUNCTION("SALES_DATE"),"OLD_SALES_DATE",1,0)=0))
+   6 - filter(RANK() OVER ( PARTITION BY "PRODUCT_ID" ORDER BY "SALES_DATE")<=1)
+
+UPD_DML: 1/1 (1 of 1)
+SQL_ID  bg5jrdh2vt12s, child number 0
+-------------------------------------
+UPDATE/*+ GATHER_PLAN_STATISTICS UPD_DML */ product_sales sd    SET
+sd.sales_date = DATE '1900-01-01'  WHERE
+170924151403128=170924151403128 AND sd.sales_date =  ( SELECT
+min(sd2.sales_date)      FROM product_sales sd2     WHERE sd.product_id
+= sd2.product_id  )    AND sd.sales_date != DATE '1900-01-01'
+
+Plan hash value: 2042760566
+
+-----------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation              | Name          | Starts | E-Rows | A-Rows |   A-Time   | Buffers |  OMem |  1Mem | Used-Mem |
+-----------------------------------------------------------------------------------------------------------------------------
+|   0 | UPDATE STATEMENT       |               |      1 |        |      0 |00:00:01.34 |     103K|       |       |          |
+|   1 |  UPDATE                | PRODUCT_SALES |      1 |        |      0 |00:00:01.34 |     103K|       |       |          |
+|*  2 |   HASH JOIN            |               |      1 |    100K|  99997 |00:00:00.84 |    1000 |  6912K|  2259K| 7876K (0)|
+|   3 |    VIEW                | VW_SQ_1       |      1 |    100K|  99995 |00:00:00.21 |     500 |       |       |          |
+|*  4 |     FILTER             |               |      1 |        |  99995 |00:00:00.21 |     500 |       |       |          |
+|   5 |      SORT GROUP BY     |               |      1 |    100K|    100K|00:00:00.21 |     500 |  7282K|  1425K| 6472K (0)|
+|   6 |       TABLE ACCESS FULL| PRODUCT_SALES |      1 |    200K|    200K|00:00:00.01 |     500 |       |       |          |
+|*  7 |    TABLE ACCESS FULL   | PRODUCT_SALES |      1 |    199K|    199K|00:00:00.04 |     500 |       |       |          |
+-----------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("SD"."SALES_DATE"="MIN(SD2.SALES_DATE)" AND "SD"."PRODUCT_ID"="ITEM_1")
+   4 - filter(MIN("SD2"."SALES_DATE")<>TO_DATE(' 1900-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+   7 - filter("SD"."SALES_DATE"<>TO_DATE(' 1900-01-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+
+
+Data Points
+===========
+Data Point:               size_wide      size_deep       cpu_time        elapsed       num_recs       per_part     group_size
+Data Point                   100000              2           1.25          1.765         200000              2              6
+
+num_records_out
+===============
+Run Type                      Depth        W100000
+DEL_DML                          D2              1
+INS_DML                          D2              1
+MH2_DML                          D2              1
+MHT_DML                          D2              1
+MRG_DML                          D2              1
+UPD_DML                          D2              1
+
+num_records_out_SLICE
+=====================
+Run Type                    W100000
+DEL_DML                           1
+INS_DML                           1
+MH2_DML                           1
+MHT_DML                           1
+MRG_DML                           1
+UPD_DML                           1
+
+num_records_out_RATIO
+=====================
+Run Type                      Depth        W100000
+DEL_DML                          D2              1
+INS_DML                          D2              1
+MH2_DML                          D2              1
+MHT_DML                          D2              1
+MRG_DML                          D2              1
+UPD_DML                          D2              1
+
+num_records_out_SLICE_RATIO
+===========================
+Run Type                    W100000
+DEL_DML                           1
+INS_DML                           1
+MH2_DML                           1
+MHT_DML                           1
+MRG_DML                           1
+UPD_DML                           1
+
+num_records_pqs
+===============
+Run Type                      Depth        W100000
+DEL_DML                          D2          99997
+INS_DML                          D2          99995
+MH2_DML                          D2          99997
+MHT_DML                          D2          99997
+MRG_DML                          D2          99997
+UPD_DML                          D2          99997
+
+num_records_pqs_SLICE
+=====================
+Run Type                    W100000
+DEL_DML                       99997
+INS_DML                       99995
+MH2_DML                       99997
+MHT_DML                       99997
+MRG_DML                       99997
+UPD_DML                       99997
+
+num_records_pqs_RATIO
+=====================
+Run Type                      Depth        W100000
+DEL_DML                          D2              1
+INS_DML                          D2              1
+MH2_DML                          D2              1
+MHT_DML                          D2              1
+MRG_DML                          D2              1
+UPD_DML                          D2              1
+
+num_records_pqs_SLICE_RATIO
+===========================
+Run Type                    W100000
+DEL_DML                           1
+INS_DML                           1
+MH2_DML                           1
+MHT_DML                           1
+MRG_DML                           1
+UPD_DML                           1
+
+cpu_time
+========
+Run Type                      Depth        W100000
+DEL_DML                          D2            .45
+INS_DML                          D2            .08
+MH2_DML                          D2            .69
+MHT_DML                          D2            .51
+MRG_DML                          D2            .67
+UPD_DML                          D2            .59
+
+cpu_time_SLICE
+==============
+Run Type                    W100000
+DEL_DML                         .45
+INS_DML                         .08
+MH2_DML                         .69
+MHT_DML                         .51
+MRG_DML                         .67
+UPD_DML                         .59
+
+cpu_time_RATIO
+==============
+Run Type                      Depth        W100000
+DEL_DML                          D2           5.63
+INS_DML                          D2              1
+MH2_DML                          D2           8.63
+MHT_DML                          D2           6.38
+MRG_DML                          D2           8.38
+UPD_DML                          D2           7.38
+
+cpu_time_SLICE_RATIO
+====================
+Run Type                    W100000
+DEL_DML                        5.63
+INS_DML                           1
+MH2_DML                        8.63
+MHT_DML                        6.38
+MRG_DML                        8.38
+UPD_DML                        7.38
+
+elapsed_time
+============
+Run Type                      Depth        W100000
+DEL_DML                          D2           .647
+INS_DML                          D2           .124
+MH2_DML                          D2          1.512
+MHT_DML                          D2          1.193
+MRG_DML                          D2          2.229
+UPD_DML                          D2          1.346
+
+elapsed_time_SLICE
+==================
+Run Type                    W100000
+DEL_DML                        .647
+INS_DML                        .124
+MH2_DML                       1.512
+MHT_DML                       1.193
+MRG_DML                       2.229
+UPD_DML                       1.346
+
+elapsed_time_RATIO
+==================
+Run Type                      Depth        W100000
+DEL_DML                          D2           5.22
+INS_DML                          D2              1
+MH2_DML                          D2          12.19
+MHT_DML                          D2           9.62
+MRG_DML                          D2          17.98
+UPD_DML                          D2          10.85
+
+elapsed_time_SLICE_RATIO
+========================
+Run Type                    W100000
+DEL_DML                        5.22
+INS_DML                           1
+MH2_DML                       12.19
+MHT_DML                        9.62
+MRG_DML                       17.98
+UPD_DML                       10.85
+
+memory_used
+===========
+Run Type                      Depth        W100000
+DEL_DML                          D2        7863296
+INS_DML                          D2        6736896
+MH2_DML                          D2       15142912
+MHT_DML                          D2       15142912
+MRG_DML                          D2       16588800
+UPD_DML                          D2        8065024
+
+memory_used_SLICE
+=================
+Run Type                    W100000
+DEL_DML                     7863296
+INS_DML                     6736896
+MH2_DML                    15142912
+MHT_DML                    15142912
+MRG_DML                    16588800
+UPD_DML                     8065024
+
+memory_used_RATIO
+=================
+Run Type                      Depth        W100000
+DEL_DML                          D2           1.17
+INS_DML                          D2              1
+MH2_DML                          D2           2.25
+MHT_DML                          D2           2.25
+MRG_DML                          D2           2.46
+UPD_DML                          D2            1.2
+
+memory_used_SLICE_RATIO
+=======================
+Run Type                    W100000
+DEL_DML                        1.17
+INS_DML                           1
+MH2_DML                        2.25
+MHT_DML                        2.25
+MRG_DML                        2.46
+UPD_DML                         1.2
+
+buffers
+=======
+Run Type                      Depth        W100000
+DEL_DML                          D2         104322
+INS_DML                          D2           3981
+MH2_DML                          D2         103215
+MHT_DML                          D2         103221
+MRG_DML                          D2         103221
+UPD_DML                          D2         103221
+
+buffers_SLICE
+=============
+Run Type                    W100000
+DEL_DML                      104322
+INS_DML                        3981
+MH2_DML                      103215
+MHT_DML                      103221
+MRG_DML                      103221
+UPD_DML                      103221
+
+buffers_RATIO
+=============
+Run Type                      Depth        W100000
+DEL_DML                          D2           26.2
+INS_DML                          D2              1
+MH2_DML                          D2          25.93
+MHT_DML                          D2          25.93
+MRG_DML                          D2          25.93
+UPD_DML                          D2          25.93
+
+buffers_SLICE_RATIO
+===================
+Run Type                    W100000
+DEL_DML                        26.2
+INS_DML                           1
+MH2_DML                       25.93
+MHT_DML                       25.93
+MRG_DML                       25.93
+UPD_DML                       25.93
+
+disk_reads
+==========
+Run Type                      Depth        W100000
+DEL_DML                          D2              0
+INS_DML                          D2              0
+MH2_DML                          D2              0
+MHT_DML                          D2              0
+MRG_DML                          D2              0
+UPD_DML                          D2              0
+
+disk_reads_SLICE
+================
+Run Type                    W100000
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML                           0
+UPD_DML                           0
+
+disk_reads_RATIO
+================
+Run Type                      Depth        W100000
+DEL_DML                          D2              0
+INS_DML                          D2              0
+MH2_DML                          D2              0
+MHT_DML                          D2              0
+MRG_DML                          D2              0
+UPD_DML                          D2              0
+
+disk_reads_SLICE_RATIO
+======================
+Run Type                    W100000
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML                           0
+UPD_DML                           0
+
+disk_writes
+===========
+Run Type                      Depth        W100000
+DEL_DML                          D2              0
+INS_DML                          D2              0
+MH2_DML                          D2              0
+MHT_DML                          D2              0
+MRG_DML                          D2              0
+UPD_DML                          D2              0
+
+disk_writes_SLICE
+=================
+Run Type                    W100000
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML                           0
+UPD_DML                           0
+
+disk_writes_RATIO
+=================
+Run Type                      Depth        W100000
+DEL_DML                          D2              0
+INS_DML                          D2              0
+MH2_DML                          D2              0
+MHT_DML                          D2              0
+MRG_DML                          D2              0
+UPD_DML                          D2              0
+
+disk_writes_SLICE_RATIO
+=======================
+Run Type                    W100000
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML                           0
+UPD_DML                           0
+
+tempseg_size
+============
+Run Type                      Depth        W100000
+DEL_DML                          D2
+INS_DML                          D2
+MH2_DML                          D2
+MHT_DML                          D2
+MRG_DML                          D2
+UPD_DML                          D2
+
+tempseg_size_SLICE
+==================
+Run Type                    W100000
+DEL_DML
+INS_DML
+MH2_DML
+MHT_DML
+MRG_DML
+UPD_DML
+
+tempseg_size_RATIO
+==================
+Run Type                      Depth        W100000
+DEL_DML                          D2
+INS_DML                          D2
+MH2_DML                          D2
+MHT_DML                          D2
+MRG_DML                          D2
+UPD_DML                          D2
+
+tempseg_size_SLICE_RATIO
+========================
+Run Type                    W100000
+DEL_DML
+INS_DML
+MH2_DML
+MHT_DML
+MRG_DML
+UPD_DML
+
+cardinality
+===========
+Run Type                      Depth        W100000
+DEL_DML                          D2         200000
+INS_DML                          D2         200000
+MH2_DML                          D2         200000
+MHT_DML                          D2         200000
+MRG_DML                          D2         200000
+UPD_DML                          D2         200000
+
+cardinality_SLICE
+=================
+Run Type                    W100000
+DEL_DML                      200000
+INS_DML                      200000
+MH2_DML                      200000
+MHT_DML                      200000
+MRG_DML                      200000
+UPD_DML                      200000
+
+cardinality_RATIO
+=================
+Run Type                      Depth        W100000
+DEL_DML                          D2              1
+INS_DML                          D2              1
+MH2_DML                          D2              1
+MHT_DML                          D2              1
+MRG_DML                          D2              1
+UPD_DML                          D2              1
+
+cardinality_SLICE_RATIO
+=======================
+Run Type                    W100000
+DEL_DML                           1
+INS_DML                           1
+MH2_DML                           1
+MHT_DML                           1
+MRG_DML                           1
+UPD_DML                           1
+
+output_rows
+===========
+Run Type                      Depth        W100000
+DEL_DML                          D2         200000
+INS_DML                          D2         200000
+MH2_DML                          D2         200000
+MHT_DML                          D2         200000
+MRG_DML                          D2         200000
+UPD_DML                          D2         200000
+
+output_rows_SLICE
+=================
+Run Type                    W100000
+DEL_DML                      200000
+INS_DML                      200000
+MH2_DML                      200000
+MHT_DML                      200000
+MRG_DML                      200000
+UPD_DML                      200000
+
+output_rows_RATIO
+=================
+Run Type                      Depth        W100000
+DEL_DML                          D2              1
+INS_DML                          D2              1
+MH2_DML                          D2              1
+MHT_DML                          D2              1
+MRG_DML                          D2              1
+UPD_DML                          D2              1
+
+output_rows_SLICE_RATIO
+=======================
+Run Type                    W100000
+DEL_DML                           1
+INS_DML                           1
+MH2_DML                           1
+MHT_DML                           1
+MRG_DML                           1
+UPD_DML                           1
+
+cardinality_error
+=================
+Run Type                      Depth        W100000
+DEL_DML                          D2          99996
+INS_DML                          D2          94958
+MH2_DML                          D2         100003
+MHT_DML                          D2         100003
+MRG_DML                          D2         100003
+UPD_DML                          D2            829
+
+cardinality_error_SLICE
+=======================
+Run Type                    W100000
+DEL_DML                       99996
+INS_DML                       94958
+MH2_DML                      100003
+MHT_DML                      100003
+MRG_DML                      100003
+UPD_DML                         829
+
+cardinality_error_RATIO
+=======================
+Run Type                      Depth        W100000
+DEL_DML                          D2         120.62
+INS_DML                          D2         114.55
+MH2_DML                          D2         120.63
+MHT_DML                          D2         120.63
+MRG_DML                          D2         120.63
+UPD_DML                          D2              1
+
+cardinality_error_SLICE_RATIO
+=============================
+Run Type                    W100000
+DEL_DML                      120.62
+INS_DML                      114.55
+MH2_DML                      120.63
+MHT_DML                      120.63
+MRG_DML                      120.63
+UPD_DML                           1
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'sorts (rows)' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE point_wide WH
+EN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+sorts (rows)
+============
+Run Type                      Depth        W100000
+DEL_DML                          D2         200000
+INS_DML                          D2              0
+MH2_DML                          D2         200000
+MHT_DML                          D2         200000
+MRG_DML                          D2         200000
+UPD_DML                          D2         205430
+
+sorts (rows)_SLICE
+==================
+Run Type                    W100000
+DEL_DML                      200000
+INS_DML                           0
+MH2_DML                      200000
+MHT_DML                      200000
+MRG_DML                      200000
+UPD_DML                      205430
+
+sorts (rows)_RATIO
+==================
+Run Type                      Depth        W100000
+DEL_DML                          D2   200000000000
+INS_DML                          D2              0
+MH2_DML                          D2   200000000000
+MHT_DML                          D2   200000000000
+MRG_DML                          D2   200000000000
+UPD_DML                          D2   205430000000
+
+sorts (rows)_SLICE_RATIO
+========================
+Run Type                    W100000
+DEL_DML                200000000000
+INS_DML                           0
+MH2_DML                200000000000
+MHT_DML                200000000000
+MRG_DML                200000000000
+UPD_DML                205430000000
+
+Top Stats
+=========
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'session pga memory max' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE poi
+nt_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+session pga memory max
+======================
+Run Type                      Depth        W100000
+DEL_DML                          D2              0
+INS_DML                          D2              0
+MH2_DML                          D2              0
+MHT_DML                          D2              0
+MRG_DML                          D2       23592960
+UPD_DML                          D2       10223616
+
+session pga memory max_SLICE
+============================
+Run Type                    W100000
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML                    23592960
+UPD_DML                    10223616
+
+session pga memory max_RATIO
+============================
+Run Type                      Depth        W100000
+DEL_DML                          D2              0
+INS_DML                          D2              0
+MH2_DML                          D2              0
+MHT_DML                          D2              0
+MRG_DML                          D2 23592960000000
+UPD_DML                          D2 10223616000000
+
+session pga memory max_SLICE_RATIO
+==================================
+Run Type                    W100000
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML              23592960000000
+UPD_DML              10223616000000
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'session uga memory max' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE poi
+nt_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+session uga memory max
+======================
+Run Type                      Depth        W100000
+DEL_DML                          D2              0
+INS_DML                          D2              0
+MH2_DML                          D2              0
+MHT_DML                          D2              0
+MRG_DML                          D2       18340832
+UPD_DML                          D2        8250544
+
+session uga memory max_SLICE
+============================
+Run Type                    W100000
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML                    18340832
+UPD_DML                     8250544
+
+session uga memory max_RATIO
+============================
+Run Type                      Depth        W100000
+DEL_DML                          D2              0
+INS_DML                          D2              0
+MH2_DML                          D2              0
+MHT_DML                          D2              0
+MRG_DML                          D2 18340832000000
+UPD_DML                          D2  8250544000000
+
+session uga memory max_SLICE_RATIO
+==================================
+Run Type                    W100000
+DEL_DML                           0
+INS_DML                           0
+MH2_DML                           0
+MHT_DML                           0
+MRG_DML              18340832000000
+UPD_DML               8250544000000
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'logical read bytes from cache' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (C
+ASE point_wide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+logical read bytes from cache
+=============================
+Run Type                      Depth        W100000
+DEL_DML                          D2     2522939392
+INS_DML                          D2       54755328
+MH2_DML                          D2     2509168640
+MHT_DML                          D2     2508529664
+MRG_DML                          D2     2508324864
+UPD_DML                          D2     2511192064
+
+logical read bytes from cache_SLICE
+===================================
+Run Type                    W100000
+DEL_DML                  2522939392
+INS_DML                    54755328
+MH2_DML                  2509168640
+MHT_DML                  2508529664
+MRG_DML                  2508324864
+UPD_DML                  2511192064
+
+logical read bytes from cache_RATIO
+===================================
+Run Type                      Depth        W100000
+DEL_DML                          D2          46.08
+INS_DML                          D2              1
+MH2_DML                          D2          45.83
+MHT_DML                          D2          45.81
+MRG_DML                          D2          45.81
+UPD_DML                          D2          45.86
+
+logical read bytes from cache_SLICE_RATIO
+=========================================
+Run Type                    W100000
+DEL_DML                       46.08
+INS_DML                           1
+MH2_DML                       45.83
+MHT_DML                       45.81
+MRG_DML                       45.81
+UPD_DML                       45.86
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'redo size' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE point_wide WHEN
+1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+redo size
+=========
+Run Type                      Depth        W100000
+DEL_DML                          D2       49045024
+INS_DML                          D2        3307888
+MH2_DML                          D2       46540800
+MHT_DML                          D2       46555704
+MRG_DML                          D2       46541328
+UPD_DML                          D2       46592248
+
+redo size_SLICE
+===============
+Run Type                    W100000
+DEL_DML                    49045024
+INS_DML                     3307888
+MH2_DML                    46540800
+MHT_DML                    46555704
+MRG_DML                    46541328
+UPD_DML                    46592248
+
+redo size_RATIO
+===============
+Run Type                      Depth        W100000
+DEL_DML                          D2          14.83
+INS_DML                          D2              1
+MH2_DML                          D2          14.07
+MHT_DML                          D2          14.07
+MRG_DML                          D2          14.07
+UPD_DML                          D2          14.09
+
+redo size_SLICE_RATIO
+=====================
+Run Type                    W100000
+DEL_DML                       14.83
+INS_DML                           1
+MH2_DML                       14.07
+MHT_DML                       14.07
+MRG_DML                       14.07
+UPD_DML                       14.09
+WITH wit AS (SELECT query_name, point_deep, size_deep, point_wide, stat_val f_real, Round (stat_val / Greatest (Min (stat_val) OVER (PARTITION BY point_deep, point_wide), 0.000001), 2) f_ratio FROM be
+nch_run_v$stats_v WHERE stat_name = 'session pga memory' AND stat_type = 'STAT') SELECT text FROM (SELECT query_name, point_deep, '"' || query_name || '","D' || size_deep || '","' || Max (CASE point_w
+ide WHEN 1 THEN f_real END) || '"' text FROM wit GROUP BY query_name, point_deep, size_deep) ORDER BY query_name, point_deep
+
+
+session pga memory
+==================
+Run Type                      Depth        W100000
+DEL_DML                          D2         524288
+INS_DML                          D2              0
+MH2_DML                          D2        -327680
+MHT_DML                          D2       14811136
+MRG_DML                          D2       14811136
+UPD_DML                          D2        1048576
+
+session pga memory_SLICE
+========================
+Run Type                    W100000
+DEL_DML                      524288
+INS_DML                           0
+MH2_DML                     -327680
+MHT_DML                    14811136
+MRG_DML                    14811136
+UPD_DML                     1048576
+
+session pga memory_RATIO
+========================
+Run Type                      Depth        W100000
+DEL_DML                          D2   524288000000
+INS_DML                          D2              0
+MH2_DML                          D2  -327680000000
+MHT_DML                          D2 14811136000000
+MRG_DML                          D2 14811136000000
+UPD_DML                          D2  1048576000000
+
+session pga memory_SLICE_RATIO
+==============================
+Run Type                    W100000
+DEL_DML                524288000000
+INS_DML                           0
+MH2_DML               -327680000000
+MHT_DML              14811136000000
+MRG_DML              14811136000000
+UPD_DML               1048576000000
+
+Timer Set: File Writer, Constructed at 24 Sep 2017 15:14:18, written at 15:14:24
+================================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000012), CPU (per call): 0.01 (0.000010), calls: 1000, '***' denotes corrected line below]
+
+Timer       Elapsed         CPU         Calls       Ela/Call       CPU/Call
+-------  ----------  ----------  ------------  -------------  -------------
+Lines          0.00        0.00             1        0.00000        0.00000
+(Other)        5.76        1.69             1        5.75900        1.69000
+-------  ----------  ----------  ------------  -------------  -------------
+Total          5.76        1.69             2        2.87950        0.84500
+-------  ----------  ----------  ------------  -------------  -------------
+
+Timer Set: Top, Constructed at 24 Sep 2017 15:14:01, written at 15:14:24
+========================================================================
+[Timer timed: Elapsed (per call): 0.01 (0.000007), CPU (per call): 0.00 (0.000000), calls: 1000, '***' denotes corrected line below]
+
+Timer          Elapsed         CPU         Calls       Ela/Call       CPU/Call
+----------  ----------  ----------  ------------  -------------  -------------
+Setup Data        1.97        1.25             1        1.97300        1.25000
+Querying         10.92        6.24             1       10.92400        6.24000
+(Other)          10.17        3.22             1       10.17200        3.22000
+----------  ----------  ----------  ------------  -------------  -------------
+Total            23.07       10.71             3        7.68967        3.57000
+----------  ----------  ----------  ------------  -------------  -------------
+Successfully completed
+
+2402 rows selected.
+
+Elapsed: 00:00:00.91
+SQL> 
+SQL> SELECT 'End: ' || To_Char(SYSDATE,'DD-MON-YYYY HH24:MI:SS') FROM DUAL
+  2  /
+
+'END:'||TO_CHAR(SYSDATE,'DD-MON-YY
+----------------------------------
+End: 24-SEP-2017 15:14:25
+
+Elapsed: 00:00:00.00
+SQL> SPOOL OFF

@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE BODY Bench_Queries AS
 /***************************************************************************************************
-Description: Bench_SQL SQL benchmarking framework - test queries across a 2-d dataset space
+Description: SQL benchmarking framework - test queries, DML and DDL across a 2-d dataset space
 
              Bench_Queries package has:
 
@@ -19,6 +19,9 @@ Who                  When        Which What
 -------------------- ----------- ----- -------------------------------------------------------------
 Brendan Furey        05-Nov-2016 1.0   Created.
 Brendan Furey        03-Dec-2016 1.1   Execute_Run_Batch added; Add_Query: Added p_v12_active_only
+Brendan Furey        24-Sep-2017 1.2   Extend to allow DML and DDL benchmarking: Capture pre-query 
+                                       counts; rollback after query; post-query SQL
+                                       Change random number SQL substitution for timestamp
 
 ***************************************************************************************************/
 
@@ -28,6 +31,13 @@ Brendan Furey        03-Dec-2016 1.1   Execute_Run_Batch added; Add_Query: Added
   c_fact_size               CONSTANT    PLS_INTEGER := 15;
   c_flush_threshold         CONSTANT    PLS_INTEGER := 32766;
   c_bulk_limit              CONSTANT    PLS_INTEGER := 1000;
+  c_update                  CONSTANT    VARCHAR2(100) := 'UPDATE';
+  c_merge                   CONSTANT    VARCHAR2(100) := 'MERGE';
+  c_delete                  CONSTANT    VARCHAR2(100) := 'DELETE';
+  c_insert                  CONSTANT    VARCHAR2(100) := 'INSERT';
+  c_create                  CONSTANT    VARCHAR2(100) := 'CREATE';
+  c_ddl                     CONSTANT    VARCHAR2(100) := 'DDL';
+  c_dummy_query             CONSTANT    VARCHAR2(100) := 'SELECT ''"1"'' FROM DUAL';
 
   g_queries                             query_list_type;
   g_query_group                         VARCHAR2(30);
@@ -55,6 +65,7 @@ PROCEDURE Add_Query (p_query_name            VARCHAR2,                 -- query 
                      p_active_yn             VARCHAR2 DEFAULT 'Y',     -- active, i.e. includein run?
                      p_text                  CLOB,                     -- query text
                      p_pre_query_sql         CLOB DEFAULT NULL,        -- SQL to run in advance of query
+                     p_post_query_sql        CLOB DEFAULT NULL,        -- SQL to run after query
                      p_v12_active_only       BOOLEAN DEFAULT FALSE) IS -- De-activate if Oracle version < 12
 
   l_active_yn   VARCHAR2(1) := p_active_yn;
@@ -95,12 +106,13 @@ BEGIN
   END IF;
 
   MERGE INTO queries qry
-  USING (SELECT p_query_group query_group, p_query_name query_name, p_description description, l_active_yn active_yn, p_text text, p_pre_query_sql pre_query_sql FROM DUAL) par
+  USING (SELECT p_query_group query_group, p_query_name query_name, p_description description, l_active_yn active_yn, p_text text, p_pre_query_sql pre_query_sql , p_post_query_sql post_query_sql FROM DUAL) par
      ON (qry.name = par.query_name AND qry.query_group = par.query_group)
    WHEN MATCHED THEN
     UPDATE SET description      = par.description,
                text             = par.text,
                pre_query_sql    = par.pre_query_sql,
+               post_query_sql   = par.post_query_sql,
                active_yn        = par.active_yn
    WHEN NOT MATCHED THEN
      INSERT (
@@ -110,7 +122,8 @@ BEGIN
        description,
        active_yn,
        text,
-       pre_query_sql
+       pre_query_sql,
+       post_query_sql
     ) VALUES (
       queries_s.NEXTVAL,
       p_query_group,
@@ -118,7 +131,8 @@ BEGIN
       par.description,
       par.active_yn,
       par.text,
-      par.pre_query_sql
+      par.pre_query_sql,
+      par.post_query_sql
     );
 
 END Add_Query;
@@ -176,7 +190,6 @@ BEGIN
             unv.stat_val,
             unv.wait_time
      FROM unv;
-
 END Init_Statistics;
 
 /***************************************************************************************************
@@ -444,7 +457,7 @@ Get_Queries: Gets the active queries for the group into a global array;
 PROCEDURE Get_Queries (p_query_group VARCHAR2) IS -- query group
 
   CURSOR c_qry IS
-  SELECT query_type (id, name, text, pre_query_sql)
+  SELECT query_type (id, name, text, pre_query_sql, post_query_sql)
     FROM queries
    WHERE query_group = p_query_group
      AND active_yn   = 'Y'
@@ -458,6 +471,7 @@ PROCEDURE Get_Queries (p_query_group VARCHAR2) IS -- query group
   l_hint_end            PLS_INTEGER;
   l_str                 CLOB;
   l_hint                VARCHAR2(4000);
+  l_dml_str             VARCHAR2(100);
 
 BEGIN
 
@@ -472,6 +486,29 @@ BEGIN
 
     l_hint := '/*+ GATHER_PLAN_STATISTICS ';
     l_str := g_queries(i).text;
+
+    IF l_str IN (c_update, c_merge, c_delete, c_insert, c_ddl, c_create) THEN
+
+      l_dml_str := l_str;
+
+      IF l_str = c_ddl THEN
+        g_queries(i).text := Replace (c_dummy_query, 'SELECT', 'SELECT ' || l_hint || g_queries(i).name || ' */' );
+      ELSE
+        g_queries(i).text := c_dummy_query;
+      END IF;
+
+      l_str := g_queries(i).pre_query_sql;
+      IF Instr (l_str, '/*+') = 0 THEN
+        g_queries(i).pre_query_sql := Replace (l_str, l_dml_str, l_dml_str || l_hint || g_queries(i).name || ' */');
+      ELSE
+        g_queries(i).pre_query_sql := Replace (l_str, '/*+', l_hint || g_queries(i).name || ' ');
+      END IF;
+      Utils.Write_Log ('pre_query_sql=' || g_queries(i).pre_query_sql);
+
+      CONTINUE;
+
+    END IF;
+
     l_pos_list_beg := RegExp_Instr (l_str, '/\* SEL \*/', 1, 1) +  9;
     l_pos_list_end := RegExp_Instr (l_str, '/\* SEL \*/', 1, 2) -  1;
     l_mid := Substr (l_str, l_pos_list_beg, l_pos_list_end - l_pos_list_beg + 1);
@@ -650,7 +687,8 @@ PROCEDURE Outbound_Interface (
         p_bench_run_statistics_id           PLS_INTEGER,    -- run statistic id
         x_cpu_time                      OUT NUMBER,         -- cpu time used by query
         x_elapsed_time                  OUT NUMBER,         -- elapsed time used by query
-        x_num_records                   OUT PLS_INTEGER) IS -- number of records output
+        x_num_records                   OUT PLS_INTEGER,    -- number of records output
+        x_num_records_pqs               OUT PLS_INTEGER) IS -- number of records processed in pre-query sql
 
   TYPE row_list_type IS         VARRAY(10000) OF VARCHAR2(4000);
   l_cur                         SYS_REFCURSOR;
@@ -662,11 +700,13 @@ PROCEDURE Outbound_Interface (
   l_ela_inc                     NUMBER;
   l_cpu_inc                     NUMBER;
   l_timer_cur                   PLS_INTEGER;
-  l_timer_cur_names             L1_chr_arr := L1_chr_arr ('Pre SQL', 'Open cursor', 'First fetch', 'Remaining fetches', 'Write to file', 'Write plan');
-  l_rand                        VARCHAR2(100);
+  l_timer_cur_names             L1_chr_arr := L1_chr_arr (
+                                  'Pre SQL', 'Open cursor', 'First fetch', 'Remaining fetches', 
+                                  'Write to file', 'Write plan', 'Rollback', 'Post SQL');
+  l_ts_ms                       VARCHAR2(100);
   l_bench_run_statistics_id     PLS_INTEGER;
   l_timer_stat_rec              Timer_Set.timer_stat_rec;
-
+  l_num_records_pqs             PLS_INTEGER := 0;
   /***************************************************************************************************
 
   Process_Cursor: Processes the query after any pre-query SQL;
@@ -679,6 +719,7 @@ PROCEDURE Outbound_Interface (
   ***************************************************************************************************/
   PROCEDURE Process_Cursor (p_cur_str           CLOB,        -- cursor string
                             p_pre_query_sql     CLOB,        -- SQL to run before query
+                            p_post_query_sql    CLOB,        -- SQL to run after query
                             p_sql_marker        VARCHAR2) IS -- marker for query
   BEGIN
 
@@ -686,9 +727,12 @@ PROCEDURE Outbound_Interface (
     Init_Statistics (p_bench_run_statistic_id => p_bench_run_statistics_id);
     Timer_Set.Init_Time (l_timer_cur);
 
+    COMMIT;
     IF p_pre_query_sql IS NOT NULL THEN
-      Utils.Write_Log (p_pre_query_sql);
+      Utils.Write_Log ('Executing pqs: ' || p_pre_query_sql);
       EXECUTE IMMEDIATE p_pre_query_sql;
+      l_num_records_pqs := SQL%ROWCOUNT;
+      Utils.Write_Log ('Rows processed: ' || SQL%ROWCOUNT);
     END IF;
     Timer_Set.Increment_Time (l_timer_cur, l_timer_cur_names(1));
 
@@ -717,12 +761,18 @@ PROCEDURE Outbound_Interface (
 
     END LOOP;
     Flush_Buf;
---
--- 170912: Moved
---
-    Timer_Set.Increment_Time (l_timer_cur, l_timer_cur_names(5));
-    Write_Plan_Statistics (p_sql_marker => p_sql_marker, p_bench_run_statistic_id => p_bench_run_statistics_id);
 
+    Timer_Set.Increment_Time (l_timer_cur, l_timer_cur_names(5));
+    ROLLBACK;
+    Timer_Set.Increment_Time (l_timer_cur, l_timer_cur_names(7));
+    IF p_post_query_sql IS NOT NULL THEN
+      Utils.Write_Log ('Executing pqs: ' || p_post_query_sql);
+      EXECUTE IMMEDIATE p_post_query_sql;
+      Utils.Write_Log ('Rows processed: ' || SQL%ROWCOUNT);
+    END IF;
+    Timer_Set.Increment_Time (l_timer_cur, l_timer_cur_names(8));
+    Write_Plan_Statistics (p_sql_marker => p_sql_marker, p_bench_run_statistic_id => p_bench_run_statistics_id);
+    COMMIT;
     Utils.Write_Plan (p_sql_marker => p_sql_marker);
     CLOSE l_cur;
     Timer_Set.Increment_Time (l_timer_cur, l_timer_cur_names(6));
@@ -746,13 +796,17 @@ BEGIN
   Open_File (p_file_name);
   Write_Line (p_headings);
 
-  l_rand := Mod (Abs (DBMS_Random.Random), 10000);
-  Process_Cursor (Replace (p_query.text, '#?', l_rand), p_query.pre_query_sql, p_query.name);
+  l_ts_ms := To_Char(SYSTIMESTAMP, 'yymmddhh24missff3');
+
+  Process_Cursor (Replace (p_query.text, '#?', l_ts_ms), 
+                  Replace (p_query.pre_query_sql, '1=1', l_ts_ms || '=' || l_ts_ms), 
+                  Replace (p_query.post_query_sql, '1=1', l_ts_ms || '=' || l_ts_ms), p_query.name);
 
   Close_File;
   Utils.Write_Log (g_n_write || ' rows written to ' || p_query.name || '.csv');
 
   x_num_records := g_n_write;
+  x_num_records_pqs := l_num_records_pqs;
   x_cpu_time := l_cpu_time;
   x_elapsed_time := l_elapsed_time;
 
@@ -1004,6 +1058,7 @@ PROCEDURE Write_All_Facts (p_hdr_str    VARCHAR2,       -- header string
 
   l_fact_name_lis     L1_chr_arr := L1_chr_arr(
       'num_records_out',
+      'num_records_pqs',
       'cpu_time',
       'elapsed_time',
       'memory_used',
@@ -1285,6 +1340,7 @@ FUNCTION Run_One (p_query_ind                   PLS_INTEGER, -- query index with
   l_status                      VARCHAR2(1);
   l_message                     VARCHAR2(4000);
   l_num_records                 PLS_INTEGER;
+  l_num_records_pqs             PLS_INTEGER;
   l_bench_run_statistics_id     PLS_INTEGER;
   l_cpu_time                    NUMBER;
   l_elapsed_time                NUMBER;
@@ -1318,7 +1374,8 @@ BEGIN
                             p_bench_run_statistics_id   => l_bench_run_statistics_id,
                             x_cpu_time                  => l_cpu_time,
                             x_elapsed_time              => l_elapsed_time,
-                            x_num_records               => l_num_records);
+                            x_num_records               => l_num_records,
+                            x_num_records_pqs           => l_num_records_pqs);
   EXCEPTION
     WHEN OTHERS THEN
       ROLLBACK;
@@ -1336,6 +1393,7 @@ BEGIN
      SET    cpu_time            = l_cpu_time,
             elapsed_time        = l_elapsed_time,
             num_records_out     = l_num_records - 1, -- ignore header
+            num_records_pqs     = l_num_records_pqs,
             status              = l_status,
             message             = l_message
    WHERE id = l_bench_run_statistics_id;
