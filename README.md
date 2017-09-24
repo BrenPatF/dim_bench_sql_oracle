@@ -36,3 +36,5 @@ Blog Posts
 - <a href="http://aprogrammerwrites.eu/?p=1937" target="_blank">Dimensional Benchmarking of SQL for Fixed-Depth Hierarchies</a>
 - <a href="http://aprogrammerwrites.eu/?p=1950" target="_blank">Benchmarking of Hash Join Options in SQL for Fixed-Depth Hierarchies</a>
 - <a href="http://aprogrammerwrites.eu/?p=1957" target="_blank">Dimensional Benchmarking of String Splitting SQL</a>
+- <a href="http://aprogrammerwrites.eu/?p=2040" target="_blank">Benchmarking Oracle DML: A Case Study I - Update vs Merge, An Example</a>
+- <a href="http://aprogrammerwrites.eu/?p=2121" target="_blank">Benchmarking Oracle DML: A Case Study II - Effects of Indexes</a>
