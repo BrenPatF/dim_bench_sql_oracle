@@ -422,7 +422,16 @@ BEGIN
 
 END Write_File;
 
-PROCEDURE Write_CSV_Fields (p_csv_str VARCHAR2, p_desc_size PLS_INTEGER DEFAULT 20, p_fact_size PLS_INTEGER DEFAULT 10, p_group_text VARCHAR2 DEFAULT NULL) IS
+/***************************************************************************************************
+
+Write_CSV_Fields: Given an input csf-formatted string, write it out to log in format of initial
+                  left-justified description, followed by right-justified 'fact' fields
+
+***************************************************************************************************/
+PROCEDURE Write_CSV_Fields (p_csv_str   VARCHAR2,                  -- csv string
+                            p_desc_size PLS_INTEGER DEFAULT 20,    -- description width
+                            p_fact_size PLS_INTEGER DEFAULT 10,    -- fact width
+                            p_group_text VARCHAR2 DEFAULT NULL) IS -- log grouping text
   l_line                VARCHAR2(500);
   l_right_pos   PLS_INTEGER := 0;
   l_left_pos    PLS_INTEGER;
@@ -448,7 +457,13 @@ BEGIN
 
 END Write_CSV_Fields;
 
-FUNCTION Get_SQL_Id  (p_sql_marker VARCHAR2) RETURN VARCHAR2 IS
+/***************************************************************************************************
+
+Get_SQL_Id: Given a marker string to match against in v$sql get the sql_id
+
+***************************************************************************************************/
+FUNCTION Get_SQL_Id  (p_sql_marker VARCHAR2)   -- marker string
+                            RETURN VARCHAR2 IS -- sql id
   l_sql_id VARCHAR2(60);
 BEGIN
 
@@ -461,7 +476,15 @@ BEGIN
 
 END Get_SQL_Id;
 
-PROCEDURE Write_Plan (p_sql_marker VARCHAR2, p_group_text VARCHAR2 DEFAULT NULL, p_add_outline BOOLEAN DEFAULT FALSE) IS
+/***************************************************************************************************
+
+Write_Plan: Given a marker string to match against in v$sql extract the execution plan via 
+            DBMA_XPlan and insert it into the log table
+
+***************************************************************************************************/
+PROCEDURE Write_Plan (p_sql_marker  VARCHAR2,                 -- SQL marker string (include this in the SQL)
+                      p_group_text  VARCHAR2 DEFAULT NULL,    -- optional log grouping
+                      p_add_outline BOOLEAN DEFAULT FALSE) IS -- repeat the plan with outline added
   PRAGMA AUTONOMOUS_TRANSACTION;
   l_sql_id VARCHAR2(60) := Get_SQL_Id (p_sql_marker);
   PROCEDURE Ins_Plan (p_type VARCHAR2) IS
